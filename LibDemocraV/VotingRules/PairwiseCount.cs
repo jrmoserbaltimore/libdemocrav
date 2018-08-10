@@ -19,6 +19,7 @@ namespace DemocraticElections.Voting.Analysis
      */
     public class PairwiseCounts : IBallotSheet
     {
+        private Dictionary<ICandidate, Dictionary<ICandidate, IRace>> pairwiseHash = new Dictionary<ICandidate, Dictionary<ICandidate, IRace>>();
         private List<IRace> pairwiseRaces = new List<IRace>();
 
         public PairwiseCounts(IRace race)
@@ -37,19 +38,70 @@ namespace DemocraticElections.Voting.Analysis
             {
                 // TODO:  Uncontested, return Uncontested Race
             }
-            else {
-                /* For each candidate, loop through all remaining candidates
-                 * and add a Plurality race for each pair */
-                for (int i = 0; i < candidates.Count - 1; i++)
+            /* For each candidate, loop through all remaining candidates
+             * and add a Plurality race for each pair */
+            for (int i = 0; i < candidates.Count - 1; i++)
+            {
+                for (int j = i + 1; j < candidates.Count; j++)
                 {
-                    for (int j = i + 1; j < candidates.Count; j++)
+                    IRace r;
+                    List<ICandidate> c = new List<ICandidate>
                     {
-                        List<ICandidate> c = new List<ICandidate>
+                        candidates[i],
+                        candidates[j]
+                    };
+                    r = new Plurality(c);
+                    this.pairwiseRaces.Add(r);
+                    pairwiseHash[c[0]][c[1]] = pairwiseHash[c[1]][c[0]] = r;
+                }
+            }
+            /* For each ballot, cast votes to the Plurality race for
+             * each pair of candidates */
+            foreach (IBallot b in (IEnumerable<IBallot>)race)
+            {
+                List<ICandidate> unranked = new List<ICandidate>(candidates);
+                Dictionary<ICandidate,IVote> rankedHash = new Dictionary<ICandidate,IVote>();
+                List<ICandidate> ranked;
+                /* Move each candidate from unranked to ranked */
+                foreach (IVote v in b)
+                {
+                    unranked.Remove(v.Candidate);
+                    rankedHash[v.Candidate] = v;
+                }
+                ranked = rankedHash.Keys;
+                /* Cast a bunch of plurality votes */
+                for (int i = 0; i < ranked.Count; i++)
+                {
+                    /* All ranked candidates. Skips on last ranked. */
+                    for (int j = i+1; j < ranked.Count; j++)
+                    {
+                        IRace r = pairwiseHash[ranked[i].Candidate][ranked[j].Candidate];
+                        ICandidate c;
+                        if (rankedHash[ranked[i]].Value > rankedHash[ranked[j].Value])
                         {
-                            candidates[i],
-                            candidates[j]
-                        };
-                        this.pairwiseRaces.Add(new Plurality(c));
+                            c = ranked[i];
+                        }
+                        else if (rankedHash[ranked[j]].Value > rankedHash[ranked[i].Value])
+                        {
+                            c = ranked[j];
+                        }
+                        else
+                        {
+                            /* Skip ties */
+                            continue;
+                        }
+                        /* Cast a plurality vote for the winner */
+                        IVote v = new Vote(c, 1);
+                        IBallot b = new RankedBallot(v);
+                        r.Cast(b);
+                    }
+                    /* Cast against all unranked */
+                    for (int j = 0; j < unranked.Count; j++)
+                    {
+                        IRace r = pairwiseHash[ranked[i].Candidate][unranked[j].Candidate];
+                        IVote v = new Vote(ranked[i].Candidate, 1);
+                        IBallot b = new RankedBallot(v);
+                        r.Cast(b);
                     }
                 }
             }

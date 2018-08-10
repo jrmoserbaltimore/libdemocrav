@@ -95,4 +95,16 @@ namespace DemocraticElections.Voting
             throw new NotImplementedException();
         }
     }
+
+    public class Vote : IVote
+    {
+        public ICandidate Candidate { get; private set; }
+        public uint Value { get; private set; }
+
+        public Vote(ICandidate c, uint v)
+        {
+            Candidate = c;
+            Value = v;
+        }
+    }
 }
