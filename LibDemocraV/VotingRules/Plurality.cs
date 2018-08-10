@@ -64,25 +64,28 @@ namespace DemocraticElections.Voting.VotingRules
             }
         }
 
-        public IRace Winners()
+        public IRace Results
         {
-            List<IResult> c = new List<IResult>();
-            foreach (IResult r in results.Values)
+            get
             {
-                /* If nothing yet or a tie, add */
-                if (c.Count == 0 || c[0].Votes == r.Votes)
+                List<IResult> c = new List<IResult>();
+                foreach (IResult r in results.Values)
                 {
-                    c.Add(r);
+                    /* If nothing yet or a tie, add */
+                    if (c.Count == 0 || c[0].Votes == r.Votes)
+                    {
+                        c.Add(r);
+                    }
+                    /* if this result has more votes, make it the only result */
+                    else if (r.Votes > c[0].Votes)
+                    {
+                        c.Clear();
+                        c.Add(r);
+                    }
                 }
-                /* if this result has more votes, make it the only result */
-                else if (r.Votes > c[0].Votes)
-                {
-                    c.Clear();
-                    c.Add(r);
-                }
+                /* Return only the winner */
+                return new Plurality(c);
             }
-            /* Return only the winner */
-            return new Plurality(c);
         }
 
         IEnumerator<IResult> IEnumerable<IResult>.GetEnumerator()

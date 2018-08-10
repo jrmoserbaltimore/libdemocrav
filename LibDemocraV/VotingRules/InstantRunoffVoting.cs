@@ -48,10 +48,7 @@ namespace DemocraticElections.Voting.VotingRules
             ballots.Add(votes);
         }
 
-        public IRace Winners()
-        {
-            throw new NotImplementedException();
-        }
+        public IRace Results => throw new NotImplementedException();
 
 
         IEnumerator<IResult> IEnumerable<IResult>.GetEnumerator()

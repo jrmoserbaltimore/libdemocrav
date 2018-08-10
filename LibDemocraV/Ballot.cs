@@ -42,7 +42,9 @@ namespace DemocraticElections.Voting
     {
         void Cast(IBallot ballot);
         /* Returns an IRace which enumerates IResult objects for winners only*/
-        IRace Winners();
+        IRace Results { get; }
+        /* Compute one round of eliminations or such */
+        IRace NextRound { get; }
     }
 
     public interface IBallotSheet : IEnumerable<IRace>
