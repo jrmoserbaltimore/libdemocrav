@@ -5,6 +5,7 @@
 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace DemocraticElections.Voting
@@ -50,4 +51,46 @@ namespace DemocraticElections.Voting
 
     }
 
+    public class Result : IResult
+    {
+        public Result(ICandidate c, uint v)
+        {
+            Candidate = c;
+            Votes = v;
+        }
+
+        public Result(IResult r)
+            : this(r.Candidate, r.Votes + 1)
+        {
+            /* This space intentionally left blank */
+        }
+
+        public ICandidate Candidate { get; private set; }
+
+        public uint Votes { get; private set; }
+    }
+
+    public class RankedBallot : IBallot
+    {
+        /* eliminates any votes for candidates not in (c) from ballot (b) */
+        public RankedBallot(IBallot b, IEnumerable<ICandidate> c)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Cast(IVote vote)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerator<IVote> GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

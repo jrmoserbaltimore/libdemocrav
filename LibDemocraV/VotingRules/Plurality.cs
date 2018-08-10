@@ -12,7 +12,7 @@ namespace DemocraticElections.Voting.VotingRules
 {
     public class Plurality : IRace
     {
-        private List<PluralityResult> results = new List<PluralityResult>();
+        private Dictionary<ICandidate, PluralityResult> results = new Dictionary<ICandidate, PluralityResult>();
         private class PluralityResult : IResult
         {
             public ICandidate Candidate { get; private set; }
@@ -40,7 +40,7 @@ namespace DemocraticElections.Voting.VotingRules
         {
             foreach (ICandidate c in candidates)
             {
-                results.Add(new PluralityResult(c));
+                results[c] = new PluralityResult(c);
             }
         }
 
@@ -48,19 +48,26 @@ namespace DemocraticElections.Voting.VotingRules
         {
             foreach (IResult r in results)
             {
-                this.results.Add(new PluralityResult(r));
+                this.results[r.Candidate] = new PluralityResult(r);
             }
         }
 
         public void Cast(IBallot votes)
         {
-            throw new NotImplementedException();
+            foreach (IVote v in votes)
+            {
+                /* First-ranked vote  on a ranked ballot */
+                if (v.Value == 1)
+                {
+                    results[v.Candidate].AddVote();
+                }
+            }
         }
 
         public IRace Winners()
         {
             List<IResult> c = new List<IResult>();
-            foreach (IResult r in results)
+            foreach (IResult r in results.Values)
             {
                 /* If nothing yet or a tie, add */
                 if (c.Count == 0 || c[0].Votes == r.Votes)
@@ -86,7 +93,7 @@ namespace DemocraticElections.Voting.VotingRules
         IEnumerator<ICandidate> IEnumerable<ICandidate>.GetEnumerator()
         {
             List<ICandidate> c = new List<ICandidate>();
-            foreach (IResult r in results)
+            foreach (IResult r in results.Values)
             {
                 c.Add(r.Candidate);
             }
