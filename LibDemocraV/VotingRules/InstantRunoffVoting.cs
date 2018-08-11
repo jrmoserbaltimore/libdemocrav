@@ -15,13 +15,13 @@ namespace DemocraticElections.Voting.VotingRules
      */
     public class InstantRunoffVoting : IRace
     {
-        private List<ICandidate> candidates = new List<ICandidate>();
+        private List<Candidate> candidates = new List<Candidate>();
         private List<IBallot> ballots = new List<IBallot>();
-        private Dictionary<ICandidate, IResult> results = new Dictionary<ICandidate, IResult>();
+        private Dictionary<Candidate, IResult> results = new Dictionary<Candidate, IResult>();
 
-        public InstantRunoffVoting(IEnumerable<ICandidate> candidates)
+        public InstantRunoffVoting(IEnumerable<Candidate> candidates)
         {
-            foreach (ICandidate c in candidates)
+            foreach (Candidate c in candidates)
             {
                 this.candidates.Add(c);
             }
@@ -31,7 +31,7 @@ namespace DemocraticElections.Voting.VotingRules
          * This constructor performs one round of elimination.
          */
         private InstantRunoffVoting(IRace race)
-        : this((IEnumerable<ICandidate>)race)
+        : this((IEnumerable<Candidate>)race)
         {
             foreach (IBallot b in (IEnumerable<IBallot>)race) {
                 Cast(b);
@@ -56,9 +56,9 @@ namespace DemocraticElections.Voting.VotingRules
             return results.Values.GetEnumerator();
         }
 
-        IEnumerator<ICandidate> IEnumerable<ICandidate>.GetEnumerator()
+        IEnumerator<Candidate> IEnumerable<Candidate>.GetEnumerator()
         {
-            List<ICandidate> c = new List<ICandidate>();
+            List<Candidate> c = new List<Candidate>();
             foreach (IResult r in results.Values)
             {
                 c.Add(r.Candidate);

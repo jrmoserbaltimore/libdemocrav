@@ -40,7 +40,7 @@ namespace DemocraticElections.Voting.VotingRules
             throw new NotImplementedException();
         }
 
-        IEnumerator<ICandidate> IEnumerable<ICandidate>.GetEnumerator()
+        IEnumerator<Candidate> IEnumerable<Candidate>.GetEnumerator()
         {
             throw new NotImplementedException();
         }

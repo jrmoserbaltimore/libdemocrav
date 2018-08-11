@@ -12,13 +12,13 @@ namespace DemocraticElections.Voting.VotingRules
 {
     public class Plurality : IRace
     {
-        private Dictionary<ICandidate, PluralityResult> results = new Dictionary<ICandidate, PluralityResult>();
+        private Dictionary<Candidate, PluralityResult> results = new Dictionary<Candidate, PluralityResult>();
         private class PluralityResult : IResult
         {
-            public ICandidate Candidate { get; private set; }
+            public Candidate Candidate { get; private set; }
             public uint Votes { get; private set; } = 0;
 
-            public PluralityResult(ICandidate candidate)
+            public PluralityResult(Candidate candidate)
             {
                 Candidate = candidate;
             }
@@ -36,9 +36,9 @@ namespace DemocraticElections.Voting.VotingRules
             }
         }
 
-        public Plurality(IEnumerable<ICandidate> candidates)
+        public Plurality(IEnumerable<Candidate> candidates)
         {
-            foreach (ICandidate c in candidates)
+            foreach (Candidate c in candidates)
             {
                 results[c] = new PluralityResult(c);
             }
@@ -93,9 +93,9 @@ namespace DemocraticElections.Voting.VotingRules
             return results.GetEnumerator();
         }
 
-        IEnumerator<ICandidate> IEnumerable<ICandidate>.GetEnumerator()
+        IEnumerator<Candidate> IEnumerable<Candidate>.GetEnumerator()
         {
-            List<ICandidate> c = new List<ICandidate>();
+            List<Candidate> c = new List<Candidate>();
             foreach (IResult r in results.Values)
             {
                 c.Add(r.Candidate);

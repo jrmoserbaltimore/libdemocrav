@@ -19,13 +19,13 @@ namespace DemocraticElections.Voting.Analysis
      */
     public class PairwiseCounts : IBallotSheet
     {
-        private Dictionary<ICandidate, Dictionary<ICandidate, IRace>> pairwiseHash = new Dictionary<ICandidate, Dictionary<ICandidate, IRace>>();
+        private Dictionary<Candidate, Dictionary<Candidate, IRace>> pairwiseHash = new Dictionary<Candidate, Dictionary<Candidate, IRace>>();
         private List<IRace> pairwiseRaces = new List<IRace>();
 
         public PairwiseCounts(IRace race)
         {
-            List<ICandidate> candidates = new List<ICandidate>();
-            foreach (ICandidate c in (IEnumerable<ICandidate>)race)
+            List<Candidate> candidates = new List<Candidate>();
+            foreach (Candidate c in (IEnumerable<Candidate>)race)
             {
                 candidates.Add(c);
             }
@@ -45,7 +45,7 @@ namespace DemocraticElections.Voting.Analysis
                 for (int j = i + 1; j < candidates.Count; j++)
                 {
                     IRace r;
-                    List<ICandidate> c = new List<ICandidate>
+                    List<Candidate> c = new List<Candidate>
                     {
                         candidates[i],
                         candidates[j]
@@ -59,9 +59,9 @@ namespace DemocraticElections.Voting.Analysis
              * each pair of candidates */
             foreach (IBallot b in (IEnumerable<IBallot>)race)
             {
-                List<ICandidate> unranked = new List<ICandidate>(candidates);
-                Dictionary<ICandidate,IVote> rankedHash = new Dictionary<ICandidate,IVote>();
-                List<ICandidate> ranked;
+                List<Candidate> unranked = new List<Candidate>(candidates);
+                Dictionary<Candidate,IVote> rankedHash = new Dictionary<Candidate,IVote>();
+                List<Candidate> ranked;
                 /* Move each candidate from unranked to ranked */
                 foreach (IVote v in b)
                 {
@@ -76,7 +76,7 @@ namespace DemocraticElections.Voting.Analysis
                     for (int j = i+1; j < ranked.Count; j++)
                     {
                         IRace r = pairwiseHash[ranked[i].Candidate][ranked[j].Candidate];
-                        ICandidate c;
+                        Candidate c;
                         if (rankedHash[ranked[i]].Value > rankedHash[ranked[j].Value])
                         {
                             c = ranked[i];
@@ -116,7 +116,7 @@ namespace DemocraticElections.Voting.Analysis
         {
             List<IRace> races = new List<IRace>();
             throw new NotImplementedException();
-            foreach (ICandidate c in (IEnumerable<ICandidate>)pairwiseRaces)
+            foreach (Candidate c in (IEnumerable<Candidate>)pairwiseRaces)
             {
 
             }
