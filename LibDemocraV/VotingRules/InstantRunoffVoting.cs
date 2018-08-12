@@ -16,7 +16,7 @@ namespace DemocraticElections.Voting.VotingRules
     public class InstantRunoffVoting : IRace
     {
         private List<Candidate> candidates = new List<Candidate>();
-        private List<IBallot> ballots = new List<IBallot>();
+        private List<Ballot> ballots = new List<Ballot>();
         private Dictionary<Candidate, IResult> results = new Dictionary<Candidate, IResult>();
 
         public InstantRunoffVoting(IEnumerable<Candidate> candidates)
@@ -33,7 +33,7 @@ namespace DemocraticElections.Voting.VotingRules
         private InstantRunoffVoting(IRace race)
         : this((IEnumerable<Candidate>)race)
         {
-            foreach (IBallot b in (IEnumerable<IBallot>)race) {
+            foreach (Ballot b in (IEnumerable<Ballot>)race) {
                 Cast(b);
             }
             // TODO:  Create a Plurality vote from this to compute loser
@@ -41,10 +41,10 @@ namespace DemocraticElections.Voting.VotingRules
             // TODO:  Re-filter ballots
         }
 
-        public void Cast(IBallot votes)
+        public void Cast(Ballot votes)
         {
             /* Filter the ballot to just the candidates */
-            IBallot b = new RankedBallot(votes, candidates);
+            Ballot b = new RankedBallot(votes, candidates);
             ballots.Add(votes);
         }
 
@@ -66,10 +66,10 @@ namespace DemocraticElections.Voting.VotingRules
             return c.GetEnumerator();
         }
 
-        IEnumerator<IBallot> IEnumerable<IBallot>.GetEnumerator()
+        IEnumerator<Ballot> IEnumerable<Ballot>.GetEnumerator()
         {
             throw new NotImplementedException();
-            //List<IBallot> b = new List<IBallot>();
+            //List<Ballot> b = new List<Ballot>();
             //return b.GetEnumerator();
         }
         IEnumerator IEnumerable.GetEnumerator()

@@ -52,9 +52,9 @@ namespace DemocraticElections.Voting.VotingRules
             }
         }
 
-        public void Cast(IBallot votes)
+        public void Cast(Ballot votes)
         {
-            foreach (IVote v in votes)
+            foreach (Vote v in votes)
             {
                 /* First-ranked vote  on a ranked ballot */
                 if (v.Value == 1)
@@ -103,10 +103,10 @@ namespace DemocraticElections.Voting.VotingRules
             return c.GetEnumerator();
         }
 
-        IEnumerator<IBallot> IEnumerable<IBallot>.GetEnumerator()
+        IEnumerator<Ballot> IEnumerable<Ballot>.GetEnumerator()
         {
             throw new NotImplementedException();
-            //List<IBallot> b = new List<IBallot>();
+            //List<Ballot> b = new List<Ballot>();
             //return b.GetEnumerator();
         }
         IEnumerator IEnumerable.GetEnumerator()

@@ -14,6 +14,11 @@ namespace DemocraticElections.Voting
     {
         protected Guid Id { get; set; }
 
+        public Candidate(Candidate c)
+        {
+            Id = c.Id;
+        }
+
         public virtual bool Equals(Candidate c)
         {
             return (c.Id.Equals(Id));

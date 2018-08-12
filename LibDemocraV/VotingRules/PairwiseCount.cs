@@ -57,13 +57,13 @@ namespace DemocraticElections.Voting.Analysis
             }
             /* For each ballot, cast votes to the Plurality race for
              * each pair of candidates */
-            foreach (IBallot b in (IEnumerable<IBallot>)race)
+            foreach (Ballot b in (IEnumerable<Ballot>)race)
             {
                 List<Candidate> unranked = new List<Candidate>(candidates);
-                Dictionary<Candidate,IVote> rankedHash = new Dictionary<Candidate,IVote>();
+                Dictionary<Candidate,Vote> rankedHash = new Dictionary<Candidate,Vote>();
                 List<Candidate> ranked;
                 /* Move each candidate from unranked to ranked */
-                foreach (IVote v in b)
+                foreach (Vote v in b)
                 {
                     unranked.Remove(v.Candidate);
                     rankedHash[v.Candidate] = v;
@@ -91,23 +91,23 @@ namespace DemocraticElections.Voting.Analysis
                             continue;
                         }
                         /* Cast a plurality vote for the winner */
-                        IVote v = new Vote(c, 1);
-                        IBallot b = new RankedBallot(v);
+                        Vote v = new Vote(c, 1);
+                        Ballot b = new RankedBallot(v);
                         r.Cast(b);
                     }
                     /* Cast against all unranked */
                     for (int j = 0; j < unranked.Count; j++)
                     {
                         IRace r = pairwiseHash[ranked[i].Candidate][unranked[j].Candidate];
-                        IVote v = new Vote(ranked[i].Candidate, 1);
-                        IBallot b = new RankedBallot(v);
+                        Vote v = new Vote(ranked[i].Candidate, 1);
+                        Ballot b = new RankedBallot(v);
                         r.Cast(b);
                     }
                 }
             }
         }
 
-        public void Cast(IBallot votes)
+        public void Cast(Ballot votes)
         {
             throw new NotImplementedException();
         }

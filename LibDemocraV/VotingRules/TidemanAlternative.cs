@@ -23,12 +23,12 @@ namespace DemocraticElections.Voting.VotingRules
      */
     abstract class TidemanAlternative : IRace
     {
-        public void Cast(IBallot ballot)
+        public void Cast(Ballot ballot)
         {
             throw new NotImplementedException();
         }
 
-        public IEnumerator<IBallot> GetEnumerator()
+        public IEnumerator<Ballot> GetEnumerator()
         {
             throw new NotImplementedException();
         }
