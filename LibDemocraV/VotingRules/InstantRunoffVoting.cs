@@ -77,5 +77,16 @@ namespace DemocraticElections.Voting.VotingRules
             throw new NotImplementedException();
         }
     }
+}
+
+namespace DemocraticElections.Voting.Analysis
+{
+    public class EliminatePluralityLoser : IRace
+    {
+        public EliminatePluralityLoser(IRace votes)
+        {
+            // TODO:  Identify vote counts.
+            // TODO:  drop loser from ballots.
+        }
 
 }

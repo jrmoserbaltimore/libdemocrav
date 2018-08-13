@@ -10,6 +10,51 @@ using System.Collections.Generic;
 
 namespace DemocraticElections.Voting.VotingRules
 {
+    /* A plurality ballot */
+    public abstract class PluralityBallot : ApprovalBallot
+    {
+
+        protected int seats;
+
+        public PluralityBallot(Vote vote)
+            : this(vote, 1)
+        {
+
+        }
+
+        /* Multiple seats in a multi-seat race */
+        public PluralityBallot(Vote vote, int seats)
+            : base()
+        {
+            this.seats = seats;
+            Cast(vote);
+        }
+
+
+        public PluralityBallot(PluralityBallot b)
+            : base(b)
+        {
+            this.seats = b.seats;
+            foreach (Vote v in b)
+                Cast(v);
+        }
+
+        /* Insert the vote at the top and delete the last candidate if
+           more votes than seats */
+        public override void Cast(Vote vote)
+        {
+            if (vote.Value >= 1)
+                Votes.Insert(0, new Vote(vote, 1));
+            else
+                for (int i = 0; i < Votes.Count; i++)
+                    if (Votes[i].Candidate.Equals(vote.Candidate))
+                        Votes.RemoveAt(i);
+            /* Trim excess votes */
+            if (Votes.Count > seats)
+                Votes.RemoveRange(seats, Votes.Count - seats);
+        }
+    }
+
     public class Plurality : IRace
     {
         private Dictionary<Candidate, PluralityResult> results = new Dictionary<Candidate, PluralityResult>();

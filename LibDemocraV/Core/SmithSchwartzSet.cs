@@ -7,22 +7,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using DemocraticElections.Voting.Analysis;
 
-namespace DemocraticElections.Voting.VotingRules
+namespace DemocraticElections.Voting.Analysis
 {
-    /* Alternative Race
+    /* Smith and Schwartz Set
      * 
-     * The Tideman Alternative rules will:
-     *  - Accept ranked ballots without equal rankings
-     *  
-     * To compute:
-     * 
-     *  - Filter results to SmithSet or SchwartzSet
-     *  - If more than one result, one round of InstantRunoffVoting
-     *  - Repeat until one result
+     * These classes identify the Smith and Schwartz sets from the pairwise
+     * contests.
      */
-    abstract class TidemanAlternative : IRace
+    public abstract class SmithSchwartzSet : IBallotSheet, IRace
     {
         public void Cast(Ballot ballot)
         {
@@ -50,5 +43,17 @@ namespace DemocraticElections.Voting.VotingRules
         {
             throw new NotImplementedException();
         }
+    }
+
+    /* Exposes candidates and results from the Smith Set */
+    public class SmithSet : SmithSchwartzSet
+    {
+
+    }
+
+    /* Exposes candidates and results from the Schwartz Set */
+    public class SchwartzSet : SmithSchwartzSet
+    {
+
     }
 }
