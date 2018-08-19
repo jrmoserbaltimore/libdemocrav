@@ -33,6 +33,7 @@ namespace DemocraticElections.Voting
             Value = value;
         }
 
+
         public int CompareTo(object obj)
         {
             Vote v = obj as Vote;
@@ -47,34 +48,36 @@ namespace DemocraticElections.Voting
         }
     }
 
-    public abstract class Ballot : IEnumerable<Vote>
+    public abstract class Ballot : ICollection<Vote>
     {
-        public Ballot()
-        {
-        }
+        protected List<Vote> Votes { get; } = new List<Vote>();
+        protected Race Race { get; }
+
+        // Vote collection
+        int ICollection<Vote>.Count => Votes.Count;
+        bool ICollection<Vote>.IsReadOnly => true;
+        void ICollection<Vote>.Add(Vote item) => throw new NotImplementedException();
+        bool ICollection<Vote>.Remove(Vote item) => throw new NotImplementedException();
+        void ICollection<Vote>.Clear() => throw new NotImplementedException();
+        bool ICollection<Vote>.Contains(Vote item) => throw new NotImplementedException();
+        void ICollection<Vote>.CopyTo(Vote[] array, int arrayIndex) => throw new NotImplementedException();
+        IEnumerator<Vote> IEnumerable<Vote>.GetEnumerator() => Votes.GetEnumerator();
+
+        private Ballot() => throw new NotImplementedException();
+
+        public Ballot(Race race) => Race = race;
 
         /* Copy constructor:  iterate each vote and cast it */
-        public Ballot(Ballot b)
+        public Ballot(Ballot ballot)
+            : this(ballot.Race)
         {
-            foreach (Vote v in (IEnumerable<Vote>)b)
-            {
+            foreach (Vote v in ballot)
                 Cast(new Vote(v));
-            }
         }
 
         public abstract void Cast(Vote vote);
 
-        public abstract IEnumerator<Vote> GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator();
-        }
-
-        IEnumerator<Vote> IEnumerable<Vote>.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<Vote>)this).GetEnumerator();
     }
 
     public interface IBallotSheet : IEnumerable<IRace>

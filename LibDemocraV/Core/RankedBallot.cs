@@ -6,6 +6,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DemocraticElections.Voting
 {
@@ -19,41 +20,20 @@ namespace DemocraticElections.Voting
      */
     public class RankedBallot : Ballot
     {
-        //protected Dictionary<Candidate, Vote> Votes { get; set; } = new Dictionary<Candidate, Vote>();
-
-        protected List<Vote> Votes { get; set; } = new List<Vote>();
-
-        /* Copying the Dictionary is not a deep copy, so a RankedBallot
-         * copy constructor isn't useful.
-         */
-        public RankedBallot(Ballot b)
-            : base(b)
-        {
-
-        }
-
-        public RankedBallot()
-            : base()
+        public RankedBallot(Race race)
+            : base(race)
         {
 
         }
 
         public override void Cast(Vote vote)
         {
-            for (int i = 0; i < Votes.Count; i++)
-            {
-                if (Votes[i].Candidate.Equals(vote.Candidate))
-                    Votes.RemoveAt(i);
+            Votes.RemoveAll(x => x.Candidate.Equals(vote.Candidate));
+            foreach (int i in Votes.Select(v => v.Value)) {
+                // TODO:  Compact votes
             }
-
             Votes.Add(new Vote(vote));
             OrderVotes();
-        }
-
-        /* Just hand back all the Vote objects cast.  They're immutable. */
-        public override IEnumerator<Vote> GetEnumerator()
-        {
-            return Votes.GetEnumerator();
         }
 
         protected virtual void OrderVotes()
@@ -88,17 +68,11 @@ namespace DemocraticElections.Voting
     public class RankedNoTies : RankedBallot
     {
 
-        public RankedNoTies()
-            : base()
-        {
-        }
-
-        public RankedNoTies(Ballot b)
-            : base(b)
+        public RankedNoTies(Race race)
+            : base(race)
         {
 
         }
-
         public override void Cast(Vote vote)
         {
             /* If not deleting a vote, sort the List and then open a space
@@ -121,13 +95,9 @@ namespace DemocraticElections.Voting
      */
     public class ApprovalBallot : RankedBallot
     {
-        public ApprovalBallot()
-            : base()
-        {
-        }
 
-        public ApprovalBallot(Ballot b)
-            : base(b)
+        public ApprovalBallot(Race race)
+            : base(race)
         {
 
         }
