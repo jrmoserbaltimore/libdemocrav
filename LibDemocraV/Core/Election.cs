@@ -10,41 +10,25 @@ using System.Collections.Generic;
 
 namespace DemocraticElections.Voting
 {
-    public abstract class Election : ICollection<Race>, ICollection<Voter>
+    public abstract class Election : IEquatable<Election>
     {
-        protected List<Voter> Voters { get; } = new List<Voter>();
-        protected List<Race> Races { get; } = new List<Race>();
+        
+	public IReadOnlyCollection<Voter> Voters => VoterList.AsReadOnly();
+	protected ICollection<Voter> VoterList { get; } = new List<Voter>();
+
+	public IReadOnlyCollection<Race> Races => RaceList.AsReadOnly();
+        protected ICollection<Race> RaceList { get; } = new List<Race>();
 
         protected Guid Id { get; private set; }
 
-        // Voter collection
-        int ICollection<Voter>.Count => Voters.Count;
-        bool ICollection<Voter>.IsReadOnly => true;
-        void ICollection<Voter>.Add(Voter item) => throw new NotImplementedException();
-        bool ICollection<Voter>.Remove(Voter item) => throw new NotImplementedException();
-        void ICollection<Voter>.Clear() => throw new NotImplementedException();
-        bool ICollection<Voter>.Contains(Voter item) => throw new NotImplementedException();
-        void ICollection<Voter>.CopyTo(Voter[] array, int arrayIndex) => throw new NotImplementedException();
-        IEnumerator<Voter> IEnumerable<Voter>.GetEnumerator() => Voters.GetEnumerator();
-
-        // Race collection
-        int ICollection<Race>.Count => Races.Count;
-        bool ICollection<Race>.IsReadOnly => true;
-        void ICollection<Race>.Add(Race item) => throw new NotImplementedException();
-        bool ICollection<Race>.Remove(Race item) => throw new NotImplementedException();
-        void ICollection<Race>.Clear() => throw new NotImplementedException();
-        bool ICollection<Race>.Contains(Race item) => throw new NotImplementedException();
-        void ICollection<Race>.CopyTo(Race[] array, int arrayIndex) => throw new NotImplementedException();
-        IEnumerator<Race> IEnumerable<Race>.GetEnumerator() => Races.GetEnumerator();
-
         // Comparators
         public virtual bool Equals(Election e) => e.Id.Equals(Id);
-        public virtual int GetHashCode(Election e) => e.Id.GetHashCode();
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            throw new NotImplementedException();
+        public virtual bool Equals(Object o) {
+            if (o is Election e)
+                return e.Id.Equals(Id);
+            throw new ArgumentException("O is not an Election object.");
         }
+        public virtual int GetHashCode(Election e) => e.Id.GetHashCode();
 
         // No empty elections
         private Election() => throw new NotImplementedException();
