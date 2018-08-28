@@ -23,11 +23,13 @@ namespace DemocraticElections.Voting
 
         // Comparators
         public virtual bool Equals(Election e) => e.Id.Equals(Id);
+
         public override bool Equals(Object o) {
             if (o is Election e)
                 return e.Id.Equals(Id);
-            throw new ArgumentException("O is not an Election object.");
+            throw new ArgumentException("o is not an Election object.");
         }
+
         public override int GetHashCode() => Id.GetHashCode();
         
         // No empty elections
@@ -59,7 +61,7 @@ namespace DemocraticElections.Voting
         }
 
         // Throw an exception if the voter has already voted.
-        public void Cast(IBallotSheet ballots, Voter voter)
+        public void Cast(BallotSheet ballots, Voter voter)
         {
             if (VoterList.Contains(voter))
                 throw new ArgumentException("Voter has already voted", "voter");

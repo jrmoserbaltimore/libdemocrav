@@ -29,7 +29,7 @@ namespace DemocraticElections.Voting
         public override void Cast(Vote vote)
         {
             Votes.RemoveAll(x => x.Candidate.Equals(vote.Candidate));
-            foreach (int i in Votes.Select(v => v.Value)) {
+            foreach (int i in Votes.Select(v => v.Value).Distinct().OrderBy(value => value)) {
                 // TODO:  Compact votes
             }
             Votes.Add(new Vote(vote));

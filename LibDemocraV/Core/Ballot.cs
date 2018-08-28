@@ -48,41 +48,30 @@ namespace DemocraticElections.Voting
         }
     }
 
-    public abstract class Ballot : ICollection<Vote>
+    public abstract class Ballot : IReadOnlyCollection<Vote>, ICloneable
     {
+        public Race Race { get; }
         protected List<Vote> Votes { get; } = new List<Vote>();
-        protected Race Race { get; }
 
         // Vote collection
-        int ICollection<Vote>.Count => Votes.Count;
-        bool ICollection<Vote>.IsReadOnly => true;
-        void ICollection<Vote>.Add(Vote item) => throw new NotImplementedException();
-        bool ICollection<Vote>.Remove(Vote item) => throw new NotImplementedException();
-        void ICollection<Vote>.Clear() => throw new NotImplementedException();
-        bool ICollection<Vote>.Contains(Vote item) => throw new NotImplementedException();
-        void ICollection<Vote>.CopyTo(Vote[] array, int arrayIndex) => throw new NotImplementedException();
+        int IReadOnlyCollection<Vote>.Count => Votes.Count;
         IEnumerator<Vote> IEnumerable<Vote>.GetEnumerator() => Votes.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<Vote>)this).GetEnumerator();
 
         private Ballot() => throw new NotImplementedException();
 
         public Ballot(Race race) => Race = race;
 
         /* Copy constructor:  iterate each vote and cast it */
-        public Ballot(Ballot ballot)
-            : this(ballot.Race)
+        protected Ballot(Ballot ballot)
         {
             foreach (Vote v in ballot)
-                Cast(new Vote(v));
+                Cast(v.Clone());
         }
 
         public abstract void Cast(Vote vote);
 
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<Vote>)this).GetEnumerator();
-    }
-
-    public interface IBallotSheet : IEnumerable<IRace>
-    {
-        void Cast(Ballot votes);
+        public abstract object Clone();
     }
 
     /* Decorator to limit the ballot to specific candidates.

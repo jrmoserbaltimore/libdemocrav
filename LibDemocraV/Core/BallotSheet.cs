@@ -6,31 +6,39 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DemocraticElections.Voting.Factories;
 
 namespace DemocraticElections.Voting
 {
-    
-    public class BallotSheet : ICollection<Ballot>
+    public class BallotSheet : IReadOnlyCollection<Ballot>, ICloneable
     {
         protected List<Ballot> Ballots { get; } = new List<Ballot>();
 
         // Ballot collection
-        int ICollection<Ballot>.Count => Ballots.Count;
-        bool ICollection<Ballot>.IsReadOnly => true;
-        void ICollection<Ballot>.Add(Ballot item) => throw new NotImplementedException();
-        bool ICollection<Ballot>.Remove(Ballot item) => throw new NotImplementedException();
-        void ICollection<Ballot>.Clear() => throw new NotImplementedException();
-        bool ICollection<Ballot>.Contains(Ballot item) => throw new NotImplementedException();
-        void ICollection<Ballot>.CopyTo(Ballot[] array, int arrayIndex) => throw new NotImplementedException();
+        int IReadOnlyCollection<Ballot>.Count => Ballots.Count;
         // Shallow copy
-        IEnumerator<Ballot> IEnumerable<Ballot>.GetEnumerator() => new List<Ballot>(Ballots).GetEnumerator();
+        IEnumerator<Ballot> IEnumerable<Ballot>.GetEnumerator()
+        {
+            List<Ballot> ballots = new List<Ballot>();
+            foreach (Ballot b in Ballots)
+                ballots.Add((Ballot)b.Clone());
+            return ballots.GetEnumerator();
+        } 
 
-        IEnumerator IEnumerable.GetEnumerator() => ((ICollection<Ballot>)this).GetEnumerator();
-        
+        IEnumerator IEnumerable.GetEnumerator() => ((IReadOnlyCollection<Ballot>)this).GetEnumerator();
+
+        public object Clone()
+        {
+            throw new NotImplementedException();
+        }
+
         public BallotSheet(IEnumerable<Race> races)
         {
             foreach (Race r in races)
-                Ballots.Add(new Ballot(r));
+            {
+                AbstractBallotFactory bf = AbstractBallotFactory.GetFactory(r);
+                Ballots.Add(bf.CreateBallot());
+            }
         }
     }
 }
