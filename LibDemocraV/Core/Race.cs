@@ -33,7 +33,7 @@ namespace DemocraticElections.Voting
             /* This space intentionally left blank */
         }
     }
-
+    // FIXME:  Race and Results should be different things.
     public interface IRace : IEnumerable<Ballot>, IEnumerable<IResult>, IEnumerable<Candidate>
     {
         void Cast(Ballot ballot);
@@ -43,8 +43,10 @@ namespace DemocraticElections.Voting
         IRace NextRound { get; }
     }
 
-    public abstract class Race : IEnumerable<Ballot>, IEnumerable<IResult>, IEnumerable<Candidate>
+    public abstract class Race
     {
-
+        abstract Race Results { get; }
+        abstract void Cast(Ballot ballot);
+        
     }
 }

@@ -22,8 +22,9 @@ namespace DemocraticElections.Voting.VotingRules
      *  - If more than one result, one round of InstantRunoffVoting
      *  - Repeat until one result
      */
-    abstract class TidemanAlternative : IRace
+    abstract class TidemanAlternative : Race
     {
+
         public void Cast(Ballot ballot)
         {
             throw new NotImplementedException();
@@ -34,21 +35,7 @@ namespace DemocraticElections.Voting.VotingRules
             throw new NotImplementedException();
         }
 
-        public IRace Results => throw new NotImplementedException();
+        public Race Results => throw new NotImplementedException();
 
-        IEnumerator<IResult> IEnumerable<IResult>.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
-        IEnumerator<Candidate> IEnumerable<Candidate>.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
     }
 }
