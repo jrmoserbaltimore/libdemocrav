@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2042
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibDemocraV", "LibDemocraV\LibDemocraV.csproj", "{DC5C3A9E-E24D-46BD-A045-E4436A43AB6E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DC5C3A9E-E24D-46BD-A045-E4436A43AB6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC5C3A9E-E24D-46BD-A045-E4436A43AB6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC5C3A9E-E24D-46BD-A045-E4436A43AB6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC5C3A9E-E24D-46BD-A045-E4436A43AB6E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4E99287A-4CE9-4647-96B8-ABF0B8B504EA}
+	EndGlobalSection
+EndGlobal

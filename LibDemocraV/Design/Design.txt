@@ -1,0 +1,15 @@
+﻿Storage
+=======
+
+The storage backends will provide factories to create objects such as
+ballots, elections, and so forth.  These objects can save and recall
+from backend.
+
+The backends will also provide classes to dig under the hood.  This
+abstracts away identification.  For example:  the ICandidate
+interface does not provide a unique identifier; the class
+implementing ICandidate handles that.  When exporting from a storage
+backend, such as to transfer ballots through a file, the application
+will call on the storage backend to provide a unique identifier for
+the class implementing ICandidate.
+
