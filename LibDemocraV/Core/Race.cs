@@ -1,5 +1,5 @@
 ﻿//
-// Copyright (c) Secure Democratic Election Services, LLC. All rights reserved.  
+// Copyright (c) Moonset Technology Holdings, LLC. All rights reserved.  
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.  
 //
 
@@ -8,45 +8,75 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace DemocraticElections.Voting
+namespace MoonsetTechnologies.Voting
 {
-    public interface IResult
+    /// <summary>
+    /// Results of a Race.
+    /// </summary>
+    public abstract class Result
     {
-        Candidate Candidate { get; }
-        int Votes { get; }
+        /// <summary>
+        /// The set of winners in this Race.
+        /// </summary>
+        public IReadOnlyCollection<Candidate> Winners => WinnerList.AsReadOnly();
+
+        /// <summary>
+        /// The internal list provided by Winners.
+        /// </summary>
+        protected List<Candidate> WinnerList { get; } = new List<Candidate>();
+
+        /// <summary>
+        /// Returns the ballots which ultimately went to this Candidate.
+        /// </summary>
+        /// <param name="candidate">The Candidate to whom the ballots went.</param>
+        /// <returns></returns>
+        public abstract IReadOnlyCollection<Ballot> GetBallots(Candidate candidate);
     }
 
-    public class Result : IResult
+    /// <summary>
+    /// A class representing a race in an election.
+    /// </summary>
+    public abstract class Race : IEquatable<Race>
     {
-        public Candidate Candidate { get; private set; }
+        /// <summary>
+        /// Unique identifier for this Race.
+        /// </summary>
+        public Guid Id { get; }
 
-        public int Votes { get; private set; }
-        public Result(Candidate c, int v)
-        {
-            Candidate = c;
-            Votes = v;
-        }
+        /// <summary>
+        /// The ballots cast in this Race.
+        /// </summary>
+        public IReadOnlyCollection<Ballot> Ballots => BallotList.AsReadOnly();
 
-        public Result(IResult r)
-            : this(r.Candidate, r.Votes + 1)
-        {
-            /* This space intentionally left blank */
-        }
-    }
-    // FIXME:  Race and Results should be different things.
-    public interface IRace : IEnumerable<Ballot>, IEnumerable<IResult>, IEnumerable<Candidate>
-    {
-        void Cast(Ballot ballot);
-        /* Returns an IRace which enumerates IResult objects for winners only*/
-        IRace Results { get; }
-        /* Compute one round of eliminations or such */
-        IRace NextRound { get; }
-    }
+        /// <summary>
+        /// The ballots cast in this race, available to derived types.
+        /// </summary>
+        protected List<Ballot> BallotList { get; } = new List<Ballot>();
 
-    public abstract class Race
-    {
-        abstract Race Results { get; }
-        abstract void Cast(Ballot ballot);
-        
+        /// <summary>
+        /// Candidates in this Race.
+        /// </summary>
+        public IReadOnlyCollection<Candidate> Candidates { get; }
+
+        /// <summary>
+        /// Cast a ballot in this Race.
+        /// </summary>
+        /// <param name="ballot"></param>
+        public abstract void Cast(Ballot ballot);
+
+        /// <summary>
+        /// Computes the results and returns a collection thereof.
+        /// </summary>
+        /// <returns></returns>
+        public abstract Result GetResults();
+
+        /// <summary>
+        /// Determines whether the current Race object refers to the
+        /// same race as the other Race object.
+        /// </summary>
+        /// <param name="other">The object to compare with the current
+        /// object.</param>
+        /// <returns></returns>
+        public virtual bool Equals(Race other) => Id.Equals(other.Id);
     }
 }
