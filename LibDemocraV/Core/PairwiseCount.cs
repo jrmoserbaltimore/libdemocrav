@@ -1,5 +1,5 @@
 ﻿//
-// Copyright (c) Secure Democratic Election Services, LLC. All rights reserved.  
+// Copyright (c) Moonset Technology Holdings, LLC. All rights reserved.  
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.  
 //
 
@@ -7,9 +7,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using DemocraticElections.Voting.VotingRules;
+using MoonsetTechnologies.Voting.VotingRules;
 
-namespace DemocraticElections.Voting.Analysis
+namespace MoonsetTechnologies.Voting.Analysis
 {
     /* PairwiseCounts
      * Create a ballot sheet of pairwise races between candidates.

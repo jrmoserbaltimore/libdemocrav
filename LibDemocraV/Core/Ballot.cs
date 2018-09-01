@@ -1,5 +1,5 @@
 ﻿//
-// Copyright (c) Secure Democratic Election Services, LLC. All rights reserved.  
+// Copyright (c) Moonset Technology Holdings, LLC. All rights reserved.  
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.  
 //
 
@@ -7,7 +7,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace DemocraticElections.Voting
+namespace MoonsetTechnologies.Voting
 {
     /* Vote to Cast.  Immutable object. */
     public class Vote : IComparable

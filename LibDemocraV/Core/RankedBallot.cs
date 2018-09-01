@@ -1,5 +1,5 @@
 ﻿//
-// Copyright (c) Secure Democratic Election Services, LLC. All rights reserved.  
+// Copyright (c) Moonset Technology Holdings, LLC. All rights reserved.  
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.  
 //
 
@@ -8,7 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DemocraticElections.Voting
+namespace MoonsetTechnologies.Voting
 {
     /* A ranked ballot.  Sequential rankings and ties.
      * 
