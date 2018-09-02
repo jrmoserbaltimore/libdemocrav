@@ -61,7 +61,7 @@ namespace MoonsetTechnologies.Voting
         }
 
         // Throw an exception if the voter has already voted.
-        public void Cast(BallotSheet ballots, Voter voter)
+        public void Cast(ReadOnlyBallotSheet ballots, Voter voter)
         {
             if (VoterList.Contains(voter))
                 throw new ArgumentException("Voter has already voted", "voter");

@@ -54,16 +54,21 @@ namespace MoonsetTechnologies.Voting
     }
 
     /// <summary>
-    /// 
+    /// Ballot which allows the casting of votes.
     /// </summary>
     public class Ballot : ReadOnlyBallot
     {
-        public void Cast(Vote vote)
+        /// <summary>
+        /// Cast a vote.
+        /// </summary>
+        /// <param name="vote">The vote to cast.</param>
+        public virtual void Cast(Vote vote)
         {
             if (!Race.Candidates.Contains(vote.Candidate))
                 throw new ArgumentException("Vote is for a candidate not in the race.");
-            // TODO:  Remove any existing vote for candidate
-            // TODO:  If vote.Value > 0, record vote for candidate.
+            Votes.RemoveAll(v => v.Candidate == vote.Candidate);
+            if (vote.Value > 0)
+                Votes.Add(vote);
         }
     }
 }
