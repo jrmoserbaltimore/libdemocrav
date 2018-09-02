@@ -14,7 +14,7 @@ namespace MoonsetTechnologies.Voting
     /// A Vote object.  Allows placing a value on a vote.
     /// Immutable.
     /// </summary>
-    public class Vote : IComparable
+    public class Vote : IComparable<Vote>, IEquatable<Vote>
     {
         public Candidate Candidate { get; }
         public int Value { get; }
@@ -25,17 +25,47 @@ namespace MoonsetTechnologies.Voting
             Value = value;
         }
 
+        public virtual bool Equals(Vote v)
+        {
+            if (v is null)
+                return false;
+            else if (ReferenceEquals(this, v))
+                return true;
+            return Candidate.Equals(v.Candidate) && Value.Equals(v.Value);
+        }
+
+        public override bool Equals(object obj) => Equals(obj as Vote);
+
+        public static bool operator ==(Vote lhs, Vote rhs)
+        {
+            if (lhs is null && rhs is null)
+                return true;
+            else if (lhs is null)
+                return false;
+            else
+                return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(Vote lhs, Vote rhs) => !(lhs == rhs);
+        /// <summary>
+        /// Compares two votes to determine which has a higher Value,
+        /// but not a stronger ordinal rank.
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public int CompareTo(Vote other)
+        {
+            if (other is null)
+                return 1;
+            return Value.CompareTo(other.Value);
+        }
+
         public int CompareTo(object obj)
         {
             Vote v = obj as Vote;
-
-            if (obj == null)
-                return 1;
-
-            if (v != null)
-                return this.Value.CompareTo(v.Value);
-            else
+            if (!(obj is null) && (obj as Vote is null))
                 throw new ArgumentException("Object is not a Vote");
+            return CompareTo(obj as Vote);
         }
     }
 

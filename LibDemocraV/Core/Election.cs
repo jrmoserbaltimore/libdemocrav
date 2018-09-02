@@ -12,7 +12,6 @@ namespace MoonsetTechnologies.Voting
 {
     public abstract class Election : IEquatable<Election>
     {
-        
         public IReadOnlyCollection<Voter> Voters => VoterList.AsReadOnly();
         protected List<Voter> VoterList { get; } = new List<Voter>();
 
@@ -21,17 +20,31 @@ namespace MoonsetTechnologies.Voting
 
         protected Guid Id { get; private set; }
 
-        // Comparators
-        public virtual bool Equals(Election e) => e.Id.Equals(Id);
-
-        public override bool Equals(Object o) {
-            if (o is Election e)
-                return e.Id.Equals(Id);
-            throw new ArgumentException("o is not an Election object.");
+        public virtual bool Equals(Election e)
+        {
+            if (e is null)
+                return false;
+            else if (ReferenceEquals(this, e))
+                return true;
+            return Id.Equals(e.Id);
         }
+
+        public override bool Equals(Object obj) => Equals(obj as Election);
 
         public override int GetHashCode() => Id.GetHashCode();
         
+        public static bool operator ==(Election lhs, Election rhs)
+        {
+            if (lhs is null && rhs is null)
+                return true;
+            else if (lhs is null)
+                return false;
+            else
+                return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(Election lhs, Election rhs) => !(lhs == rhs);
+
         // No empty elections
         private Election() => throw new NotImplementedException();
 
