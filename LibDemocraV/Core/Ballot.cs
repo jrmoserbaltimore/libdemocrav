@@ -40,7 +40,7 @@ namespace MoonsetTechnologies.Voting
     }
 
     /// <summary>
-    /// The basic ReadOnlyBallot for iterating through votes.  Immutable.
+    /// The basic ReadOnlyBallot for iterating through votes.  Read-only.
     /// </summary>
     public abstract class ReadOnlyBallot : IReadOnlyCollection<Vote>
     {

@@ -45,7 +45,7 @@ namespace MoonsetTechnologies.Voting
         public override void Cast(Vote vote)
         {
             // Do nothing if vote already in vote list
-            if (Votes.Contains(vote))
+            if (Votes.Contains<Vote>(vote))
                 return;
             if (!Ties)
             {
@@ -53,7 +53,7 @@ namespace MoonsetTechnologies.Voting
                 return;
             }
             Remove(vote.Candidate);
-            OrderVotes();
+            CloseRankingGaps();
             if (vote.Value > 0)
                 Votes.Add(vote);
         }
@@ -66,7 +66,7 @@ namespace MoonsetTechnologies.Voting
         public virtual void Insert(Vote vote)
         {
             Remove(vote.Candidate);
-            OrderVotes();
+            CloseRankingGaps();
             // Move down all votes with Value >= vote.Value.
             if (vote.Value > 0)
             {
@@ -79,53 +79,35 @@ namespace MoonsetTechnologies.Voting
             }
         }
 
-        protected virtual void OrderVotes()
+        /// <summary>
+        /// Ensures rankings start at 1 and there are no skipped ranks.
+        /// </summary>
+        protected virtual void CloseRankingGaps()
         {
-            int priorValue = 1;
+            Dictionary<int, List<int>> voteMap = new Dictionary<int, List<int>>();
 
-            Votes.Sort();
-            /* One vote, always rank 1 */
-            if (Votes.Count >= 1 && Votes[0].Value != 1)
+            // Value x is at Votes indexes given by voteMap[x]
+            for (int i = 0; i < Votes.Count; i++)
             {
-                priorValue = Votes[0].Value;
-                Votes[0] = new Vote(Votes[0].Candidate, 1);
+                int rank = Votes[i].Value;
+                if (!voteMap.ContainsKey(rank))
+                    voteMap[rank] = new List<int>();
+                voteMap[rank].Add(i);
             }
-            /* Start at second vote and close gaps */
-            for (int i = 1; i < Votes.Count; i++)
+
+            int[] ranks = voteMap.Keys.ToArray();
+            Array.Sort(ranks);
+
+            // Close all gaps in rankings
+            for (int i = 0; i < ranks.Length; i++)
             {
-                int newValue = Votes[i].Value;
-                /* If was tied with previous value, set to previous value's current value */
-                if (Votes[i].Value == priorValue)
-                    Votes[i] = new Vote(Votes[i].Candidate, Votes[i - 1].Value);
-                /* Else move up if not strictly sequential */
-                else if (Votes[i].Value > Votes[i - 1].Value + 1)
-                    Votes[i] = new Vote(Votes[i].Candidate, Votes[i - 1].Value);
-                priorValue = newValue;
+                for (int j = 0; j < voteMap[i].Count; j++)
+                {
+                    int n = voteMap[i][j];
+                    if (Votes[n].Value != i + 1)
+                        Votes[n] = new Vote(Votes[n].Candidate, i + 1);
+                }
             }
-        }
-    }
-
-    /* 
-     * An Approval ballot.
-     */
-    public class ApprovalBallot : RankedBallot
-    {
-
-        public ApprovalBallot(Race race)
-            : base(race)
-        {
-
-        }
-
-        /* Casts the vote with a rank of 0 or 1 */
-        public override void Cast(Vote vote)
-        {
-            int value = 0;
-
-            if (vote.Value > 1)
-                value = 1;
-
-            base.Cast(new Vote(vote, value));
         }
     }
 }
