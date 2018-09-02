@@ -25,6 +25,28 @@ namespace MoonsetTechnologies.Voting
             Value = value;
         }
 
+        /// <summary>
+        /// Returns the higher-ranked Vote, with a lower Vote.Value indicating
+        /// a higher rank, or null if both are of equal rank.
+        /// </summary>
+        /// <param name="first">A Vote to compare.  Must not be null.</param>
+        /// <param name="second">A Vote to compare.  Must not be null.</param>
+        /// <returns></returns>
+        public static Vote GetHigherRanked(Vote first, Vote second)
+        {
+            if (first is null)
+                throw new ArgumentNullException("first", "Attempt to compare ranks of a null Vote object.");
+            if (second is null)
+                throw new ArgumentNullException("second", "Attempt to compare ranks of a null Vote object.");
+            if (first.CompareTo(second) == 0)
+                return null;
+            if (first > second)
+                return second;
+            if (first < second)
+                return first;
+            throw new NotImplementedException("Somehow reached unreachable code path.");
+        }
+
         public virtual bool Equals(Vote v)
         {
             if (v is null)
@@ -36,17 +58,6 @@ namespace MoonsetTechnologies.Voting
 
         public override bool Equals(object obj) => Equals(obj as Vote);
 
-        public static bool operator ==(Vote lhs, Vote rhs)
-        {
-            if (lhs is null && rhs is null)
-                return true;
-            else if (lhs is null)
-                return false;
-            else
-                return lhs.Equals(rhs);
-        }
-
-        public static bool operator !=(Vote lhs, Vote rhs) => !(lhs == rhs);
         /// <summary>
         /// Compares two votes to determine which has a higher Value,
         /// but not a stronger ordinal rank.
@@ -67,6 +78,23 @@ namespace MoonsetTechnologies.Voting
                 throw new ArgumentException("Object is not a Vote");
             return CompareTo(obj as Vote);
         }
+
+        public static bool operator >(Vote lhs, Vote rhs) => lhs.CompareTo(rhs) > 0;
+        public static bool operator <(Vote lhs, Vote rhs) => lhs.CompareTo(rhs) < 0;
+        public static bool operator >=(Vote lhs, Vote rhs) => lhs.CompareTo(rhs) >= 0;
+        public static bool operator <=(Vote lhs, Vote rhs) => lhs.CompareTo(rhs) <= 0;
+
+        public static bool operator ==(Vote lhs, Vote rhs)
+        {
+            if (lhs is null && rhs is null)
+                return true;
+            else if (lhs is null)
+                return false;
+            else
+                return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(Vote lhs, Vote rhs) => !(lhs == rhs);
     }
 
     /// <summary>
