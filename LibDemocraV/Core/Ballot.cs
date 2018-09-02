@@ -40,7 +40,7 @@ namespace MoonsetTechnologies.Voting
     }
 
     /// <summary>
-    /// The basic ReadOnlyBallot for iterating through votes.  Immutable.
+    /// The basic ReadOnlyBallot for iterating through votes.  Read-only.
     /// </summary>
     public abstract class ReadOnlyBallot : IReadOnlyCollection<Vote>
     {
@@ -51,12 +51,21 @@ namespace MoonsetTechnologies.Voting
         int IReadOnlyCollection<Vote>.Count => Votes.Count;
         IEnumerator<Vote> IEnumerable<Vote>.GetEnumerator() => Votes.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<Vote>)this).GetEnumerator();
+
+        /// <summary>
+        /// Create a ballot with a Race and no votes.
+        /// </summary>
+        /// <param name="race">The Race this ballot represents.</param>
+        protected ReadOnlyBallot(Race race)
+        {
+            Race = race;
+        }
     }
 
     /// <summary>
     /// Ballot which allows the casting of votes.
     /// </summary>
-    public class Ballot : ReadOnlyBallot
+    public abstract class Ballot : ReadOnlyBallot
     {
         /// <summary>
         /// Cast a vote.
@@ -69,6 +78,23 @@ namespace MoonsetTechnologies.Voting
             Votes.RemoveAll(v => v.Candidate == vote.Candidate);
             if (vote.Value > 0)
                 Votes.Add(vote);
+        }
+
+        /// <summary>
+        /// Remove the votes cast for a candidate, if any.
+        /// </summary>
+        /// <param name="candidate">Candidate whose votes to remove.</param>
+        protected virtual void Remove(Candidate candidate) =>
+            Votes.RemoveAll(v => v.Candidate == candidate);
+
+        /// <summary>
+        /// Create a ballot with a Race and no votes.
+        /// </summary>
+        /// <param name="race">The Race this ballot represents.</param>
+        protected Ballot(Race race)
+            : base(race)
+        {
+
         }
     }
 }
