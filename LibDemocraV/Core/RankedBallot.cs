@@ -10,30 +10,73 @@ using System.Linq;
 
 namespace MoonsetTechnologies.Voting
 {
-    /* A ranked ballot.  Sequential rankings and ties.
-     * 
-     * This ballot is suitable for InstantRunoffApprovalVoting, which
-     * simplifies to Instant Run-off Voting with no ties, Approval voting
-     * with only first-ranked candidates, and Plurality with no ties and
-     * only one first-ranked candidate.  Multi-seat plurality can also
-     * use such a ballot.
-     */
-    public class RankedBallot : ReadOnlyBallot
+    /// <summary>
+    /// A ranked ballot.  Sequential rankings and ties.
+    /// 
+    /// This ballot is suitable for InstantRunoffApprovalVoting, which
+    /// simplifies to Instant Run-off Voting with no ties, Approval voting
+    /// with only first-ranked candidates, and Plurality with no ties and
+    /// only one first-ranked candidate.  Multi-seat plurality can also
+    /// use such a ballot.
+    /// </summary>
+    public class RankedBallot : Ballot
     {
+        /// <summary>
+        /// Whether or not tied ranks are allowed.
+        /// </summary>
+        protected bool Ties { get; }
+
         public RankedBallot(Race race)
-            : base(race)
+            : this(race, true)
         {
 
         }
 
+        public RankedBallot(Race race, bool ties)
+            : base(race)
+        {
+            Ties = ties;
+        }
+
+        /// <summary>
+        /// Cast with ties, if allowed, otherwise Insert().
+        /// </summary>
+        /// <param name="vote">The vote to cast.</param>
         public override void Cast(Vote vote)
         {
-            Votes.RemoveAll(x => x.Candidate.Equals(vote.Candidate));
-            foreach (int i in Votes.Select(v => v.Value).Distinct().OrderBy(value => value)) {
-                // TODO:  Compact votes
+            // Do nothing if vote already in vote list
+            if (Votes.Contains(vote))
+                return;
+            if (!Ties)
+            {
+                Insert(vote);
+                return;
             }
-            Votes.Add(new Vote(vote));
+            Remove(vote.Candidate);
             OrderVotes();
+            if (vote.Value > 0)
+                Votes.Add(vote);
+        }
+
+        /// <summary>
+        /// Inserts a vote by moving all votes of the cast rank or
+        /// below down a rank and adding the vote.
+        /// </summary>
+        /// <param name="vote">The vote to cast.</param>
+        public virtual void Insert(Vote vote)
+        {
+            Remove(vote.Candidate);
+            OrderVotes();
+            // Move down all votes with Value >= vote.Value.
+            if (vote.Value > 0)
+            {
+                for (int i = 0; i < Votes.Count; i++)
+                {
+                    if (Votes[i].Value >= vote.Value)
+                        Votes[i] = new Vote(Votes[i].Candidate, Votes[i].Value + 1);
+                }
+                Votes.Add(vote);
+            }
         }
 
         protected virtual void OrderVotes()
@@ -45,7 +88,7 @@ namespace MoonsetTechnologies.Voting
             if (Votes.Count >= 1 && Votes[0].Value != 1)
             {
                 priorValue = Votes[0].Value;
-                Votes[0] = new Vote(Votes[0], 1);
+                Votes[0] = new Vote(Votes[0].Candidate, 1);
             }
             /* Start at second vote and close gaps */
             for (int i = 1; i < Votes.Count; i++)
@@ -53,40 +96,12 @@ namespace MoonsetTechnologies.Voting
                 int newValue = Votes[i].Value;
                 /* If was tied with previous value, set to previous value's current value */
                 if (Votes[i].Value == priorValue)
-                    Votes[i] = new Vote(Votes[i], Votes[i - 1].Value);
+                    Votes[i] = new Vote(Votes[i].Candidate, Votes[i - 1].Value);
                 /* Else move up if not strictly sequential */
                 else if (Votes[i].Value > Votes[i - 1].Value + 1)
-                    Votes[i] = new Vote(Votes[i], Votes[i - 1].Value);
+                    Votes[i] = new Vote(Votes[i].Candidate, Votes[i - 1].Value);
                 priorValue = newValue;
             }
-        }
-    }
-
-    /* 
-     * A Ranked Ballot that prohibits ties.
-     */
-    public class RankedNoTies : RankedBallot
-    {
-
-        public RankedNoTies(Race race)
-            : base(race)
-        {
-
-        }
-        public override void Cast(Vote vote)
-        {
-            /* If not deleting a vote, sort the List and then open a space
-               to accept the vote being cast. */
-            if (vote.Value > 0)
-            {
-                Votes.Sort();
-                /* Add 1 to all vote values ahead of insertion point */
-                for (int i = vote.Value - 1; i < Votes.Count; i++)
-                    Votes[i] = new Vote(Votes[i], Votes[i].Value + 1);
-            }
-
-            /* Cast the vote, which will also sort and compact the list */
-            base.Cast(vote);
         }
     }
 
