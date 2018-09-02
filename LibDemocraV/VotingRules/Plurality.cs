@@ -97,7 +97,7 @@ namespace MoonsetTechnologies.Voting.VotingRules
             }
         }
 
-        public void Cast(Ballot votes)
+        public void Cast(ReadOnlyBallot votes)
         {
             foreach (Vote v in votes)
             {
@@ -148,7 +148,7 @@ namespace MoonsetTechnologies.Voting.VotingRules
             return c.GetEnumerator();
         }
 
-        IEnumerator<Ballot> IEnumerable<Ballot>.GetEnumerator()
+        IEnumerator<ReadOnlyBallot> IEnumerable<ReadOnlyBallot>.GetEnumerator()
         {
             throw new NotImplementedException();
             //List<Ballot> b = new List<Ballot>();

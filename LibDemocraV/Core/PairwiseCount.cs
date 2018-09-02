@@ -57,7 +57,7 @@ namespace MoonsetTechnologies.Voting.Analysis
             }
             /* For each ballot, cast votes to the Plurality race for
              * each pair of candidates */
-            foreach (Ballot b in (IEnumerable<Ballot>)race)
+            foreach (ReadOnlyBallot b in (IEnumerable<ReadOnlyBallot>)race)
             {
                 List<Candidate> unranked = new List<Candidate>(candidates);
                 Dictionary<Candidate,Vote> rankedHash = new Dictionary<Candidate,Vote>();
@@ -92,7 +92,7 @@ namespace MoonsetTechnologies.Voting.Analysis
                         }
                         /* Cast a plurality vote for the winner */
                         Vote v = new Vote(c, 1);
-                        Ballot b = new RankedBallot(v);
+                        ReadOnlyBallot b = new RankedBallot(v);
                         r.Cast(b);
                     }
                     /* Cast against all unranked */
@@ -100,14 +100,14 @@ namespace MoonsetTechnologies.Voting.Analysis
                     {
                         IRace r = pairwiseHash[ranked[i].Candidate][unranked[j].Candidate];
                         Vote v = new Vote(ranked[i].Candidate, 1);
-                        Ballot b = new RankedBallot(v);
+                        ReadOnlyBallot b = new RankedBallot(v);
                         r.Cast(b);
                     }
                 }
             }
         }
 
-        public void Cast(Ballot votes)
+        public void Cast(ReadOnlyBallot votes)
         {
             throw new NotImplementedException();
         }

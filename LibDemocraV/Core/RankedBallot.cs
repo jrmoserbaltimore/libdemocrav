@@ -18,7 +18,7 @@ namespace MoonsetTechnologies.Voting
      * only one first-ranked candidate.  Multi-seat plurality can also
      * use such a ballot.
      */
-    public class RankedBallot : Ballot
+    public class RankedBallot : ReadOnlyBallot
     {
         public RankedBallot(Race race)
             : base(race)

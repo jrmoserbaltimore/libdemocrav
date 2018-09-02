@@ -16,7 +16,7 @@ namespace MoonsetTechnologies.Voting.VotingRules
     public class InstantRunoffVoting : IRace
     {
         private List<Candidate> candidates = new List<Candidate>();
-        private List<Ballot> ballots = new List<Ballot>();
+        private List<ReadOnlyBallot> ballots = new List<ReadOnlyBallot>();
         private Dictionary<Candidate, IResult> results = new Dictionary<Candidate, IResult>();
 
         public InstantRunoffVoting(IEnumerable<Candidate> candidates)
@@ -33,7 +33,7 @@ namespace MoonsetTechnologies.Voting.VotingRules
         private InstantRunoffVoting(IRace race)
         : this((IEnumerable<Candidate>)race)
         {
-            foreach (Ballot b in (IEnumerable<Ballot>)race) {
+            foreach (ReadOnlyBallot b in (IEnumerable<ReadOnlyBallot>)race) {
                 Cast(b);
             }
             // TODO:  Create a Plurality vote from this to compute loser
@@ -41,10 +41,10 @@ namespace MoonsetTechnologies.Voting.VotingRules
             // TODO:  Re-filter ballots
         }
 
-        public void Cast(Ballot votes)
+        public void Cast(ReadOnlyBallot votes)
         {
             /* Filter the ballot to just the candidates */
-            Ballot b = new RankedBallot(votes, candidates);
+            ReadOnlyBallot b = new RankedBallot(votes, candidates);
             ballots.Add(votes);
         }
 
@@ -66,7 +66,7 @@ namespace MoonsetTechnologies.Voting.VotingRules
             return c.GetEnumerator();
         }
 
-        IEnumerator<Ballot> IEnumerable<Ballot>.GetEnumerator()
+        IEnumerator<ReadOnlyBallot> IEnumerable<ReadOnlyBallot>.GetEnumerator()
         {
             throw new NotImplementedException();
             //List<Ballot> b = new List<Ballot>();

@@ -11,8 +11,8 @@ namespace MoonsetTechnologies.Voting.Factories
 {
     abstract class AbstractBallotFactory
     {
-        public abstract Ballot CreateBallot();
-        public abstract Ballot CopyBallot(Ballot ballot);
+        public abstract ReadOnlyBallot CreateBallot();
+        public abstract ReadOnlyBallot CopyBallot(ReadOnlyBallot ballot);
         public abstract Vote CreateVote();
 
         /// <summary>

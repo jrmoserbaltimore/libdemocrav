@@ -12,7 +12,7 @@ namespace MoonsetTechnologies.Voting
     /// Base Person class which holds information about Voters, Candidates,
     /// etc.
     /// </summary>
-    public abstract class Person : IEquatable<Person>
+    public abstract class ReadOnlyPerson : IEquatable<ReadOnlyPerson>
     {
         /// <summary>
         /// Unique identifier for this person.
@@ -26,7 +26,7 @@ namespace MoonsetTechnologies.Voting
         /// <param name="other">The object to compare with the current
         /// object.</param>
         /// <returns></returns>
-        public virtual bool Equals(Person other) => Id.Equals(other.Id);
+        public virtual bool Equals(ReadOnlyPerson other) => Id.Equals(other.Id);
 
         /// <summary>
         /// Determines whether the current object is equal to the other object.
@@ -36,7 +36,7 @@ namespace MoonsetTechnologies.Voting
         /// <returns></returns>
         public override bool Equals(Object obj)
         {
-            if (obj is Person p)
+            if (obj is ReadOnlyPerson p)
                 return Equals(p);
             throw new ArgumentException("obj is not a Person object.");
         }
@@ -46,20 +46,40 @@ namespace MoonsetTechnologies.Voting
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode() => Id.GetHashCode();
+
+
+        private ReadOnlyPerson(Guid id)
+        {
+            Id = id;
+        }
+
+        /// <summary>
+        /// Copy from another Person.
+        /// </summary>
+        /// <param name="person"></param>
+        protected ReadOnlyPerson(ReadOnlyPerson person)
+            : this(person.Id)
+        {
+
+        }
     }
 
     /// <summary>
     /// A Voter.
     /// </summary>
-    public class Voter : Person
+    public class Voter : ReadOnlyPerson
     {
+        public Voter(ReadOnlyPerson person)
+            : base(person)
+        {
 
+        }
     }
 
     /// <summary>
     /// A Candidate, which is a Person in a particular Race.
     /// </summary>
-    public class Candidate : Person
+    public class Candidate : ReadOnlyPerson
     {
         public Race Race { get; }
 
@@ -69,5 +89,10 @@ namespace MoonsetTechnologies.Voting
         /// <returns>A hash consistent for the Person and Race representing the Candidate.</returns>
         public override int GetHashCode() => HashCode.Combine(Id, Race.Id);
 
+        public Candidate(ReadOnlyPerson person, Race race)
+            : base(person)
+        {
+            Race = race;
+        }
     }
 }

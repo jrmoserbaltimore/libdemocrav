@@ -25,12 +25,12 @@ namespace MoonsetTechnologies.Voting.VotingRules
     abstract class TidemanAlternative : Race
     {
 
-        public void Cast(Ballot ballot)
+        public void Cast(ReadOnlyBallot ballot)
         {
             throw new NotImplementedException();
         }
 
-        public IEnumerator<Ballot> GetEnumerator()
+        public IEnumerator<ReadOnlyBallot> GetEnumerator()
         {
             throw new NotImplementedException();
         }

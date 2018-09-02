@@ -30,7 +30,7 @@ namespace MoonsetTechnologies.Voting
         /// </summary>
         /// <param name="candidate">The Candidate to whom the ballots went.</param>
         /// <returns></returns>
-        public abstract IReadOnlyCollection<Ballot> GetBallots(Candidate candidate);
+        public abstract IReadOnlyCollection<ReadOnlyBallot> GetBallots(Candidate candidate);
     }
 
     /// <summary>
@@ -46,12 +46,12 @@ namespace MoonsetTechnologies.Voting
         /// <summary>
         /// The ballots cast in this Race.
         /// </summary>
-        public IReadOnlyCollection<Ballot> Ballots => BallotList.AsReadOnly();
+        public IReadOnlyCollection<ReadOnlyBallot> Ballots => BallotList.AsReadOnly();
 
         /// <summary>
         /// The ballots cast in this race, available to derived types.
         /// </summary>
-        protected List<Ballot> BallotList { get; } = new List<Ballot>();
+        protected List<ReadOnlyBallot> BallotList { get; } = new List<ReadOnlyBallot>();
 
         /// <summary>
         /// Candidates in this Race.
@@ -62,7 +62,7 @@ namespace MoonsetTechnologies.Voting
         /// Cast a ballot in this Race.
         /// </summary>
         /// <param name="ballot"></param>
-        public abstract void Cast(Ballot ballot);
+        public abstract void Cast(ReadOnlyBallot ballot);
 
         /// <summary>
         /// Computes the results and returns a collection thereof.

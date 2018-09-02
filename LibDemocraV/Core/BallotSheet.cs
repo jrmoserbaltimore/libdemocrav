@@ -10,22 +10,22 @@ using MoonsetTechnologies.Voting.Factories;
 
 namespace MoonsetTechnologies.Voting
 {
-    public class BallotSheet : IReadOnlyCollection<Ballot>, ICloneable
+    public class BallotSheet : IReadOnlyCollection<ReadOnlyBallot>, ICloneable
     {
-        protected List<Ballot> Ballots { get; } = new List<Ballot>();
+        protected List<ReadOnlyBallot> Ballots { get; } = new List<ReadOnlyBallot>();
 
         // Ballot collection
-        int IReadOnlyCollection<Ballot>.Count => Ballots.Count;
+        int IReadOnlyCollection<ReadOnlyBallot>.Count => Ballots.Count;
         // Shallow copy
-        IEnumerator<Ballot> IEnumerable<Ballot>.GetEnumerator()
+        IEnumerator<ReadOnlyBallot> IEnumerable<ReadOnlyBallot>.GetEnumerator()
         {
-            List<Ballot> ballots = new List<Ballot>();
-            foreach (Ballot b in Ballots)
-                ballots.Add((Ballot)b.Clone());
+            List<ReadOnlyBallot> ballots = new List<ReadOnlyBallot>();
+            foreach (ReadOnlyBallot b in Ballots)
+                ballots.Add((ReadOnlyBallot)b.Clone());
             return ballots.GetEnumerator();
         } 
 
-        IEnumerator IEnumerable.GetEnumerator() => ((IReadOnlyCollection<Ballot>)this).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => ((IReadOnlyCollection<ReadOnlyBallot>)this).GetEnumerator();
 
         public object Clone()
         {
