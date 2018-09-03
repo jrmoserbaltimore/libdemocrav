@@ -47,8 +47,7 @@ namespace MoonsetTechnologies.Voting
         /// <returns></returns>
         public override int GetHashCode() => Id.GetHashCode();
 
-
-        private ReadOnlyPerson(Guid id)
+        protected ReadOnlyPerson(Guid id)
         {
             Id = id;
         }
@@ -64,6 +63,15 @@ namespace MoonsetTechnologies.Voting
         }
     }
 
+    public class Person : ReadOnlyPerson
+    {
+        public Person()
+            : base(Guid.NewGuid())
+        {
+            
+        }
+    }
+
     /// <summary>
     /// A Voter.
     /// </summary>
@@ -76,6 +84,7 @@ namespace MoonsetTechnologies.Voting
         }
     }
 
+    // FIXME:  Refactor as Candidacy, not as a Candidate.
     /// <summary>
     /// A Candidate, which is a Person in a particular Race.
     /// </summary>
