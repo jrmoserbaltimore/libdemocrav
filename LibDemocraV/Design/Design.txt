@@ -1,15 +1,33 @@
-﻿Storage
+﻿General
+=======
+
+
+Election:  Unique election.  All voters who have voted, all races.
+Accepts BallotSheets to cast votes.
+
+BallotSheet:  A collection of Races in the same Election, for which a
+voter may vote.
+
+Ballot:  A Ballot tied to a Race.  Accepts Votes.
+
+Vote:  A Candidate and Value.  Value can indicate ranking in ranked ballots.
+
+Candidate:  A Person and Race, describing candidacy for that Race.
+
+Race:  A race in an election.  Has a VotingRule.
+
+Voter:  A unique voter.
+
+VotingRule:  A rule for voting, determining what kind of ballot to create and
+how to compute the winner from a set of ballots.
+
+Voting rules should be added by creating a new type of VotingRule.  This may
+require a new concrete derivation of AbstractBallotFactory et al.
+
+Storage
 =======
 
 The storage backends will provide factories to create objects such as
 ballots, elections, and so forth.  These objects can save and recall
 from backend.
-
-The backends will also provide classes to dig under the hood.  This
-abstracts away identification.  For example:  the ICandidate
-interface does not provide a unique identifier; the class
-implementing ICandidate handles that.  When exporting from a storage
-backend, such as to transfer ballots through a file, the application
-will call on the storage backend to provide a unique identifier for
-the class implementing ICandidate.
 
