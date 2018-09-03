@@ -58,6 +58,8 @@ namespace MoonsetTechnologies.Voting
 
         public override bool Equals(object obj) => Equals(obj as Vote);
 
+        public override int GetHashCode() => HashCode.Combine(Candidate, Value);
+
         /// <summary>
         /// Compares two votes to determine which has a higher Value,
         /// but not a stronger ordinal rank.

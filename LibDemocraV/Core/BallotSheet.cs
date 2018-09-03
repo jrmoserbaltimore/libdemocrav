@@ -6,30 +6,55 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using MoonsetTechnologies.Voting.Factories;
 
 namespace MoonsetTechnologies.Voting
 {
     public class ReadOnlyBallotSheet : IReadOnlyCollection<ReadOnlyBallot>
     {
-        protected List<ReadOnlyBallot> Ballots { get; } = new List<ReadOnlyBallot>();
+        protected List<Ballot> Ballots { get; } = new List<Ballot>();
 
-        // Ballot collection
-        int IReadOnlyCollection<ReadOnlyBallot>.Count => Ballots.Count;
+        public int Count => Ballots.Count;
+
         // Shallow copy
         IEnumerator<ReadOnlyBallot> IEnumerable<ReadOnlyBallot>.GetEnumerator() =>
             Ballots.GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator() =>
+        public virtual IEnumerator GetEnumerator() =>
             ((IReadOnlyCollection<ReadOnlyBallot>)this).GetEnumerator();
 
-        public ReadOnlyBallotSheet(IEnumerable<Race> races)
+        protected ReadOnlyBallotSheet(IEnumerable<Race> races)
+        {
+
+        }
+
+        public ReadOnlyBallotSheet(IEnumerable<ReadOnlyBallot> ballots)
+        {
+            foreach (ReadOnlyBallot r in ballots)
+            {
+                Ballot b = r as Ballot;
+                if (b is null)
+                    Ballots.Add(r.Race.GetNewBallot(r));
+                else
+                    Ballots.Add(b);
+            }
+        }
+    }
+
+    public class BallotSheet : ReadOnlyBallotSheet, IReadOnlyCollection<Ballot>
+    {
+        public BallotSheet(IEnumerable<Race> races)
+            : base(races)
         {
             foreach (Race r in races)
             {
-                AbstractBallotFactory bf = AbstractBallotFactory.GetFactory(r);
-                Ballots.Add(bf.CreateBallot());
+                Ballots.Add(r.GetNewBallot());
             }
         }
+
+        IEnumerator<Ballot> IEnumerable<Ballot>.GetEnumerator() =>
+            Ballots.GetEnumerator();
+
+        public override IEnumerator GetEnumerator() =>
+            ((IReadOnlyCollection<Ballot>)this).GetEnumerator();
     }
 }

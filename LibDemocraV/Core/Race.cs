@@ -6,6 +6,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using MoonsetTechnologies.Voting.VotingRules;
 
 namespace MoonsetTechnologies.Voting
 {
@@ -37,6 +38,8 @@ namespace MoonsetTechnologies.Voting
     /// </summary>
     public abstract class Race : IEquatable<Race>
     {
+        private VotingRule VotingRule { get; }
+
         /// <summary>
         /// Unique identifier for this Race.
         /// </summary>
@@ -60,8 +63,13 @@ namespace MoonsetTechnologies.Voting
         /// <summary>
         /// Cast a ballot in this Race.
         /// </summary>
-        /// <param name="ballot"></param>
+        /// <param name="ballot">A ballot to cast.</param>
         public abstract void Cast(ReadOnlyBallot ballot);
+
+        public Ballot GetNewBallot() => VotingRule.GetNewBallot();
+
+        public Ballot GetNewBallot(ReadOnlyBallot ballot) =>
+            VotingRule.CopyBallot(ballot);
 
         /// <summary>
         /// Computes the results and returns a collection thereof.
