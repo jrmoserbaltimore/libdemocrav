@@ -114,6 +114,21 @@ namespace MoonsetTechnologies.Voting.Analytics
                 if (!opponent.opponents.ContainsKey(Candidate))
                     opponent.ConnectNeighbor(this);
             }
+
+            public (int v1, int v2) GetVoteCount(Candidate opponent)
+            {
+                int v1, v2;
+                GraphNode g;
+                if (!opponents.ContainsKey(opponent))
+                    throw new ArgumentOutOfRangeException("opponent", "Opponent does not appear to be an opponent in this graph.");
+                v1 = opponents[opponent].Votes;
+                g = opponents[opponent].Node;
+
+                if (!g.opponents.ContainsKey(Candidate))
+                    throw new ArgumentOutOfRangeException("opponent", "Opponent does not reference this node as an opponent.");
+                v2 = g.opponents[Candidate].Votes;
+                return new ValueTuple<int, int>(v1, v2);
+            }
         }
 
         // The whole graph
@@ -134,7 +149,7 @@ namespace MoonsetTechnologies.Voting.Analytics
             // Ballots may include eliminated candidates.
             foreach (Candidate c in candidates)
                 graph[c] = new GraphNode(c);
-            // Set all to ties
+            // Connect all candidates.
             foreach (GraphNode g in graph.Values)
             {
                 foreach (GraphNode j in graph.Values)
@@ -240,6 +255,59 @@ namespace MoonsetTechnologies.Voting.Analytics
                 graph[g.Candidate].Add(g);
             foreach (GraphNode g in g2.graph.Values)
                 graph[g.Candidate].Add(g);
+        }
+
+        public (int v1, int v2) GetVoteCount(Candidate c1, Candidate c2)
+        {
+            return graph[c1].GetVoteCount(c2);
+        }
+
+        private Dictionary<Candidate, (int v1, int v2)> VoteCounts(Candidate candidate)
+        {
+            Dictionary<Candidate, (int, int)> output = new Dictionary<Candidate, (int, int)>();
+            foreach (Candidate c in graph.Keys)
+            {
+                if (c == candidate)
+                    continue;
+                output[c] = GetVoteCount(candidate, c);
+            }
+            return output;
+        }
+
+        public IEnumerable<Candidate> Wins(Candidate candidate)
+        {
+            List<Candidate> output = new List<Candidate>();
+            Dictionary<Candidate, (int v1, int v2)> votes = VoteCounts(candidate);
+
+            foreach (Candidate c in votes.Keys)
+                if (votes[c].v1 > votes[c].v2)
+                    output.Add(c);
+
+            return output;
+        }
+
+        public IEnumerable<Candidate> Ties(Candidate candidate)
+        {
+            List<Candidate> output = new List<Candidate>();
+            Dictionary<Candidate, (int v1, int v2)> votes = VoteCounts(candidate);
+
+            foreach (Candidate c in votes.Keys)
+                if (votes[c].v1 == votes[c].v2)
+                    output.Add(c);
+
+            return output;
+        }
+
+        public IEnumerable<Candidate> Losses(Candidate candidate)
+        {
+            List<Candidate> output = new List<Candidate>();
+            Dictionary<Candidate, (int v1, int v2)> votes = VoteCounts(candidate);
+
+            foreach (Candidate c in votes.Keys)
+                if (votes[c].v1 < votes[c].v2)
+                    output.Add(c);
+
+            return output;
         }
     }
 
