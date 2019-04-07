@@ -28,9 +28,11 @@ namespace MoonsetTechnologies.Voting.Analytics
         // XXX:  Not exposing this ugly thing to clients.
         protected class GraphNode
         {
+
+
             // FIXME:  Refactor to track votes cast instead of running difference.
-            private Dictionary<GraphNode, int> beats = new Dictionary<GraphNode, int>();
-            public IEnumerator<KeyValuePair<GraphNode, int>> Beats => beats.GetEnumerator();
+            private Dictionary<GraphNode, int> opponents = new Dictionary<GraphNode, int>();
+            public IEnumerator<KeyValuePair<GraphNode, int>> Beats => opponents.GetEnumerator();
 
             public Candidate Candidate { get; private set; }
 
@@ -39,20 +41,32 @@ namespace MoonsetTechnologies.Voting.Analytics
                 this.Candidate = candidate;
             }
 
-            public void Increment(GraphNode opponent)
+            /// <summary>
+            /// Add a vote for this Candidate against another Candidate.
+            /// </summary>
+            /// <param name="opponent">The opponent in the pairwise race.</param>
+            public void Increment(Candidate opponent)
             {
-                if (!opponent.beats.ContainsKey(this))
+                GraphNode g = null;
+                foreach (GraphNode h in opponents.Keys)
+                {
+                    if (h.Candidate == opponent)
+                    {
+                        g = h;
+                        break;
+                    }
+                }
+                if (g == null)
                     throw new ArgumentOutOfRangeException("opponent", "Opponent does not appear to be an opponent in this graph.");
-                opponent.beats[this]--;
-                beats[opponent]++;
                 // Sanity check
-                if (opponent.beats[this] + beats[opponent] != 0)
-                    throw new InvalidOperationException("Opponent win-by values don't sum to zero.");
+                if (!g.opponents.ContainsKey(this))
+                    throw new ArgumentOutOfRangeException("opponent", "Opponent does not reference this node as an opponent.");
+                // Add a vote for us against this opponent.
+                opponents[g]++;
             }
 
             /// <summary>
-            /// Add a GraphNode to this one, incrementing the count by which we beat each candidate
-            /// by the beat count on the given node.
+            /// Add a GraphNode to this one, summing the vote counts.
             /// </summary>
             /// <param name="input">The GraphNode to add.</param>
             public void Add(GraphNode input)
@@ -62,36 +76,32 @@ namespace MoonsetTechnologies.Voting.Analytics
                     throw new ArgumentException("Candidate does not match the candidate for this node!");
 
                 // g is the opponent in the provided graph node.
-                foreach (GraphNode g in input.beats.Keys)
+                foreach (GraphNode g in input.opponents.Keys)
                 {
-                    // Only add positive values.
-                    if (input.beats[g] <= 0)
-                        continue;
+                    // Negative values are invalid.
+                    if (input.opponents[g] < 0)
+                        throw new ArgumentOutOfRangeException("input","Provided graph node contains negative vote counts.");
+
                     // h is the opponent in our graph.
-                    foreach (GraphNode h in beats.Keys)
+                    foreach (GraphNode h in opponents.Keys)
                     {
                         if (g.Candidate == h.Candidate)
                         {
-                            // Sanity checking the presented graph
-                            if (input.beats[g] + g.beats[input] != 0)
-                                throw new InvalidOperationException("Opponent win-by values on GraphNode being merged don't sum to zero.");
-                            // add the opposing values.
-                            beats[h] += input.beats[g];
-                            h.beats[this] += g.beats[input];
+                            if (opponents[h] < 0)
+                                throw new InvalidOperationException("Vote count against an opponent is negative.");
+                            // add the vote count from the given node to our node.
+                            opponents[h] += input.opponents[g];
                         }
                     }
                 }
             }
 
-            public void CheckNeighbor(GraphNode opponent)
+            public void AddNeighbor(GraphNode opponent)
             {
-                // Checks for a tie
-                if (!opponent.beats.ContainsKey(this) && !beats.ContainsKey(opponent))
-                {
-                    beats[opponent] = 0;
-                    opponent.beats[this] = 0;
-                }
-
+                if (!opponent.opponents.ContainsKey(this))
+                    opponent.opponents[this] = 0;
+                if (!opponents.ContainsKey(opponent))
+                    opponents[opponent] = 0;
             }
         }
 
@@ -117,7 +127,7 @@ namespace MoonsetTechnologies.Voting.Analytics
             foreach (GraphNode g in graph.Values)
             {
                 foreach (GraphNode j in graph.Values)
-                    g.CheckNeighbor(j);
+                    g.AddNeighbor(j);
             }
 
             // Iterate each ballot and count who wins and who ties.
@@ -211,7 +221,7 @@ namespace MoonsetTechnologies.Voting.Analytics
             foreach (GraphNode g in graph.Values)
             {
                 foreach (GraphNode j in graph.Values)
-                    g.CheckNeighbor(j);
+                    g.AddNeighbor(j);
             }
 
             // Add the two graphs to this empty graph.
