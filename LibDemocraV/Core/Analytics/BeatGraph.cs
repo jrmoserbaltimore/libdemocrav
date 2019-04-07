@@ -13,9 +13,7 @@ using System.Text;
 //     g.Wins(candidate);
 //     g.Ties(candidate);
 //     g.Losses(candidate);
-//
-// We need to extend this to track the number of actual votes for and against
-// each candidate in the pairs, allowing more-robust statistics and compuattions.
+//     g.GetVoteCount(c1, g2);
 //
 // Aside from that, the internals are ham-fisted.
 namespace MoonsetTechnologies.Voting.Analytics
@@ -45,7 +43,6 @@ namespace MoonsetTechnologies.Voting.Analytics
                 }
             }
 
-            // FIXME:  Refactor to track votes cast instead of running difference.
             private Dictionary<Candidate, Path> opponents = new Dictionary<Candidate, Path>();
 
             public Candidate Candidate { get; private set; }
@@ -143,7 +140,7 @@ namespace MoonsetTechnologies.Voting.Analytics
         /// </summary>
         /// <param name="candidates">Candidates to be considered in the race.</param>
         /// <param name="ballots">Ranked ballots in the election.</param>
-        public PairwiseGraph(IEnumerable<Candidate> candidates, IEnumerable<IBallot> ballots)
+        public PairwiseGraph(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
         {
             // Initialize to include only those candidates about whom we care.
             // Ballots may include eliminated candidates.
@@ -158,15 +155,15 @@ namespace MoonsetTechnologies.Voting.Analytics
 
             // Iterate each ballot and count who wins and who ties.
             // This can support tied ranks and each ballot is O(SUM(1..n)) and o(n).
-            foreach (IBallot b in ballots)
+            foreach (IRankedBallot b in ballots)
             {
                 // Track who is not ranked by the end
                 List<Candidate> unranked = new List<Candidate>(graph.Keys);
-                foreach (Vote v in b.Votes)
+                foreach (IRankedVote v in b.Votes)
                     unranked.Remove(v.Candidate);
 
                 // Iterate to compare each pair.
-                List<Vote> votes = new List<Vote>(b.Votes);
+                List<IRankedVote> votes = new List<IRankedVote>(b.Votes);
                 for (int i = 0; i < votes.Count; i++)
                 {
                     // Candidate is not counted, so skip
@@ -174,24 +171,14 @@ namespace MoonsetTechnologies.Voting.Analytics
                         continue;
                     for (int j=i+1; j < votes.Count; j++)
                     {
-                        Candidate w = null, l = null;
                         // Candidate is not counted, so skip
                         if (!graph.ContainsKey(votes[j].Candidate))
                             continue;
-                        // Who is ranked first?
-                        if (votes[i].Value < votes[j].Value)
-                        {
-                            w = votes[i].Candidate;
-                            l = votes[j].Candidate;
-                        }
-                        else if (votes[j].Value < votes[i].Value)
-                        {
-                            w = votes[j].Candidate;
-                            l = votes[i].Candidate;
-                        }
-                        // No change if a tie, otherwise increment the winner.
-                        if (w != null)
-                            graph[w].Increment(l);
+                        // Who is ranked first?  No action if a tie.
+                        if (votes[i].Beats(votes[j]))
+                            graph[votes[i].Candidate].Increment(votes[j].Candidate);
+                        else if (votes[j].Beats(votes[i]))
+                            graph[votes[j].Candidate].Increment(votes[i].Candidate);
                     }
                     // Defeat all unranked candidates
                     foreach (Candidate c in unranked)

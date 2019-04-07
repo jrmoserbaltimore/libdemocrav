@@ -15,7 +15,7 @@ namespace MoonsetTechnologies.Voting.Tabulators
         public IEnumerator<Candidate> SmithSet => smithSet.GetEnumerator();
         public IEnumerator<Candidate> SchwartzSet => schwartzSet.GetEnumerator();
 
-        public TopCycle(IEnumerable<Candidate> candidates, IEnumerable<IBallot> ballots)
+        public TopCycle(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
             : this(new PairwiseGraph(candidates, ballots))
         {
             
