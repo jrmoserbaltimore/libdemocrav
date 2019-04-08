@@ -21,7 +21,7 @@ namespace MoonsetTechnologies.Voting.Analytics
     /// <summary>
     /// Converts a set of candidates and a set of ballots into a graph of wins and ties.
     /// </summary>
-    class PairwiseGraph
+    public class PairwiseGraph
     {
         // XXX:  Not exposing this ugly thing to clients.
         protected class GraphNode
@@ -150,7 +150,10 @@ namespace MoonsetTechnologies.Voting.Analytics
             foreach (GraphNode g in graph.Values)
             {
                 foreach (GraphNode j in graph.Values)
-                    g.ConnectNeighbor(j);
+                {
+                    if (g != j)
+                        g.ConnectNeighbor(j);
+                }
             }
 
             // Iterate each ballot and count who wins and who ties.
