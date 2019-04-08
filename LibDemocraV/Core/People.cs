@@ -8,12 +8,13 @@ namespace MoonsetTechnologies.Voting
     /// Base Person class which holds information about Voters, Candidates,
     /// etc.
     /// </summary>
-    public abstract class Person : IEquatable<Person>
+    public class Person : IEquatable<Person>
     {
         /// <summary>
         /// Unique identifier for this person.
         /// </summary>
         public Guid Id { get; }
+        public String Name { get; }
 
         /// <summary>
         /// Determines whether the current Person object refers to the
@@ -49,12 +50,24 @@ namespace MoonsetTechnologies.Voting
             Id = id;
         }
 
+        public Person(string name)
+            : this()
+        {
+            Name = name;
+        }
+
         /// <summary>
         /// Copy from another Person.
         /// </summary>
         /// <param name="person"></param>
         protected Person(Person person)
             : this(person.Id)
+        {
+
+        }
+
+        protected Person()
+            : this(Guid.NewGuid())
         {
 
         }
@@ -67,6 +80,12 @@ namespace MoonsetTechnologies.Voting
     {
         public Voter(Person person)
             : base(person)
+        {
+
+        }
+
+        public Voter()
+            : base()
         {
 
         }
