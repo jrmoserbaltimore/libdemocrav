@@ -17,7 +17,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                 "c|Chris|1\n" +
                 "c|Sam|2\n" +
                 "b|20|0 1 2\n" +
-                "b|15|2 1 0\n" +
+                "b|15|2 1\n" +
                 "b|8|1 2 0\n"+
                 "b|5|1 0";
             // Decode the above into a thing.
@@ -52,7 +52,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                     for (int i = 0; i < votes.Count; i++)
                     {
                         int cnum = Convert.ToInt32(votes[i]);
-                        v.Add(new RankedVote(cout[cnum], i));
+                        v.Add(new RankedVote(cout[cnum], i + 1));
                     }
 
                     // Create as many ballots as there are noted in field 2
@@ -79,6 +79,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         public void PairwiseGraphBuild()
         {
             PairwiseGraph graph = new PairwiseGraph(ballotSetFixture.Candidates.Values, ballotSetFixture.Ballots);
+            Assert.Equal(graph.GetVoteCount(ballotSetFixture.Candidates[0], ballotSetFixture.Candidates[1]), (20, 28));
             Assert.NotNull(graph);
         }
     }

@@ -51,7 +51,7 @@ namespace MoonsetTechnologies.Voting
         }
 
         /// <inheritdoc/>
-        public virtual bool Beats(IRankedVote vote) => Value > vote.Value;
+        public virtual bool Beats(IRankedVote vote) => Value < vote.Value;
 
         /// <inheritdoc/>
         public virtual bool Equals(RankedVote v)

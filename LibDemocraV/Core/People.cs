@@ -63,7 +63,7 @@ namespace MoonsetTechnologies.Voting
         protected Person(Person person)
             : this(person.Id)
         {
-
+            Name = person.Name;
         }
 
         protected Person()
