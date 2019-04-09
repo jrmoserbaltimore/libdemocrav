@@ -33,9 +33,9 @@ namespace MoonsetTechnologies.Voting.Analytics
         /// <param name="graph">The pairwise graph.</param>
         private void ComputeSets(PairwiseGraph graph)
         {
-            Dictionary<Candidate, int> linkId = new Dictionary<Candidate, int>();
-            Dictionary<Candidate, int> nodeId = new Dictionary<Candidate, int>();
-            Stack<Candidate> s = new Stack<Candidate>();
+            Dictionary<Candidate, int> linkId;
+            Dictionary<Candidate, int> nodeId;
+            Stack<Candidate> s;
             int i = 0;
 
             void dfs(Candidate c, bool isSmith)
@@ -78,6 +78,10 @@ namespace MoonsetTechnologies.Voting.Analytics
 
             List<Candidate> getSet(bool isSmith)
             {
+                linkId = new Dictionary<Candidate, int>();
+                nodeId = new Dictionary<Candidate, int>();
+                s = new Stack<Candidate>();
+                i = 0;
                 // Visit each node in the graph as a starting point.
                 foreach (Candidate c in graph.Candidates)
                     dfs(c, isSmith);
