@@ -4,17 +4,17 @@ using System.Text;
 using System.Linq;
 using MoonsetTechnologies.Voting.Analytics;
 
-namespace MoonsetTechnologies.Voting.Tabulators
+namespace MoonsetTechnologies.Voting.Analytics
 {
     /// <summary>
     /// Computes the Smith and Schwartz sets.
     /// </summary>
-    class TopCycle
+    public class TopCycle
     {
         protected List<Candidate> smithSet;
         protected List<Candidate> schwartzSet;
-        public IEnumerator<Candidate> SmithSet => smithSet.GetEnumerator();
-        public IEnumerator<Candidate> SchwartzSet => schwartzSet.GetEnumerator();
+        public IEnumerable<Candidate> SmithSet => smithSet;
+        public IEnumerable<Candidate> SchwartzSet => schwartzSet;
 
         public TopCycle(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
             : this(new PairwiseGraph(candidates, ballots))
@@ -43,6 +43,7 @@ namespace MoonsetTechnologies.Voting.Tabulators
                 // Skip this node when isSmith is false and the node is not in the
                 // Smith Set, of which the Schwartz Set is a subset.
                 if (!isSmith && !smithSet.Contains(c))
+                    return;
                 // Only search if not yet visited.
                 if (nodeId.ContainsKey(c))
                     return;
@@ -70,7 +71,7 @@ namespace MoonsetTechnologies.Voting.Tabulators
                 if (linkId[c] == nodeId[c])
                 {
                     // Remove all associated members of the SCC
-                    while (linkId[s.Peek()] == linkId[c])
+                    while (s.Count > 0 && linkId[s.Peek()] == linkId[c])
                         s.Pop();
                 }
             }
@@ -79,7 +80,7 @@ namespace MoonsetTechnologies.Voting.Tabulators
             {
                 // Visit each node in the graph as a starting point.
                 foreach (Candidate c in graph.Candidates)
-                    dfs(c, false);
+                    dfs(c, isSmith);
 
                 // Find every SCC that cannot be reached by any other SCC.
                 // In the Smith Set, this is one SCC; in the Schwartz Set,
@@ -95,6 +96,9 @@ namespace MoonsetTechnologies.Voting.Tabulators
                     {
                         foreach (Candidate m in linkId.Keys)
                         {
+                            // Assigns from itself, below, sometimes, so must exist
+                            if (!reachable.ContainsKey((linkId[l], linkId[m])))
+                                reachable[(linkId[l], linkId[m])] = false;
                             // The SCC containing (l) can reach the SCC containing (m) if
                             //  - (l) defeats (m)
                             //  - (l) ties with (m) and it's the Smith Set

@@ -79,8 +79,23 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         public void PairwiseGraphBuild()
         {
             PairwiseGraph graph = new PairwiseGraph(ballotSetFixture.Candidates.Values, ballotSetFixture.Ballots);
-            Assert.Equal(graph.GetVoteCount(ballotSetFixture.Candidates[0], ballotSetFixture.Candidates[1]), (20, 28));
+            Assert.Equal((20, 28), graph.GetVoteCount(ballotSetFixture.Candidates[0], ballotSetFixture.Candidates[1]));
             Assert.NotNull(graph);
+        }
+
+        [Fact]
+        public void TopCycleTest()
+        {
+            TopCycle t = new TopCycle(ballotSetFixture.Candidates.Values, ballotSetFixture.Ballots);
+            List<Candidate> c = new List<Candidate>();
+
+            c.AddRange(t.SmithSet);
+            Assert.Equal("Chris", c[0].Name);
+
+            c.Clear();
+            c.AddRange(t.SchwartzSet);
+            Assert.Equal("Chris", c[0].Name);
+
         }
     }
 }
