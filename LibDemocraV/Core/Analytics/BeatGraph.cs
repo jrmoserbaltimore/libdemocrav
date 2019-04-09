@@ -131,6 +131,11 @@ namespace MoonsetTechnologies.Voting.Analytics
         // The whole graph
         private Dictionary<Candidate, GraphNode> graph = new Dictionary<Candidate, GraphNode>();
 
+        /// <summary>
+        /// All candidates in this graph.
+        /// </summary>
+        public IEnumerable<Candidate> Candidates => graph.Keys;
+
         private PairwiseGraph(IEnumerable<Candidate> candidates)
         {
 
