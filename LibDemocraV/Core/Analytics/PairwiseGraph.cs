@@ -129,26 +129,17 @@ namespace MoonsetTechnologies.Voting.Analytics
         }
 
         // The whole graph
-        private Dictionary<Candidate, GraphNode> graph = new Dictionary<Candidate, GraphNode>();
+        protected Dictionary<Candidate, GraphNode> graph = new Dictionary<Candidate, GraphNode>();
 
         /// <summary>
         /// All candidates in this graph.
         /// </summary>
-        public IEnumerable<Candidate> Candidates => graph.Keys;
+        public virtual IEnumerable<Candidate> Candidates => graph.Keys;
 
         private PairwiseGraph(IEnumerable<Candidate> candidates)
         {
-
-        }
-        /// <summary>
-        /// Converts a set of candidates and ballots to a graph of wins and ties.
-        /// </summary>
-        /// <param name="candidates">Candidates to be considered in the race.</param>
-        /// <param name="ballots">Ranked ballots in the election.</param>
-        public PairwiseGraph(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
-        {
-            // Initialize to include only those candidates about whom we care.
-            // Ballots may include eliminated candidates.
+            // Initialize to an empty graph including only those candidates
+            // about whom we care.  Ballots may include eliminated candidates.
             foreach (Candidate c in candidates)
                 graph[c] = new GraphNode(c);
             // Connect all candidates.
@@ -160,7 +151,15 @@ namespace MoonsetTechnologies.Voting.Analytics
                         g.ConnectNeighbor(j);
                 }
             }
-
+        }
+        /// <summary>
+        /// Converts a set of candidates and ballots to a graph of wins and ties.
+        /// </summary>
+        /// <param name="candidates">Candidates to be considered in the race.</param>
+        /// <param name="ballots">Ranked ballots in the election.</param>
+        public PairwiseGraph(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
+            : this(candidates)
+        {
             // Iterate each ballot and count who wins and who ties.
             // This can support tied ranks and each ballot is O(SUM(1..n)) and o(n).
             foreach (IRankedBallot b in ballots)
@@ -195,69 +194,48 @@ namespace MoonsetTechnologies.Voting.Analytics
             }
         }
 
-        // XXX:  Do we want to do this, or to expose a Merge() member?
         /// <summary>
         /// Merge two PairwiseGraphs.
         /// </summary>
         /// <param name="g1">Graph 1</param>
-        /// <param name="g2">Graph 2</param>
+        /// <param name="g2">Graph 2, which contains a strict superset of candidates in g1.</param>
         public PairwiseGraph(PairwiseGraph g1, PairwiseGraph g2)
+            : this(g1.Candidates)
         {
-            // With 100,000,000 ballots—a fully-counted Presidential election—this comes
-            // to about O((n^2)/2 + n/2) times a linear hundred million.  Assuming nine
-            // candidates—the maximum for Unified Majority with 54 primary candidates—gives
-            // around 4.5 seconds per 1GHz per clock cycle required to compute this entire
-            // loop.  Approximating 250 cycles per loop iteration gives ten minutes of
-            // computation time at 2GHz.
-            //
-            // To reduce this computation time, we can split the ballots into smaller sets
-            // and count them separately on separate cores.
-            // 
-            // With 4 cores, the above computation falls to 2 minutes 20 seconds.  With a
-            // six -core AMD Ryzen with SMT, this falls to 47 seconds.  With a Ryzen
-            // Threadripper 2990WX at 4.2GHz with 64 threads, we get 4.18 seconds.
-            //
-            // Computing an election may take up to n-2 iterations for n candidates, so
-            // an $800 CPU instead of a $100 CPU is a worthwhile investment for a central
-            // tabulator.
-
-            IEnumerable<Candidate> candidates = g1.graph.Keys;
-
-            // These must use the same candidates.
-            // FIXME:  Validate the exceptions here are correct practice.
-            foreach (Candidate c in g1.graph.Keys)
-            {
-                if (!g2.graph.ContainsKey(c))
-                    throw new ArgumentException("Graphs do not contain the same candidates.");
-            }
-            foreach (Candidate c in g2.graph.Keys)
-            {
-                if (!g1.graph.ContainsKey(c))
-                    throw new ArgumentException("Graphs do not contain the same candidates.");
-            }
-
-            // Initialize to an empty graph
-            foreach (GraphNode g in g1.graph.Values)
-                graph[g.Candidate] = new GraphNode(g.Candidate);
-            foreach (GraphNode g in graph.Values)
-            {
-                foreach (GraphNode j in graph.Values)
-                    g.ConnectNeighbor(j);
-            }
-
-            // Add the two graphs to this empty graph.
-            foreach (GraphNode g in g1.graph.Values)
-                graph[g.Candidate].Add(g);
-            foreach (GraphNode g in g2.graph.Values)
-                graph[g.Candidate].Add(g);
+            AddGraph(g1);
+            AddGraph(g2);
         }
 
-        public (int v1, int v2) GetVoteCount(Candidate c1, Candidate c2)
+        /// <summary>
+        /// Create a PairwiseGraph for a subset of candidates.
+        /// </summary>
+        /// <param name="source">The source graph.</param>
+        /// <param name="candidates">The candidates to include.</param>
+        public PairwiseGraph(PairwiseGraph source, IEnumerable<Candidate> candidates)
+            : this(candidates)
+        {
+            AddGraph(source);
+        }
+
+        private void AddGraph(PairwiseGraph g)
+        {
+            // Must use a superset of our candidates.
+            // XXX:  Validate the exceptions here are correct practice.
+            foreach (Candidate c in Candidates)
+            {
+                if (!g.graph.ContainsKey(c))
+                    throw new ArgumentException("Graph does not contain a strict superset of current candidates.");
+                // Merge the graph nodes for this candidate
+                graph[c].Add(g.graph[c]);
+            }  
+        }
+
+        public virtual (int v1, int v2) GetVoteCount(Candidate c1, Candidate c2)
         {
             return graph[c1].GetVoteCount(c2);
         }
 
-        private Dictionary<Candidate, (int v1, int v2)> VoteCounts(Candidate candidate)
+        protected virtual Dictionary<Candidate, (int v1, int v2)> VoteCounts(Candidate candidate)
         {
             Dictionary<Candidate, (int, int)> output = new Dictionary<Candidate, (int, int)>();
             foreach (Candidate c in graph.Keys)
@@ -304,8 +282,30 @@ namespace MoonsetTechnologies.Voting.Analytics
 
             return output;
         }
-    }
 
-    // TODO:  PairwiseGraph derivative class which divides the ballots into (n) equal segments and
-    // parallel-executes (n) counts, then puts this all together.
+        protected PairwiseGraph()
+        {
+            throw new InvalidOperationException();
+        }
+    }
+    // TODO:  PairwiseGraph derivative class which divides the ballots into (n)
+    // equal segments and parallel-executes (n) counts, then puts this all together.
+    
+    // With 100,000,000 ballots—a fully-counted Presidential election—this comes
+    // to about O((n^2)/2 + n/2) times a linear hundred million.  Assuming nine
+    // candidates—the maximum for Unified Majority with 54 primary candidates—gives
+    // around 4.5 seconds per 1GHz per clock cycle required to compute this entire
+    // loop.  Approximating 250 cycles per loop iteration gives ten minutes of
+    // computation time at 2GHz.
+    //
+    // To reduce this computation time, we can split the ballots into smaller sets
+    // and count them separately on separate cores.
+    // 
+    // With 4 cores, the above computation falls to 2 minutes 20 seconds.  With a
+    // six -core AMD Ryzen with SMT, this falls to 47 seconds.  With a Ryzen
+    // Threadripper 2990WX at 4.2GHz with 64 threads, we get 4.18 seconds.
+    //
+    // Computing an election may take up to n-2 iterations for n candidates, so
+    // an $800 CPU instead of a $100 CPU is a worthwhile investment for a central
+    // tabulator.
 }

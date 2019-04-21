@@ -6,6 +6,10 @@ using MoonsetTechnologies.Voting.Analytics;
 
 namespace MoonsetTechnologies.Voting.Analytics
 {
+    // API for this:
+    //  TopCycle t = TopCycle(candidates, ballots)
+    //  IEnumerable<Candidate> SmithSet = t.SmithSet;
+    //  IEnumerable<Candidate> SchwartzSet = t.SchwartzSet;
     /// <summary>
     /// Computes the Smith and Schwartz sets.
     /// </summary>
@@ -24,14 +28,15 @@ namespace MoonsetTechnologies.Voting.Analytics
 
         public TopCycle(PairwiseGraph graph)
         {
-            ComputeSets(graph);
+            ComputeSets(graph, graph.Candidates);
         }
 
         /// <summary>
         /// Compute Smith and Schwartz sets with Tarjan's Algorithm.
         /// </summary>
         /// <param name="graph">The pairwise graph.</param>
-        private void ComputeSets(PairwiseGraph graph)
+        /// <param name="candidates">The candidates to consider.</param>
+        private void ComputeSets(PairwiseGraph graph, IEnumerable<Candidate> candidates)
         {
             Dictionary<Candidate, int> linkId;
             Dictionary<Candidate, int> nodeId;
