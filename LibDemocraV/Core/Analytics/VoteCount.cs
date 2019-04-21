@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MoonsetTechnologies.Voting.Core.Analytics
+namespace MoonsetTechnologies.Voting.Analytics
 {
     public interface IVoteCount
     {
@@ -18,12 +18,12 @@ namespace MoonsetTechnologies.Voting.Core.Analytics
         /// <returns>The number of votes each candidate receives.</returns>
         Dictionary<Candidate, int> GetVoteCounts();
     }
-    public class VoteCount : IVoteCount
+    public class RankedVoteCount : IVoteCount
     {
         private readonly List<Candidate> Candidates;
         private readonly List<IRankedBallot> Ballots;
 
-        public VoteCount(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
+        public RankedVoteCount(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
         {
             Candidates = new List<Candidate>(candidates);
             Ballots = new List<IRankedBallot>(ballots);
