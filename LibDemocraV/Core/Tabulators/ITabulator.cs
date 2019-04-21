@@ -17,7 +17,7 @@ namespace MoonsetTechnologies.Voting.Tabulators
         /// <summary>
         /// The ballots as they stand in the current round.
         /// </summary>
-        IEnumerable<IBallot> Ballots { get; }
+        //IEnumerable<IBallot> Ballots { get; }
 
         /// <summary>
         /// The Candidates still remaining in the current round.
@@ -32,5 +32,11 @@ namespace MoonsetTechnologies.Voting.Tabulators
         /// Iterate through the next round of tabulation
         /// </summary>
         void TabulateRound();
+    }
+
+    public interface IRankedTabulator : ITabulator
+    {
+        IEnumerable<Candidate> SchwartzSet { get; }
+        IEnumerable<Candidate> SmithSet { get; }
     }
 }

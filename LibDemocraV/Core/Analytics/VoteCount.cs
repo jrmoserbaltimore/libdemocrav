@@ -17,6 +17,8 @@ namespace MoonsetTechnologies.Voting.Analytics
         /// </summary>
         /// <returns>The number of votes each candidate receives.</returns>
         Dictionary<Candidate, int> GetVoteCounts();
+
+        Candidate GetLeastVotedCandidate();
     }
     public class RankedVoteCount : IVoteCount
     {
@@ -59,6 +61,18 @@ namespace MoonsetTechnologies.Voting.Analytics
                 vc[c] = GetVoteCount(c);
             return vc;
         }
+
+        public Candidate GetLeastVotedCandidate()
+        {
+            Dictionary<Candidate, int> vc = GetVoteCounts();
+            Candidate output = null;
+            foreach(Candidate c in vc.Keys)
+            {
+                if (output is null || vc[c] < vc[output])
+                    output = c;
+            }
+            return output;
+        }
     }
 
     public class CachedVoteCount : IVoteCount
@@ -88,6 +102,18 @@ namespace MoonsetTechnologies.Voting.Analytics
             foreach (Candidate c in Candidates)
                 GetVoteCount(c);
             return new Dictionary<Candidate, int>(VoteCounts);
+        }
+
+        public Candidate GetLeastVotedCandidate()
+        {
+            Dictionary<Candidate, int> vc = GetVoteCounts();
+            Candidate output = null;
+            foreach (Candidate c in vc.Keys)
+            {
+                if (output is null || vc[c] < vc[output])
+                    output = c;
+            }
+            return output;
         }
     }
 }
