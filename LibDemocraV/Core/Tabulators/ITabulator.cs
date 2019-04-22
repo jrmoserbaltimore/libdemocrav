@@ -6,6 +6,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using MoonsetTechnologies.Voting.Analytics;
 
 namespace MoonsetTechnologies.Voting.Tabulators 
 {
