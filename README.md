@@ -1,7 +1,39 @@
 # libdemocrav
-Core library for Electronic Voting Machine (EVM) software.
+Core library for Electronic Management System (EMS) and Electronic Voting Machine (EVM) software.
 
-The **exploratory** branch is used to track pilot code and explore architecture and implementation strategies; it is often a mess and in flux.
+The **exploratory** branch is used to track pilot code and explore architecture and implementation strategies; it is often a mess and in flux.  That branch will be deleted soon.
+
+# Why DemocraV?
+
+The Democracy Voting software, published under MIT license, allows states and municipalities to implement modern elections with minimal cost.  The software carries minimal restrictions—thanks to the MIT license—and can greatly reduce costs and increase home rule for municipalities.
+
+## Integrity Concerns
+
+A tamper-resistant balloting process is essential to high-integrity elections.
+
+When using electronic voting, we must prove the state of software on the voting machine.  This requires publication and validation of the software at the time of voting:  no trusted party can assure the voter they are not colluding to corrupt the election, and so we must prove to the voter that *anybody* with the time and skill can, independently and without permission, examine and find any form of tampering or defect *at any time in the future*.
+
+Other methods of ballot integrity are possible, although they trade other risks.
+
+This software allows elections authorities to impliment pure Direct Recording Electronic (DRE) processes and mixed hand-counted and electronic-tabulated (HCET) processes.
+
+## Representative and Tamper-Resistent Electoral Systems
+Tamper-resistent balloting process alone cannot protect the integrity of an election.  Voting rules like Plurality, majority-runoff, and Instant Runoff Voting are prone to poor representation and easily manipulated by strategic nomination of candidates—not candidates intended to win, but candidates intended to make *other* candidates *lose*.  Approval and the fractional approval systems—score and rated systems—require enormous strategic thinking and betray the voter's intent at all times, as well.
+
+This software supports legacy electoral systems, including Plurality and Instant Runoff Voting, as well as modern Single Transferable Vote and Tideman's Alternative.
+
+DemocraV implements the dangerous, polarizing, and easily-manipulated Party Primary, a standard system in the United States.  It also implements the strongly-representative Unified Majority system, designed to reliably finds consensus and to resist social media propaganda attacks, strategic nomination attacks, and strategic bloc voting.
+
+## Cost Factors
+DemocraV is designed to operate as a DRE voting machine on a Raspberry Pi 3 B+ or similar while supporting hundreds of candidates and tens of thousands of voters.  Each polling center should serve at most 2,500 voters per day due to physical logistics—long lines are disenfranchising—and we can protect Internet-based voting from hackers, but not from a corrupt elections authority, so high participation in in-person voting represents the core of a high-integrity election.
+
+The software is designed to avoid high costs and, eventually, to take the place of multi-million-dollar elections management systems.
+
+The State of Maryland issued a [fiscal note](https://legiscan.com/MD/supplement/HB624/id/96430) describing tabulation software for Instant Runoff Voting as a $385,000 cost, and integration with an Election Management System—simply allowing the storage and retrieval of ranked ballots along with all currently-supported ballot types—at $800,000.
+
+Under State law, a municipality can implement its own municipal elections using ranked ballots.  It's technically-legal for the local Board of Elections to tabulate these ballots, publish the ballots in full and the tabulation software and algorithms, and send the results to the State for publication.  This software allows the municipality to operate its own local elections without incurring a $1.2 million expense at the State level for costs related to the core EMS and tabulators.
+
+In the long run, this software will provide full EMS capabilities with voter registration management, transparency reporting, and integrity controls.  Operating procedures, rather than software, provide most of that integrity; the software is designed with such procedures in mind.  States may find significant savings by migrating their elections to a cost-free software product and changing their elections services vendors at will, rather than locking into the vendor providing the software.
 
 # Elections Integrity
 Electronic Voting Machines allow the implementation of voting rules which resist elections attacks by strategic nomination, candidate withdrawal, and organized tactical bloc voting.  Advanced election strategies to expand voter choice, provide proportional nomination and representation, and to elect a consensus candidate via Smith- and Schwartz-efficient voting rules can resist political manipulation carried out by well-timed media propaganda.
