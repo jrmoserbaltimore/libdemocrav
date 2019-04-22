@@ -13,7 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\InstantRunoffVotingTabulator\InstantRunoffVotingTabulator.csproj" />
     <ProjectReference Include="..\LibDemocraV\LibDemocraV.csproj" />
+    <ProjectReference Include="..\TidemansAlternativeTabulator\TidemansAlternativeTabulator.csproj" />
   </ItemGroup>
 
 </Project>

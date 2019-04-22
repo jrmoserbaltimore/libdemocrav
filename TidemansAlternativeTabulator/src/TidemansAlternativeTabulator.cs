@@ -12,7 +12,6 @@ namespace MoonsetTechnologies.Voting.Tabulators
 {
     class TidemansAlternativeTabulator : IRankedTabulator
     {
-
         protected IEnumerable<IRankedBallot> Ballots { get; }
         public bool Complete => candidates.Count == 1;
         public IEnumerable<Candidate> SmithSet => topCycle.SmithSet;

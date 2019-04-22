@@ -19,6 +19,21 @@ namespace MoonsetTechnologies.Voting.Analytics
         Dictionary<Candidate, int> GetVoteCounts();
 
         Candidate GetLeastVotedCandidate();
+
+        /// <summary>
+        /// Get batch elimination candidates for a run-off round.
+        /// </summary>
+        /// <returns>A list of candidates to eliminate.</returns>
+        IEnumerable<Candidate> GetBatchEliminationCandidates();
+
+        /// <summary>
+        /// Gets the top (count) candidates, such as for Top-2, by plurality vote.
+        /// </summary>
+        /// <param name="count">Number of candidates to retrieve.</param>
+        /// <returns>A list of the top (count) candidates. If there are ties for
+        /// last place, all such ties will be included, which may return more than
+        /// (count).</returns>
+        IEnumerable<Candidate> GetTopCandidates(int count);
     }
     public class RankedVoteCount : IVoteCount
     {
@@ -73,6 +88,34 @@ namespace MoonsetTechnologies.Voting.Analytics
             }
             return output;
         }
+        /// <inheritdoc/>
+        public IEnumerable<Candidate> GetBatchEliminationCandidates()
+        {
+            throw new NotImplementedException();
+        }
+        /// <inheritdoc/>
+        public IEnumerable<Candidate> GetTopCandidates(int count)
+        {
+            Dictionary<Candidate, int> vc = GetVoteCounts();
+            foreach (Candidate c in vc.Keys)
+            {
+                int j = 0;
+                foreach (Candidate d in vc.Keys)
+                {
+                    // Found someone with more votes than (c)
+                    if (vc[d] > vc[c])
+                        j++;
+                    // Found (count) candidates with more votes than (c)
+                    // so remove (c) from the top candidates
+                    if (j > count)
+                    {
+                        vc.Remove(c);
+                        break;
+                    }
+                }
+            }
+            return vc.Keys;
+        }
     }
 
     public class CachedVoteCount : IVoteCount
@@ -114,6 +157,35 @@ namespace MoonsetTechnologies.Voting.Analytics
                     output = c;
             }
             return output;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<Candidate> GetBatchEliminationCandidates()
+        {
+            throw new NotImplementedException();
+        }
+        /// <inheritdoc/>
+        public IEnumerable<Candidate> GetTopCandidates(int count)
+        {
+            Dictionary<Candidate, int> vc = GetVoteCounts();
+            foreach (Candidate c in vc.Keys)
+            {
+                int j = 0;
+                foreach (Candidate d in vc.Keys)
+                {
+                    // Found someone with more votes than (c)
+                    if (vc[d] > vc[c])
+                        j++;
+                    // Found (count) candidates with more votes than (c)
+                    // so remove (c) from the top candidates
+                    if (j > count)
+                    {
+                        vc.Remove(c);
+                        break;
+                    }
+                }
+            }
+            return vc.Keys;
         }
     }
 }
