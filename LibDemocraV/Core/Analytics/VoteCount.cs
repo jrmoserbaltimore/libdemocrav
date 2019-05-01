@@ -177,7 +177,9 @@ namespace MoonsetTechnologies.Voting.Analytics
                     if (vc[d] > vc[c])
                         j++;
                     // Found (count) candidates with more votes than (c)
-                    // so remove (c) from the top candidates
+                    // so remove (c) from the top candidates.
+                    // This will result in more than (count) candidates
+                    // if there is a tie for last place.
                     if (j > count)
                     {
                         vc.Remove(c);
