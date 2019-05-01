@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <RootNamespace>MoonsetTechnologies.Voting</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Extensions\RankedChoiceVoting\RankedChoiceVoting.csproj" />
+    <ProjectReference Include="..\..\LibDemocraV\LibDemocraV.csproj" />
+  </ItemGroup>
+
+</Project>

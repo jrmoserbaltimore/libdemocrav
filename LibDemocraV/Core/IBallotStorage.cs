@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Storage
 {
-    interface IBallotStorage
+    public interface IBallotStorage
     {
         IEnumerable<IBallot> Ballots { get; }
     }

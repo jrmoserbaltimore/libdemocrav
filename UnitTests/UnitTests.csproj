@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
@@ -13,9 +13,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\InstantRunoffVotingTabulator\InstantRunoffVotingTabulator.csproj" />
+    <ProjectReference Include="..\Extensions\RankedChoiceVoting\RankedChoiceVoting.csproj" />
+    <ProjectReference Include="..\Extensions\SingleTransferableVote\SingleTransferableVote.csproj" />
     <ProjectReference Include="..\LibDemocraV\LibDemocraV.csproj" />
-    <ProjectReference Include="..\TidemansAlternativeTabulator\TidemansAlternativeTabulator.csproj" />
+    <ProjectReference Include="..\Tabulators\InstantRunoffVotingTabulator\InstantRunoffVotingTabulator.csproj" />
+    <ProjectReference Include="..\Tabulators\MeekSTVTabulator\MeekSTVTabulator.csproj" />
+    <ProjectReference Include="..\Tabulators\TidemansAlternativeTabulator\TidemansAlternativeTabulator.csproj" />
   </ItemGroup>
 
 </Project>

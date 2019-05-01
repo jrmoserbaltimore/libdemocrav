@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LibDemocraV\LibDemocraV.csproj" />
+    <ProjectReference Include="..\..\LibDemocraV\LibDemocraV.csproj" />
     <ProjectReference Include="..\RankedChoiceVoting\RankedChoiceVoting.csproj" />
   </ItemGroup>
 

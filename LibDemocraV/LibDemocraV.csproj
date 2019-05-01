@@ -13,8 +13,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Storage\**" />
+    <EmbeddedResource Remove="Storage\**" />
+    <None Remove="Storage\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Core\Analytics\" />
-    <Folder Include="Storage\" />
   </ItemGroup>
 
 </Project>

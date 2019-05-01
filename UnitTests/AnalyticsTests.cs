@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Xunit;
 using MoonsetTechnologies.Voting.Analytics;
+using MoonsetTechnologies.Voting;
 
 namespace MoonsetTechnologies.Voting.Development.Tests
 {
