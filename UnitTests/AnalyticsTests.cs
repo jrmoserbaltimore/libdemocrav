@@ -134,6 +134,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                 Assert.Equal(vc.GetVoteCount(ballotSetFixture.Candidates[i]), cvc.GetVoteCount(ballotSetFixture.Candidates[i]));
         }
 
+        [Fact]
         public void RankedVoteCountsEliminationTest()
         {
             List<Candidate> c = new List<Candidate>(ballotSetFixture.Candidates.Values);

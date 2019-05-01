@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="Core\Analytics\" />
     <Folder Include="Storage\" />
   </ItemGroup>
 

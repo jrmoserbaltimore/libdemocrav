@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LibDemocraV\LibDemocraV.csproj" />
+    <ProjectReference Include="..\RankedChoiceVoting\RankedChoiceVoting.csproj" />
   </ItemGroup>
 
 </Project>
