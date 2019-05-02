@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting
 {
-      public interface IRankedBallot : IBallot
+    public interface IRankedBallot : IBallot
     {
         new IEnumerable<IRankedVote> Votes { get; }
     }
@@ -60,6 +60,8 @@ namespace MoonsetTechnologies.Voting
         public override int GetHashCode() => HashCode.Combine(Candidate, Value);
     }
 
+    
+    [BallotTypeId("eaf87c88-6352-42d0-a048-250c09da2d89")]
     public class RankedBallot : IRankedBallot
     {
         protected List<IRankedVote> votes = new List<IRankedVote>();
@@ -76,6 +78,45 @@ namespace MoonsetTechnologies.Voting
             : this(ballot.Votes)
         {
             this.votes.Add(vote);
+        }
+
+        /// <inheritdoc/>
+        public string Encode()
+        {
+            string output = "";
+            List<IRankedVote> vs = new List<IRankedVote>();
+
+            // Sort the votes
+            foreach (IRankedVote v in votes)
+            {
+                for (int i=0; i < vs.Count; i++)
+                {
+                    if (v.Value > vs[i].Value)
+                    {
+                        vs.Insert(i, v);
+                        break;
+                    }
+                }
+                // Append if not inserted
+                if (!vs.Contains(v))
+                    vs.Add(v);
+            }
+
+            // Start with the first candidate
+            output = vs[0].Candidate.Id.ToString("D");
+
+            // Encode A>B>C=D>E
+            // This encoding supports equal votes.
+            for(int i=1; i < vs.Count; i++)
+            {
+                if (vs[i].Value == vs[i - 1].Value)
+                    output += "=";
+                else if (vs[i].Value > vs[i - 1].Value)
+                    output += ">";
+                output += vs[i].Candidate.Id.ToString("D");
+            }
+
+            return output;
         }
     }
 }

@@ -8,4 +8,5 @@ namespace MoonsetTechnologies.Voting.Storage
     {
         IEnumerable<IBallot> Ballots { get; }
     }
+
 }
