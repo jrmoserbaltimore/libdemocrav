@@ -6,12 +6,14 @@
 //
 //   Tie Breaking in STV, Voting Matters Issue 19
 //     http://www.votingmatters.org.uk/ISSUE19/I19P1.PDF
-//   Implementing STV by MEek's Method, Voting Matters Issue 22
+//   Implementing STV by Meek's Method, Voting Matters Issue 22
 //     http://www.votingmatters.org.uk/ISSUE22/I22P2.pdf
 //   Validation of Implementation of the Meek Algorithm for STV
 //     http://www.votingmatters.org.uk/RES/MKVAL.pdf
 //   Single Transferable Vote by Meek's Method
 //     http://www.dia.govt.nz/diawebsite.NSF/Files/meekm/%24file/meekm.pdf
+//   The Meek STV reference rule
+//     https://prfound.org/resources/reference/reference-meek-rule/
 
 using System;
 using System.Collections.Generic;
@@ -22,6 +24,26 @@ namespace MoonsetTechnologies.Voting.Tabulators
 {
     public class MeekSTVTabulator : ISTVTabulator
     {
+        // number to elect
+        private int seats;
+        // Number of decimal places
+        private int precision = 9;
+        private decimal omega = 0.000001m;
+        private class CandidateState
+        {
+            public Candidate Candidate;
+            public enum States
+            {
+                defeated = 0,
+                withdrawn = 1,
+                hopeful = 2,
+                elected = 3
+            };
+            public decimal KeepFactor;
+            public decimal VoteCount;
+            public States State;
+        }
+
         public MeekSTVTabulator()
         {
         }
