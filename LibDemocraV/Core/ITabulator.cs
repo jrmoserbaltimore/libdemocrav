@@ -7,18 +7,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace MoonsetTechnologies.Voting.Tabulators 
+namespace MoonsetTechnologies.Voting.Tabulators
 {
     /// <summary>
     /// A voting rule to tabulate votes.
     /// </summary>
     public interface ITabulator
     {
-        /// <summary>
-        /// The ballots as they stand in the current round.
-        /// </summary>
-        //IEnumerable<IBallot> Ballots { get; }
-
         /// <summary>
         /// The Candidates still remaining in the current round.
         /// </summary>
@@ -27,16 +22,10 @@ namespace MoonsetTechnologies.Voting.Tabulators
         /// <summary>
         /// True if tabulation is complete; else false.
         /// </summary>
-        bool Complete { get; } 
+        bool Complete { get; }
         /// <summary>
         /// Iterate through the next round of tabulation
         /// </summary>
         void TabulateRound();
-    }
-
-    public interface IRankedTabulator : ITabulator
-    {
-        IEnumerable<Candidate> SchwartzSet { get; }
-        IEnumerable<Candidate> SmithSet { get; }
     }
 }
