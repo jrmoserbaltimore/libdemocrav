@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 using MoonsetTechnologies.Voting.Analytics;
 
 namespace MoonsetTechnologies.Voting.Tabulators
@@ -57,6 +58,10 @@ namespace MoonsetTechnologies.Voting.Tabulators
             public decimal KeepFactor;
             public decimal VoteCount;
             public States State;
+            // First Difference Tiebreaker method
+            // If FirstDifference[Candidate] = true, this candidate wins
+            // a tie with that candidate.
+            public Dictionary<Candidate,bool> FirstDifference;
         }
 
         public MeekSTVTabulator()
@@ -205,15 +210,148 @@ namespace MoonsetTechnologies.Voting.Tabulators
             return (noChange || increase);
         }
 
-        protected void EliminateCandidates()
+        protected void EliminateCandidates(decimal surplus)
+        {
+            Dictionary<Candidate, decimal> cv = new Dictionary<Candidate, decimal>();
+            Dictionary<Candidate, decimal> cd = new Dictionary<Candidate, decimal>();
+            bool disableBatch = false;
+            // Count only hopefuls
+            foreach (Candidate c in candidates.Keys)
+            {
+                if (candidates[c].State == CandidateState.States.hopeful)
+                    cv[c] = candidates[c].VoteCount;
+
+                // Update FirstDifference
+                foreach (Candidate d in candidates.Keys)
+                {
+                    // Update FirstDifference only where all prior rounds have
+                    // been ties.
+                    // If any candidate continues with no FirstDifference,
+                    // disable batch elimination.
+                    if (!candidates[c].FirstDifference.ContainsKey(d))
+                    {
+                        if (candidates[c].VoteCount > candidates[d].VoteCount)
+                            candidates[c].FirstDifference[d] = true;
+                        else if (candidates[c].VoteCount < candidates[d].VoteCount)
+                            candidates[c].FirstDifference[d] = false;
+                        else
+                            disableBatch = true;
+                    }
+                }
+            }
+            
+            do
+            {
+                // XXX:  is this deterministic to get the key for the minimum value?
+                Candidate min = cv.OrderBy(x => x.Value).First().Key;
+
+                // Move this new candidate from cv to cd
+                cd[min] = cv[min];
+                cv.Remove(min);
+
+                // If sum of lowest votes plus surplus is lower, check
+                // for adequate hopefuls and continue
+                if (cd.Sum(x => x.Value) + surplus < cv.Min(x => x.Value))
+                {
+                    // This should prevent removing all candidates.  Consider:
+                    //   - Electing 5
+                    //   - Have elected 3
+                    //   - 7 hopefuls remain
+                    //   - Each hopeful has more votes than all prior hopefuls
+                    //     combined
+                    //
+                    // We would eliminate ALL hopefuls in one batch.
+                    //
+                    // After we eliminate 5, 2 remain.  2 + 3 = 5, so we'll
+                    // eliminate those 5.
+                    //
+                    // It is impossible to tie here:  if the last 3 are ties,
+                    // then the tie case will remain, e.g.:
+                    //   [x x x x] H H H [e e e]
+                    // electing 5, three tied hopefuls, four eliminated.  This
+                    // produces zerocandidates to eliminate in the next round,
+                    // requiring a tiebreaker.
+                    if (
+                        candidates.Select(
+                        x => x.Value.State == CandidateState.States.elected).Count()
+                        + cv.Count() > seats
+                    )
+                        continue;
+                }
+                else
+                {
+                    // Overshot, so move it back.
+                    cv[min] = cd[min];
+                    cd.Remove(min);
+                }
+            } while(false);
+
+            // No complete tie, batching disabled
+            if (disableBatch && cd.Count() > 0)
+            {
+                Candidate min = cd.OrderBy(x => x.Value).First().Key;
+                List<Candidate> fd = new List<Candidate>();
+
+                // Remove from cv each above the minimum vote count
+                while (cd.OrderBy(x => x.Value).Last().Value > cd[min])
+                    cd.Remove(cd.OrderBy(x => x.Value).Last().Key);
+
+                // First-Difference tiebreaker
+                fd.AddRange(FirstDifference(cd.Keys));
+                
+                // Remove candidates from FirstDifference results.
+                // Batch up any remaining ties to avoid a tiebreaker.
+                foreach (Candidate c in cd.Keys)
+                {
+                    if (!fd.Contains(c))
+                    cd.Remove(c);
+                }
+            }
+            // If the two lowest-voted candidates tie, invoke tiebreaker.
+            // This is a standard First-Difference tiebreaker.  It looks
+            // at all 
+            else if (cd.Count() == 0)
+            {
+                Candidate min = cv.OrderBy(x => x.Value).First().Key;
+                List<Candidate> cs = new List<Candidate>();
+                foreach (Candidate c in cv.Keys)
+                {
+                    // Grab all candidates tied for last
+                    if (cv[c] == cv[min])
+                        cs.Add(c);
+                }
+                // Move each candidate qualified by FirstDifference to ce
+                foreach (Candidate c in FirstDifference(cs))
+                {
+                    // Move this new candidate from cv to cd
+                    cd[min] = cv[min];
+                    cv.Remove(min);
+                }
+
+                cs.Clear();
+                cs.AddRange(cd.Keys);
+
+                // There are still multiple tied candidates, so we
+                // need to carry out further tiebreakers.
+                if (cs.Count > 1)
+                {
+
+                }
+            }
+
+            // Eliminate the whole batch
+            foreach(Candidate c in cd.Keys)
+            {
+                candidates[c].KeepFactor = 0.0m;
+                candidates[c].State = CandidateState.States.defeated;
+            }
+        }
+
+        protected IEnumerable<Candidate> FirstDifference(IEnumerable<Candidate> candidates)
         {
             throw new NotImplementedException();
         }
 
-        protected bool DetectStasis()
-        {
-            throw new NotImplementedException();
-        }
         public IEnumerable<Candidate> SchwartzSet => throw new NotImplementedException();
 
         public IEnumerable<Candidate> SmithSet => throw new NotImplementedException();
@@ -271,7 +409,7 @@ namespace MoonsetTechnologies.Voting.Tabulators
                     break;
             } while (true);
             // B.3 Defeat low candidates
-            EliminateCandidates();
+            EliminateCandidates(surplus);
             // B.4:  Next call enters at B.1
         }
     }
