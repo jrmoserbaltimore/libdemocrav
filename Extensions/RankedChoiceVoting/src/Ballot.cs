@@ -10,7 +10,7 @@ namespace MoonsetTechnologies.Voting
         new IEnumerable<IRankedVote> Votes { get; }
     }
 
-    public interface IRankedVote : IVote
+    public interface IRankedVote : IVote, IComparable<IRankedVote>
     {
         /// <summary>
         /// The ordinal value, with lower indicating more preferred.
@@ -58,6 +58,13 @@ namespace MoonsetTechnologies.Voting
 
         /// <inheritdoc/>
         public override int GetHashCode() => HashCode.Combine(Candidate, Value);
+
+        /// <inheritdoc/>
+        public int CompareTo(IRankedVote other)
+        {
+            if (other is null) return 1;
+            return Value - other.Value;
+        }
     }
 
     
@@ -79,28 +86,13 @@ namespace MoonsetTechnologies.Voting
         {
             this.votes.Add(vote);
         }
-
+ 
         /// <inheritdoc/>
         public string Encode()
         {
             string output = "";
             List<IRankedVote> vs = new List<IRankedVote>();
-
-            // Sort the votes
-            foreach (IRankedVote v in votes)
-            {
-                for (int i=0; i < vs.Count; i++)
-                {
-                    if (v.Value > vs[i].Value)
-                    {
-                        vs.Insert(i, v);
-                        break;
-                    }
-                }
-                // Append if not inserted
-                if (!vs.Contains(v))
-                    vs.Add(v);
-            }
+            vs.Sort();
 
             // Start with the first candidate
             output = vs[0].Candidate.Id.ToString("D");
