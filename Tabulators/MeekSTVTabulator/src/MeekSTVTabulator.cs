@@ -105,19 +105,50 @@ namespace MoonsetTechnologies.Voting.Tabulators
         }
 
         // Reference rule B.2.b
-        protected void ComputeQuota()
+        protected decimal ComputeQuota()
         {
             decimal p = Convert.ToDecimal(Math.Pow(10.0D, Convert.ToDouble(0 - precision)));
-            quota = 0;
+            decimal q = 0;
             foreach (CandidateState c in candidates.Values)
-                quota += c.VoteCount;
-            quota /= seats + 1;
+                q += c.VoteCount;
+            q /= seats + 1;
             // truncate and add the precision digit
-            quota = decimal.Round(quota - 0.5m * p) + p;
+            q = decimal.Round(q - 0.5m * p) + p;
+            return q;
         }
 
         // Reference rule B.2.c, returns true if hopefuls get elected.
         protected bool ElectWinners()
+        {
+            bool elected = false;
+            foreach (CandidateState c in candidates.Values)
+            {
+                // Elect hopefuls who made it
+                if (c.State == CandidateState.States.hopeful && c.VoteCount >= quota)
+                {
+                    c.State = CandidateState.States.elected;
+                    elected = true;
+                }
+            }
+            return elected;
+        }
+
+        protected decimal ComputeSurplus()
+        {
+            decimal s = 0.0m;
+            // FIXME:  does this mean total surplus not less than zero,
+            // or only count candidates whose surplus is greater than zero?
+            foreach (CandidateState c in candidates.Values)
+            {
+                if (c.State == CandidateState.States.elected)
+                    s += c.VoteCount - quota;
+            }
+            if (s < 0.0m)
+                s = 0.0m;
+            return s;
+        }
+
+        protected bool DetectStasis()
         {
             throw new NotImplementedException();
         }
@@ -131,6 +162,31 @@ namespace MoonsetTechnologies.Voting.Tabulators
 
         public void TabulateRound()
         {
+            // The s>=surplus check is skipped the first iteration.
+            // We implement this by having surplus greater than the
+            // number of whole ballots.
+            decimal surplus = Convert.ToDecimal(Ballots.Count) + 1;
+            // XXX:  B.1 Test Count complete
+
+            do
+            {
+                decimal s = surplus;
+                bool elected = false;
+                DistributeVotes();
+                quota = ComputeQuota();
+                elected = ElectWinners();
+                surplus = ComputeSurplus();
+                // Counting continues at B1, next tabulation round.
+                if (elected)
+                    return;
+                // Iteration complete, no election, defeat candidates
+                else if (surplus >= s || omega > surplus)
+                    break;
+                // XXX:  B.2.f Update keep factors.
+
+                // XXX:  Detect stasis.
+            } while (true);
+            // XXX:  B.3 Defeat low candidates
             throw new NotImplementedException();
         }
     }
