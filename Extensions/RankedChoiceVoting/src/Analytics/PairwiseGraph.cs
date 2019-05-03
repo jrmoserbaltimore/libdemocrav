@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-
 // FIXME:  The API for this is simply:
 //
 //     PairwiseGraph g = new PairwiseGraph(candidates, ballots);

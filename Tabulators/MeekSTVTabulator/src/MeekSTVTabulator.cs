@@ -1,6 +1,4 @@
-﻿//
-// Copyright (c) Moonset Technologies, LLC. All rights reserved.  
-// Licensed under the MIT License. See LICENSE file in the project root for full license information.  
+﻿// Meek STV proportional election implementation.
 //
 // Special thanks goes to the work of Brian Wichmann and David Hill:
 //
