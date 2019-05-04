@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using MoonsetTechnologies.Voting.Analytics;
+using MoonsetTechnologies.Voting.Tiebreakers;
 
 namespace MoonsetTechnologies.Voting.Tabulators
 {
@@ -35,6 +36,7 @@ namespace MoonsetTechnologies.Voting.Tabulators
         private const decimal omega = 0.000001m;
         private decimal quota = 0.0m;
         private readonly List<IRankedBallot> ballots;
+        private readonly ITiebreaker tiebreaker;
 
         // Round up to precision
         private decimal RoundUp(decimal d)
@@ -52,8 +54,22 @@ namespace MoonsetTechnologies.Voting.Tabulators
         public MeekSTVTabulator(IEnumerable<Candidate> candidates,
             IEnumerable<IRankedBallot> ballots, int seats)
         {
-            voteCount = new MeekVoteCount(candidates, ballots, seats, precision);
-            this.ballots = new List<IRankedBallot>(ballots);
+            ITiebreaker firstDifference = new FirstDifference();
+            tiebreaker = new SeriesTiebreaker(
+                new ITiebreaker[] {
+                    new SequentialTiebreaker(
+                        new ITiebreaker[] {
+                          new LastDifference(),
+                          firstDifference,
+                        }.ToList()
+                    ),
+                    new LastDifference(),
+                    firstDifference,
+                }.ToList()
+            );
+
+            voteCount = new MeekVoteCount(seats, precision, tiebreaker);
+            this.ballots = ballots.ToList();
             this.seats = seats;
 
             // Reference rule A
@@ -74,11 +90,11 @@ namespace MoonsetTechnologies.Voting.Tabulators
 
         public IEnumerable<Candidate> Candidates => candidates.Keys;
 
-        // It's okay to use IsComplete() here because it will only
+        // It's okay to use CheckComplete() here because it will only
         // change state when there are no more rounds to tabulate.
         // This only occurs in a special case where the election has
-        // no more candidates in total than seats and IsComplete() is
-        // called before TabulateRound();
+        // no more candidates in total than seats and CheckComplete()
+        // is called before TabulateRound();
         /// <inheritdoc/>
         public bool Complete => CheckComplete();
 
@@ -132,6 +148,8 @@ namespace MoonsetTechnologies.Voting.Tabulators
                     break;
             } while (true);
 
+            // Update our tiebreaker algorithms
+            tiebreaker.UpdateTiebreaker(candidates);
             // B.3 Defeat low candidates.
             // We won't reach here if we elected someone in B.2.c
             DefeatLosers(surplus);
@@ -274,41 +292,12 @@ namespace MoonsetTechnologies.Voting.Tabulators
             List<Candidate> losers = new List<Candidate>();
             int numWinners;
 
-            // Disable batch elimination until a full set of first
-            // differences has been seen.  Typically there are no
-            // ties in round one and batch elimination is enabled
-            // immediately.  If not, one-by-one elimination avoids
-            // missing a tie-breaking first difference as such:
-            //
-            //   - Y and Z are both batched losers
-            //   - W and X are tied
-            //   - Z transfers n and m votes to W and X
-            //   - Y transfers n and m votes to X and W
-            //
-            // After eliminating Z, W and X are no longer tied.
-            // After eliminating Z and Y, W and X are again tied.
-            voteCount.UpdateTiebreaker(candidates);
-            bool enableBatchElimination = voteCount.AllTiesBreakable;
             hopefuls = candidates
                 .Where(x => x.Value.State == CandidateState.States.hopeful)
                 .ToDictionary(x => x.Key, x => x.Value.VoteCount);
             numWinners = candidates
                 .Where(x => x.Value.State == CandidateState.States.elected).Count();
-            losers = voteCount.GetEliminationCandidates(surplus, numWinners,
-                hopefuls).ToList();
-
-            // Batch elimination disabled, select first
-            if (!enableBatchElimination && losers.Count > 1)
-            {
-                Candidate min = losers.First();
-                foreach (Candidate c in losers)
-                {
-                    if (candidates[c].VoteCount < candidates[min].VoteCount)
-                        min = c;
-                }
-                losers.Clear();
-                losers.Add(min);
-            }
+            losers = voteCount.GetEliminationCandidates(hopefuls, numWinners, surplus).ToList();
 
             // Eliminate the whole batch
             foreach (Candidate c in losers)

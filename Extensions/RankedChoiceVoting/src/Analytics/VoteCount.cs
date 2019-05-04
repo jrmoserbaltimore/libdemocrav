@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using MoonsetTechnologies.Voting.Tiebreakers;
 
 namespace MoonsetTechnologies.Voting.Analytics
 {
-    public interface IVoteCount
+    public interface IVoteCount : IBatchEliminator, IUpdateTiebreaker
     {
         /// <summary>
         /// Gets the count of votes for a candidate.
@@ -18,12 +19,6 @@ namespace MoonsetTechnologies.Voting.Analytics
         /// </summary>
         /// <returns>The number of votes each candidate receives.</returns>
         Dictionary<Candidate, decimal> GetVoteCounts();
-
-        /// <summary>
-        /// Get batch elimination candidates for a run-off round.
-        /// </summary>
-        /// <returns>A list of candidates to eliminate.</returns>
-        IEnumerable<Candidate> GetBatchEliminationCandidates();
     }
 
     public class CandidateState
@@ -42,19 +37,43 @@ namespace MoonsetTechnologies.Voting.Analytics
         {
         }
     }
-    public class RankedVoteCount : IVoteCount
+
+    public abstract class AbstractVoteCount : IVoteCount
+    {
+        protected readonly IBatchEliminator batchEliminator;
+        protected readonly ITiebreaker tiebreaker;
+
+        protected AbstractVoteCount(ITiebreaker tiebreaker, IBatchEliminator batchEliminator)
+        {
+            this.batchEliminator = batchEliminator;
+            this.tiebreaker = tiebreaker;
+        }
+        public abstract decimal GetVoteCount(Candidate candidate);
+        public abstract Dictionary<Candidate, decimal> GetVoteCounts();
+        /// <inheritdoc/>
+        public virtual IEnumerable<Candidate> GetEliminationCandidates
+            (Dictionary<Candidate, decimal> hopefuls, int elected, decimal surplus = 0.0m)
+          => batchEliminator.GetEliminationCandidates(hopefuls, elected, surplus);
+        public virtual void UpdateTiebreaker<T>(Dictionary<Candidate, T> CandidateStates) where T : CandidateState
+        {
+            tiebreaker.UpdateTiebreaker(CandidateStates);
+        }
+    }
+    public class RankedVoteCount : AbstractVoteCount
     {
         private readonly List<Candidate> Candidates;
         private readonly List<IRankedBallot> Ballots;
 
-        public RankedVoteCount(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
+        public RankedVoteCount(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots,
+            ITiebreaker tiebreaker, IBatchEliminator batchEliminator)
+            : base(tiebreaker, batchEliminator)
         {
             Candidates = new List<Candidate>(candidates);
             Ballots = new List<IRankedBallot>(ballots);
         }
 
         /// <inheritdoc/>
-        public decimal GetVoteCount(Candidate c)
+        public override decimal GetVoteCount(Candidate c)
         {
             decimal count = 0.0m;
             foreach (IRankedBallot b in Ballots)
@@ -76,7 +95,7 @@ namespace MoonsetTechnologies.Voting.Analytics
         }
 
         /// <inheritdoc/>
-        public Dictionary<Candidate, decimal> GetVoteCounts()
+        public override Dictionary<Candidate, decimal> GetVoteCounts()
         {
             Dictionary<Candidate, decimal> vc = new Dictionary<Candidate, decimal>();
             foreach (Candidate c in Candidates)
@@ -95,11 +114,7 @@ namespace MoonsetTechnologies.Voting.Analytics
             }
             return output;
         }
-        /// <inheritdoc/>
-        public IEnumerable<Candidate> GetBatchEliminationCandidates()
-        {
-            throw new NotImplementedException();
-        }
+
 
         /// <summary>
         /// Gets the top (count) candidates, such as for Top-2, by plurality vote.
@@ -121,79 +136,6 @@ namespace MoonsetTechnologies.Voting.Analytics
                         j++;
                     // Found (count) candidates with more votes than (c)
                     // so remove (c) from the top candidates
-                    if (j > count)
-                    {
-                        vc.Remove(c);
-                        break;
-                    }
-                }
-            }
-            return vc.Keys;
-        }
-    }
-
-    public class CachedVoteCount : IVoteCount
-    {
-        private readonly IVoteCount VoteCount;
-        private readonly Dictionary<Candidate, decimal> VoteCounts = new Dictionary<Candidate, decimal>();
-        private readonly List<Candidate> Candidates;
-
-        public CachedVoteCount(IEnumerable<Candidate> candidates, IVoteCount voteCount)
-        {
-            Candidates = new List<Candidate>(candidates);
-            VoteCount = voteCount;
-        }
-
-        /// <inheritdoc/>
-        public decimal GetVoteCount(Candidate c)
-        {
-            if (VoteCounts.ContainsKey(c))
-                return VoteCounts[c];
-            return VoteCounts[c] = VoteCount.GetVoteCount(c);
-        }
-
-        /// <inheritdoc/>
-        public Dictionary<Candidate, decimal> GetVoteCounts()
-        {
-            // Fully populate VoteCounts, then return a copy
-            foreach (Candidate c in Candidates)
-                GetVoteCount(c);
-            return new Dictionary<Candidate, decimal>(VoteCounts);
-        }
-
-        public Candidate GetLeastVotedCandidate()
-        {
-            Dictionary<Candidate, decimal> vc = GetVoteCounts();
-            Candidate output = null;
-            foreach (Candidate c in vc.Keys)
-            {
-                if (output is null || vc[c] < vc[output])
-                    output = c;
-            }
-            return output;
-        }
-
-        /// <inheritdoc/>
-        public IEnumerable<Candidate> GetBatchEliminationCandidates()
-        {
-            throw new NotImplementedException();
-        }
-        /// <inheritdoc/>
-        public IEnumerable<Candidate> GetTopCandidates(int count)
-        {
-            Dictionary<Candidate, decimal> vc = GetVoteCounts();
-            foreach (Candidate c in vc.Keys)
-            {
-                int j = 0;
-                foreach (Candidate d in vc.Keys)
-                {
-                    // Found someone with more votes than (c)
-                    if (vc[d] > vc[c])
-                        j++;
-                    // Found (count) candidates with more votes than (c)
-                    // so remove (c) from the top candidates.
-                    // This will result in more than (count) candidates
-                    // if there is a tie for last place.
                     if (j > count)
                     {
                         vc.Remove(c);

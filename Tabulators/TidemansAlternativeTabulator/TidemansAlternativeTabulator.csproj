@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Extensions\RankedChoiceVoting\RankedChoiceVoting.csproj" />
-    <ProjectReference Include="..\..\LibDemocraV\LibDemocraV.csproj" />
+    <ProjectReference Include="..\..\Extensions\Tiebreakers\FirstDifference\FirstDifference.csproj" />
   </ItemGroup>
 
   <ItemGroup>

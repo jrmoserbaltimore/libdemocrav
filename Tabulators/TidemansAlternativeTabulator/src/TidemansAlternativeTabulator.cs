@@ -9,12 +9,15 @@ using System.Collections.Generic;
 using System.Text;
 using MoonsetTechnologies.Voting.Analytics;
 using System.Linq;
+using MoonsetTechnologies.Voting.Tiebreakers;
 
 namespace MoonsetTechnologies.Voting.Tabulators
 {
     class TidemansAlternativeTabulator : IRankedTabulator
     {
         protected IEnumerable<IRankedBallot> Ballots { get; }
+        protected ITiebreaker tiebreaker;
+        protected IBatchEliminator batchEliminator;
         public bool Complete => candidates.Count == 1;
         public IEnumerable<Candidate> SmithSet => topCycle.SmithSet;
         public IEnumerable<Candidate> SchwartzSet => topCycle.SchwartzSet;
@@ -31,6 +34,21 @@ namespace MoonsetTechnologies.Voting.Tabulators
             Ballots = new List<IRankedBallot>(ballots);
             this.candidates = new List<Candidate>(candidates);
             topCycle = new TopCycle(Candidates, Ballots);
+
+            ITiebreaker firstDifference = new FirstDifference();
+            tiebreaker = new SeriesTiebreaker(
+                new ITiebreaker[] {
+                    new SequentialTiebreaker(
+                        new ITiebreaker[] {
+                          new LastDifference(),
+                          firstDifference,
+                        }.ToList()
+                    ),
+                    new LastDifference(),
+                    firstDifference,
+                }.ToList()
+            );
+            batchEliminator = new RunoffBatchEliminator(tiebreaker);
         }
         // General algorithm:
         //   if SchwartzSet is One Candidate
@@ -51,13 +69,14 @@ namespace MoonsetTechnologies.Voting.Tabulators
             else
             {
                 // Drop everyone outside the Smith Set
-                IVoteCount vc = new CachedVoteCount(rSet, new RankedVoteCount(rSet, Ballots));
+                IVoteCount vc = new RankedVoteCount(rSet, Ballots, tiebreaker, batchEliminator);
 
                 // Get rid of the candidate with the fewest votes
                 Candidate c = vc.GetVoteCounts().OrderBy(x => x.Value).First().Key;
                 candidates = new List<Candidate>(rSet);
                 candidates.Remove(c);
             }
+            // FIXME:  Update tiebreaker
         }
     }
 

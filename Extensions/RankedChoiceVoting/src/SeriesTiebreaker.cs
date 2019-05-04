@@ -7,9 +7,9 @@ using System.Linq;
 namespace MoonsetTechnologies.Voting.Tiebreakers
 {
     /// <summary>
-    /// Uses a sequence of tiebreakers in order to break remaining ties after each stage.
+    /// Tests a series of tiebreakers, using the first that returns a sigle result.
     /// </summary>
-    public class SequentialTiebreaker : ITiebreaker
+    public class SeriesTiebreaker : ITiebreaker
     {
         private readonly IList<ITiebreaker> tiebreakers;
         public bool AllTiesBreakable
@@ -27,17 +27,17 @@ namespace MoonsetTechnologies.Voting.Tiebreakers
             }
         }
 
-        public SequentialTiebreaker(IEnumerable<ITiebreaker> tiebreakers)
+        public SeriesTiebreaker(IEnumerable<ITiebreaker> tiebreakers)
         {
             this.tiebreakers = tiebreakers.ToList();
         }
 
         public IEnumerable<Candidate> GetTieWinners(IEnumerable<Candidate> candidates)
         {
-            IList<Candidate> winners = candidates.ToList();
+            IList<Candidate> winners = null;
             foreach (ITiebreaker t in tiebreakers)
             {
-                winners = t.GetTieWinners(winners).ToList();
+                winners = t.GetTieWinners(candidates).ToList();
                 // A single winner isn't a tie, so we're done
                 if (winners.Count == 1)
                     break;

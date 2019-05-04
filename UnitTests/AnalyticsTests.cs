@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Xunit;
 using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting;
+using MoonsetTechnologies.Voting.Tiebreakers;
+using System.Linq;
 
 namespace MoonsetTechnologies.Voting.Development.Tests
 {
@@ -11,6 +13,9 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         // indexed by candidate number in the input
         public Dictionary<int, Candidate> Candidates { get;  private set; }
         public List<IRankedBallot> Ballots { get;  private set; }
+
+        public ITiebreaker tiebreaker;
+        public IBatchEliminator batchEliminator;
 
         public BallotSetFixture()
         {
@@ -24,6 +29,21 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                 "b|5|1 0";
             // Decode the above into a thing.
             (Candidates, Ballots) = DecodeBallots(ballotSet);
+
+            ITiebreaker firstDifference = new FirstDifference();
+            tiebreaker = new SeriesTiebreaker(
+                new ITiebreaker[] {
+                    new SequentialTiebreaker(
+                        new ITiebreaker[] {
+                          new LastDifference(),
+                          firstDifference,
+                        }.ToList()
+                    ),
+                    new LastDifference(),
+                    firstDifference,
+                }.ToList()
+            );
+            batchEliminator = new RunoffBatchEliminator(tiebreaker);
         }
 
         // XXX:  Horrendous parser.  Just enough to limp along.
@@ -65,30 +85,31 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             }
             return (cout, bout);
         }
+
     }
 
     public class AnalyticsTests : IClassFixture<BallotSetFixture>
     {
 
-        BallotSetFixture ballotSetFixture;
+        readonly BallotSetFixture fixture;
 
         public AnalyticsTests(BallotSetFixture fixture)
         {
-            ballotSetFixture = fixture;
+            this.fixture = fixture;
         }
 
         [Fact]
         public void PairwiseGraphBuildTest()
         {
-            PairwiseGraph graph = new PairwiseGraph(ballotSetFixture.Candidates.Values, ballotSetFixture.Ballots);
-            Assert.Equal((20, 28), graph.GetVoteCount(ballotSetFixture.Candidates[0], ballotSetFixture.Candidates[1]));
+            PairwiseGraph graph = new PairwiseGraph(fixture.Candidates.Values, fixture.Ballots);
+            Assert.Equal((20, 28), graph.GetVoteCount(fixture.Candidates[0], fixture.Candidates[1]));
             Assert.NotNull(graph);
         }
 
         [Fact]
         public void TopCycleTest()
         {
-            TopCycle t = new TopCycle(ballotSetFixture.Candidates.Values, ballotSetFixture.Ballots);
+            TopCycle t = new TopCycle(fixture.Candidates.Values, fixture.Ballots);
             List<Candidate> c = new List<Candidate>();
 
             c.AddRange(t.SmithSet);
@@ -103,57 +124,37 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         [Fact]
         public void RankedVoteCountTest()
         {
-            IVoteCount vc = new RankedVoteCount(ballotSetFixture.Candidates.Values, ballotSetFixture.Ballots);
-            Assert.Equal(20, vc.GetVoteCount(ballotSetFixture.Candidates[0]));
-            Assert.Equal(13, vc.GetVoteCount(ballotSetFixture.Candidates[1]));
-        }
-
-        [Fact]
-        public void CachedVoteCountTest()
-        {
-            IVoteCount vc = new RankedVoteCount(ballotSetFixture.Candidates.Values, ballotSetFixture.Ballots);
-            IVoteCount cvc = new CachedVoteCount(ballotSetFixture.Candidates.Values, vc);
-            
-            foreach (int i in ballotSetFixture.Candidates.Keys)
-                Assert.Equal(vc.GetVoteCount(ballotSetFixture.Candidates[i]), cvc.GetVoteCount(ballotSetFixture.Candidates[i]));
+            IVoteCount vc = new RankedVoteCount(fixture.Candidates.Values, fixture.Ballots, fixture.tiebreaker, fixture.batchEliminator);
+            Assert.Equal(20, vc.GetVoteCount(fixture.Candidates[0]));
+            Assert.Equal(13, vc.GetVoteCount(fixture.Candidates[1]));
         }
 
         [Fact]
         public void RankedVoteCountsTest()
         {
-            IVoteCount vc = new RankedVoteCount(ballotSetFixture.Candidates.Values, ballotSetFixture.Ballots);
-            IVoteCount cvc = new CachedVoteCount(ballotSetFixture.Candidates.Values, vc);
+            IVoteCount vc = new RankedVoteCount(fixture.Candidates.Values, fixture.Ballots, fixture.tiebreaker, fixture.batchEliminator);
 
             Dictionary<Candidate, decimal> vcd;
-            vcd = cvc.GetVoteCounts();
+            vcd = vc.GetVoteCounts();
             // Do the numbers match expected?
-            Assert.Equal(20, vcd[ballotSetFixture.Candidates[0]]);
-            Assert.Equal(13, vcd[ballotSetFixture.Candidates[1]]);
-
-            // Are the totals coequal?
-            foreach (int i in ballotSetFixture.Candidates.Keys)
-                Assert.Equal(vc.GetVoteCount(ballotSetFixture.Candidates[i]), cvc.GetVoteCount(ballotSetFixture.Candidates[i]));
+            Assert.Equal(20, vcd[fixture.Candidates[0]]);
+            Assert.Equal(13, vcd[fixture.Candidates[1]]);
         }
 
         [Fact]
         public void RankedVoteCountsEliminationTest()
         {
-            List<Candidate> c = new List<Candidate>(ballotSetFixture.Candidates.Values);
-            c.Remove(ballotSetFixture.Candidates[2]);
+            List<Candidate> c = new List<Candidate>(fixture.Candidates.Values);
+            c.Remove(fixture.Candidates[2]);
 
-            IVoteCount vc = new RankedVoteCount(c, ballotSetFixture.Ballots);
-            IVoteCount cvc = new CachedVoteCount(c, vc);
+            IVoteCount vc = new RankedVoteCount(c, fixture.Ballots, fixture.tiebreaker, fixture.batchEliminator);
 
             Dictionary<Candidate, decimal> vcd;
-            vcd = cvc.GetVoteCounts();
+            vcd = vc.GetVoteCounts();
 
             // Do the numbers match expected?
-            Assert.Equal(20, vcd[ballotSetFixture.Candidates[0]]);
-            Assert.Equal(13+15, vcd[ballotSetFixture.Candidates[1]]);
-
-            // Are the totals coequal?
-            foreach (int i in ballotSetFixture.Candidates.Keys)
-                Assert.Equal(vc.GetVoteCount(ballotSetFixture.Candidates[i]), cvc.GetVoteCount(ballotSetFixture.Candidates[i]));
+            Assert.Equal(20, vcd[fixture.Candidates[0]]);
+            Assert.Equal(13+15, vcd[fixture.Candidates[1]]);
         }
     }
 }

@@ -16,32 +16,18 @@ namespace MoonsetTechnologies.Voting.Analytics
 
         }
     }
-    public class MeekVoteCount : ITiebreaker
+    public class MeekVoteCount : AbstractVoteCount
     {
-        private readonly List<IRankedBallot> ballots;
-        private readonly List<ITiebreaker> tiebreakers =
-            new ITiebreaker[] {
-                new LastDifference(),
-                new FirstDifference(),
-            }.ToList();
-
         // number to elect
-        private int seats;
-        // Number of decimal places. The decimal type avoids
-        // rounding error for up to 27 digits. For 9 billion
-        // votes, precision up to 17 decimal places is possible.
-        // Beyond ten is not generally necessary:
-        // OpaVote uses 6, and the reference algorithm uses 9.
-        private int precision = 9;
+        private readonly int seats;
+        private readonly int precision = 9;
 
-        public MeekVoteCount(IEnumerable<Candidate> candidates,
-            IEnumerable<IRankedBallot> ballots,
-            int seats, int precision)
+        public MeekVoteCount(int seats, int precision, ITiebreaker tiebreaker)
+            : base(tiebreaker, new RunoffBatchEliminator(tiebreaker, seats))
         {
-            this.ballots = ballots.ToList();
+            //this.ballots = ballots.ToList();
             this.seats = seats;
             this.precision = precision;
-
         }
 
         // Reference rule B.2.c, returns null if no hopefuls get elected.
@@ -61,93 +47,50 @@ namespace MoonsetTechnologies.Voting.Analytics
         }
 
         /// <inheritdoc/>
-        public IEnumerable<Candidate> GetEliminationCandidates(decimal surplus,
-            int elected,
-            Dictionary<Candidate, decimal> hopefuls)
+        public override IEnumerable<Candidate> GetEliminationCandidates
+            (Dictionary<Candidate, decimal> hopefuls, int elected, decimal surplus)
         {
-            Dictionary<Candidate, decimal> retain = new Dictionary<Candidate, decimal>();
-            Dictionary<Candidate, decimal> batchLosers = new Dictionary<Candidate, decimal>(hopefuls);
+            List<Candidate> losers;
 
-            // If we elect candidates in B.2.c, the rule checks for a finished
-            // election before running defeats.  It is logically-impossible to
-            // attempt to defeat the last hopeful when correctly implementing
-            // the rule.
-            if (hopefuls.Count == 1)
-                throw new ArgumentOutOfRangeException("hopefuls",
-                    "Elimination of sole remaining candidate is impossible.");
-            do
+            // Disable batch elimination until a full set of first
+            // differences has been seen.  Typically there are no
+            // ties in round one and batch elimination is enabled
+            // immediately.  If not, one-by-one elimination avoids
+            // missing a tie-breaking first difference as such:
+            //
+            //   - Y and Z are both batched losers
+            //   - W and X are tied
+            //   - Z transfers n and m votes to W and X
+            //   - Y transfers n and m votes to X and W
+            //
+            // After eliminating Z, W and X are no longer tied.
+            // After eliminating Z and Y, W and X are again tied.
+            bool enableBatchElimination = tiebreaker.AllTiesBreakable;
+
+            losers = batchEliminator.GetEliminationCandidates(hopefuls, elected, surplus).ToList();
+
+            // Batch elimination disabled, select from lowest votes
+            if (!enableBatchElimination && losers.Count > 1)
             {
-                // XXX:  is this deterministic to get the key for the maximum value?
-                Candidate max = batchLosers.OrderBy(x => x.Value).Last().Key;
-
-                // Move this new candidate from cv to cd
-                retain[max] = batchLosers[max];
-                batchLosers.Remove(max);
-                // Loop on two conditions:
-                //
-                //   - We've eliminated so many hopefuls as to not fill seats
-                //   - batchLosers combined have more votes than the least-voted
-                //     non-loser candidate
-                //
-                // In any case, stop looping if we have only one loser.
-            } while (batchLosers.Count > 1
-                && (elected + retain.Count() > seats 
-                || batchLosers.Sum(x => x.Value) + surplus >= retain.Min(x => x.Value)));
-
-            // Tie check
-            if (batchLosers.Count == 1)
-            { 
-                // Load all the ties into batchLosers
-                while (batchLosers.Max(x => x.Value) == retain.Min(x => x.Value))
+                Candidate min = losers.First();
+                foreach (Candidate c in losers)
                 {
-                    Candidate min = retain.OrderBy(x => x.Value).First().Key;
-                    batchLosers[min] = retain[min];
-                    retain.Remove(min);
+                    if (hopefuls[c] < hopefuls[min])
+                        min = c;
                 }
-
-                
-                List<Candidate> ties = new List<Candidate>();
-                ITiebreaker t;
-                // Try each tiebreaker
-                foreach (ITiebreaker u in tiebreakers)
-                {
-                    t = u;
-                    ties = u.GetTieWinners(batchLosers.Keys).ToList();
-                    if (ties.Count == 1)
-                        break;
-                }
-
-                // Delete all but the single loser
-                foreach (Candidate c in ties)
-                    batchLosers.Remove(c);
+                losers.Clear();
+                losers.Add(min);
             }
 
-
-            return batchLosers.Keys;
+            return losers;
         }
 
-        /// <inheritdoc/>
-        public void UpdateTiebreaker<T>(Dictionary<Candidate, T> CandidateStates)
-            where T : CandidateState
+        public override decimal GetVoteCount(Candidate candidate)
         {
-            foreach (ITiebreaker t in tiebreakers)
-                t.UpdateTiebreaker(CandidateStates);
+            throw new NotImplementedException();
         }
 
-        /// <inheritdoc/>
-        public bool AllTiesBreakable
-        {
-            get
-            {
-                foreach (ITiebreaker t in tiebreakers)
-                {
-                    if (!t.AllTiesBreakable)
-                        return false;
-                }
-                return true;
-            }
-        }
-        public IEnumerable<Candidate> GetTieWinners(IEnumerable<Candidate> candidates)
+        public override Dictionary<Candidate, decimal> GetVoteCounts()
         {
             throw new NotImplementedException();
         }
