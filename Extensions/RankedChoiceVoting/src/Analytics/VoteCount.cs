@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace MoonsetTechnologies.Voting.Analytics
 {
@@ -11,29 +12,35 @@ namespace MoonsetTechnologies.Voting.Analytics
         /// </summary>
         /// <param name="c">The candidate whose votes to count</param>
         /// <returns>The number of votes received.</returns>
-        int GetVoteCount(Candidate c);
+        decimal GetVoteCount(Candidate c);
         /// <summary>
         /// Get the count of votes for all candidates.
         /// </summary>
         /// <returns>The number of votes each candidate receives.</returns>
-        Dictionary<Candidate, int> GetVoteCounts();
-
-        Candidate GetLeastVotedCandidate();
+        Dictionary<Candidate, decimal> GetVoteCounts();
 
         /// <summary>
         /// Get batch elimination candidates for a run-off round.
         /// </summary>
         /// <returns>A list of candidates to eliminate.</returns>
         IEnumerable<Candidate> GetBatchEliminationCandidates();
+    }
 
-        /// <summary>
-        /// Gets the top (count) candidates, such as for Top-2, by plurality vote.
-        /// </summary>
-        /// <param name="count">Number of candidates to retrieve.</param>
-        /// <returns>A list of the top (count) candidates. If there are ties for
-        /// last place, all such ties will be included, which may return more than
-        /// (count).</returns>
-        IEnumerable<Candidate> GetTopCandidates(int count);
+    public class CandidateState
+    {
+        public enum States
+        {
+            defeated = 0,
+            withdrawn = 1,
+            hopeful = 2,
+            elected = 3
+        };
+        public decimal VoteCount { get; set; }
+        public States State { get; set; }
+
+        public CandidateState()
+        {
+        }
     }
     public class RankedVoteCount : IVoteCount
     {
@@ -47,9 +54,9 @@ namespace MoonsetTechnologies.Voting.Analytics
         }
 
         /// <inheritdoc/>
-        public int GetVoteCount(Candidate c)
+        public decimal GetVoteCount(Candidate c)
         {
-            int count = 0;
+            decimal count = 0.0m;
             foreach (IRankedBallot b in Ballots)
             {
                 IRankedVote vote = null;
@@ -69,9 +76,9 @@ namespace MoonsetTechnologies.Voting.Analytics
         }
 
         /// <inheritdoc/>
-        public Dictionary<Candidate, int> GetVoteCounts()
+        public Dictionary<Candidate, decimal> GetVoteCounts()
         {
-            Dictionary<Candidate, int> vc = new Dictionary<Candidate, int>();
+            Dictionary<Candidate, decimal> vc = new Dictionary<Candidate, decimal>();
             foreach (Candidate c in Candidates)
                 vc[c] = GetVoteCount(c);
             return vc;
@@ -79,7 +86,7 @@ namespace MoonsetTechnologies.Voting.Analytics
 
         public Candidate GetLeastVotedCandidate()
         {
-            Dictionary<Candidate, int> vc = GetVoteCounts();
+            Dictionary<Candidate, decimal> vc = GetVoteCounts();
             Candidate output = null;
             foreach(Candidate c in vc.Keys)
             {
@@ -93,10 +100,17 @@ namespace MoonsetTechnologies.Voting.Analytics
         {
             throw new NotImplementedException();
         }
-        /// <inheritdoc/>
+
+        /// <summary>
+        /// Gets the top (count) candidates, such as for Top-2, by plurality vote.
+        /// </summary>
+        /// <param name="count">Number of candidates to retrieve.</param>
+        /// <returns>A list of the top (count) candidates. If there are ties for
+        /// last place, all such ties will be included, which may return more than
+        /// (count).</returns>
         public IEnumerable<Candidate> GetTopCandidates(int count)
         {
-            Dictionary<Candidate, int> vc = GetVoteCounts();
+            Dictionary<Candidate, decimal> vc = GetVoteCounts();
             foreach (Candidate c in vc.Keys)
             {
                 int j = 0;
@@ -121,7 +135,7 @@ namespace MoonsetTechnologies.Voting.Analytics
     public class CachedVoteCount : IVoteCount
     {
         private readonly IVoteCount VoteCount;
-        private readonly Dictionary<Candidate, int> VoteCounts = new Dictionary<Candidate, int>();
+        private readonly Dictionary<Candidate, decimal> VoteCounts = new Dictionary<Candidate, decimal>();
         private readonly List<Candidate> Candidates;
 
         public CachedVoteCount(IEnumerable<Candidate> candidates, IVoteCount voteCount)
@@ -131,7 +145,7 @@ namespace MoonsetTechnologies.Voting.Analytics
         }
 
         /// <inheritdoc/>
-        public int GetVoteCount(Candidate c)
+        public decimal GetVoteCount(Candidate c)
         {
             if (VoteCounts.ContainsKey(c))
                 return VoteCounts[c];
@@ -139,17 +153,17 @@ namespace MoonsetTechnologies.Voting.Analytics
         }
 
         /// <inheritdoc/>
-        public Dictionary<Candidate, int> GetVoteCounts()
+        public Dictionary<Candidate, decimal> GetVoteCounts()
         {
             // Fully populate VoteCounts, then return a copy
             foreach (Candidate c in Candidates)
                 GetVoteCount(c);
-            return new Dictionary<Candidate, int>(VoteCounts);
+            return new Dictionary<Candidate, decimal>(VoteCounts);
         }
 
         public Candidate GetLeastVotedCandidate()
         {
-            Dictionary<Candidate, int> vc = GetVoteCounts();
+            Dictionary<Candidate, decimal> vc = GetVoteCounts();
             Candidate output = null;
             foreach (Candidate c in vc.Keys)
             {
@@ -167,7 +181,7 @@ namespace MoonsetTechnologies.Voting.Analytics
         /// <inheritdoc/>
         public IEnumerable<Candidate> GetTopCandidates(int count)
         {
-            Dictionary<Candidate, int> vc = GetVoteCounts();
+            Dictionary<Candidate, decimal> vc = GetVoteCounts();
             foreach (Candidate c in vc.Keys)
             {
                 int j = 0;

@@ -124,7 +124,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             IVoteCount vc = new RankedVoteCount(ballotSetFixture.Candidates.Values, ballotSetFixture.Ballots);
             IVoteCount cvc = new CachedVoteCount(ballotSetFixture.Candidates.Values, vc);
 
-            Dictionary<Candidate, int> vcd;
+            Dictionary<Candidate, decimal> vcd;
             vcd = cvc.GetVoteCounts();
             // Do the numbers match expected?
             Assert.Equal(20, vcd[ballotSetFixture.Candidates[0]]);
@@ -144,7 +144,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             IVoteCount vc = new RankedVoteCount(c, ballotSetFixture.Ballots);
             IVoteCount cvc = new CachedVoteCount(c, vc);
 
-            Dictionary<Candidate, int> vcd;
+            Dictionary<Candidate, decimal> vcd;
             vcd = cvc.GetVoteCounts();
 
             // Do the numbers match expected?

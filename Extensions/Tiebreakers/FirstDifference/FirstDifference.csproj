@@ -1,17 +1,17 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <RootNamespace>MoonsetTechnologies.Voting</RootNamespace>
+    <RootNamespace>MoonsetTechnologies.Voting.Tiebreakers</RootNamespace>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\LibDemocraV\LibDemocraV.csproj" />
+    <ProjectReference Include="..\..\RankedChoiceVoting\RankedChoiceVoting.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\LICENSE.md">
+    <None Include="..\..\..\LICENSE.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>

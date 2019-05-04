@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using MoonsetTechnologies.Voting.Analytics;
+using System.Linq;
 
 namespace MoonsetTechnologies.Voting.Tabulators
 {
@@ -53,7 +54,7 @@ namespace MoonsetTechnologies.Voting.Tabulators
                 IVoteCount vc = new CachedVoteCount(rSet, new RankedVoteCount(rSet, Ballots));
 
                 // Get rid of the candidate with the fewest votes
-                Candidate c = vc.GetLeastVotedCandidate();
+                Candidate c = vc.GetVoteCounts().OrderBy(x => x.Value).First().Key;
                 candidates = new List<Candidate>(rSet);
                 candidates.Remove(c);
             }

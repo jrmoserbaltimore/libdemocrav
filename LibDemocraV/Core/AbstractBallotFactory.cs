@@ -11,7 +11,6 @@ namespace MoonsetTechnologies.Voting.Utility
         /// Decode an encoded ballot 
         /// </summary>
         /// <param name="encodedBallot"></param>
-        /// <param name="candidates"></param>
         /// <returns></returns>
         public abstract IBallot DecodeBallot(string encodedBallot);
     }
