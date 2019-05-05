@@ -12,24 +12,10 @@ namespace MoonsetTechnologies.Voting.Utility
     public class TidemansAlternativeTabulatorFactory 
         : AbstractTabulatorFactory<IRankedBallot, IRankedTabulator>
     {
+        readonly GenericTiebreakerFactory tiebreakerFactory;
 
-        private ITiebreaker NewTiebreaker()
-        {
-            ITiebreaker firstDifference = new FirstDifference();
-            ITiebreaker tiebreaker = new SeriesTiebreaker(
-                new ITiebreaker[] {
-                new SequentialTiebreaker(
-                    new ITiebreaker[] {
-                        new LastDifference(),
-                        firstDifference,
-                    }.ToList()
-                ),
-                new LastDifference(),
-                firstDifference,
-                }.ToList()
-            );
-            return tiebreaker;
-        }
+        private ITiebreaker NewTiebreaker() => tiebreakerFactory.CreateTiebreaker();
+
         private IBatchEliminator NewBatchEliminator(ITiebreaker tiebreaker = null)
         {
             if (tiebreaker is null)
@@ -38,9 +24,31 @@ namespace MoonsetTechnologies.Voting.Utility
         }
         public TidemansAlternativeTabulatorFactory()
         {
-            // FIXME:  Pass factories for tiebreakers and batch eliminators
-            // to configure the factory
+            // Generic tiebreaker factory is:
+            //   SeriesTiebreaker
+            //   {
+            //     SequentialTiebreaker
+            //     {
+            //       LastDifferenceTiebreaker,
+            //       FirstDifferenceTiebreaker
+            //     },
+            //     firstDifferenceTiebreaker
+            //   }
+
+            AbstractTiebreakerFactory f;
+            AbstractTiebreakerFactory firstDifference = new GenericTiebreakerFactory(typeof(FirstDifference));
+            List<AbstractTiebreakerFactory> factories = new List<AbstractTiebreakerFactory>();
+            factories.Add(new GenericTiebreakerFactory(typeof(LastDifference)));
+            factories.Add(firstDifference);
+            f = new GenericTiebreakerFactory(typeof(SequentialTiebreaker), factories);
+
+            factories = new List<AbstractTiebreakerFactory>();
+            factories.Add(f);
+            factories.Add(firstDifference);
+            f = new GenericTiebreakerFactory(typeof(SeriesTiebreaker), factories);
+            tiebreakerFactory = f as GenericTiebreakerFactory;
         }
+
         public override IRankedTabulator CreateTabulator(IEnumerable<Candidate> candidates,
             IEnumerable<IRankedBallot> ballots)
           => CreateTabulator(candidates, ballots, null, null);
