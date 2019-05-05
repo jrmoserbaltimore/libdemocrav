@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using Xunit;
 using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting;
-using MoonsetTechnologies.Voting.Tiebreakers;
+using MoonsetTechnologies.Voting.Tiebreaking;
 using System.Linq;
 using MoonsetTechnologies.Voting.Utility;
-using MoonsetTechnologies.Voting.Tabulators;
+using MoonsetTechnologies.Voting.Tabulation;
 
 namespace MoonsetTechnologies.Voting.Development.Tests
 {

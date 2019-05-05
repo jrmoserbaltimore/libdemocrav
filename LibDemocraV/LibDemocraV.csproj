@@ -12,14 +12,4 @@
     <DocumentationFile>bin\Debug\netcoreapp2.1\LibDemocraV.xml</DocumentationFile>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Storage\**" />
-    <EmbeddedResource Remove="Storage\**" />
-    <None Remove="Storage\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Core\Analytics\" />
-  </ItemGroup>
-
 </Project>

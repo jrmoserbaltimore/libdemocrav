@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Xunit;
 using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting;
-using MoonsetTechnologies.Voting.Tiebreakers;
+using MoonsetTechnologies.Voting.Tiebreaking;
 using System.Linq;
 
 namespace MoonsetTechnologies.Voting.Development.Tests
