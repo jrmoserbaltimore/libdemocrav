@@ -54,16 +54,16 @@ namespace MoonsetTechnologies.Voting.Tabulation
         public MeekSTVTabulator(IEnumerable<Candidate> candidates,
             IEnumerable<IRankedBallot> ballots, int seats)
         {
-            ITiebreaker firstDifference = new FirstDifference();
+            ITiebreaker firstDifference = new FirstDifferenceTiebreaker();
             tiebreaker = new SeriesTiebreaker(
                 new ITiebreaker[] {
                     new SequentialTiebreaker(
                         new ITiebreaker[] {
-                          new LastDifference(),
+                          new LastDifferenceTiebreaker(),
                           firstDifference,
                         }.ToList()
                     ),
-                    new LastDifference(),
+                    new LastDifferenceTiebreaker(),
                     firstDifference,
                 }.ToList()
             );

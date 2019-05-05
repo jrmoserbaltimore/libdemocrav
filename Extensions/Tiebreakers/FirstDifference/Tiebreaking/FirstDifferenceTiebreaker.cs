@@ -6,10 +6,10 @@ using System.Linq;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
-    public class FirstDifference : AbstractDifference
+    public class FirstDifferenceTiebreaker : AbstractDifferenceTiebreaker
     {
 
-        public FirstDifference()
+        public FirstDifferenceTiebreaker()
         {
         }
 

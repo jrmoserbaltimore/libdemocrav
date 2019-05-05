@@ -5,9 +5,9 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
-    public class LastDifference : AbstractDifference
+    public class LastDifferenceTiebreaker : AbstractDifferenceTiebreaker
     {
-        public LastDifference()
+        public LastDifferenceTiebreaker()
         {
         }
 

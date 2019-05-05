@@ -36,9 +36,9 @@ namespace MoonsetTechnologies.Voting.Utility
             //   }
 
             AbstractTiebreakerFactory f;
-            AbstractTiebreakerFactory firstDifference = new GenericTiebreakerFactory(typeof(FirstDifference));
+            AbstractTiebreakerFactory firstDifference = new GenericTiebreakerFactory(typeof(FirstDifferenceTiebreaker));
             List<AbstractTiebreakerFactory> factories = new List<AbstractTiebreakerFactory>();
-            factories.Add(new GenericTiebreakerFactory(typeof(LastDifference)));
+            factories.Add(new GenericTiebreakerFactory(typeof(LastDifferenceTiebreaker)));
             factories.Add(firstDifference);
             f = new GenericTiebreakerFactory(typeof(SequentialTiebreaker), factories);
 

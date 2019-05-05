@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
-    public abstract class AbstractDifference : ITiebreaker
+    public abstract class AbstractDifferenceTiebreaker : ITiebreaker
     {
         // If winPairs[a][b] = true, a wins a tie against b
         protected Dictionary<Candidate, Dictionary<Candidate, bool>> winPairs

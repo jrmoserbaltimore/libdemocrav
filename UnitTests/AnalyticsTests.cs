@@ -30,16 +30,16 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             // Decode the above into a thing.
             (Candidates, Ballots) = DecodeBallots(ballotSet);
 
-            ITiebreaker firstDifference = new FirstDifference();
+            ITiebreaker firstDifference = new FirstDifferenceTiebreaker();
             tiebreaker = new SeriesTiebreaker(
                 new ITiebreaker[] {
                     new SequentialTiebreaker(
                         new ITiebreaker[] {
-                          new LastDifference(),
+                          new LastDifferenceTiebreaker(),
                           firstDifference,
                         }.ToList()
                     ),
-                    new LastDifference(),
+                    new LastDifferenceTiebreaker(),
                     firstDifference,
                 }.ToList()
             );
