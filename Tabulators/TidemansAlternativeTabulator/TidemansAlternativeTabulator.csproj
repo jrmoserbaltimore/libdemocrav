@@ -9,8 +9,4 @@
     <ProjectReference Include="..\..\Extensions\Tiebreakers\FirstDifference\FirstDifference.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="src\" />
-  </ItemGroup>
-
 </Project>

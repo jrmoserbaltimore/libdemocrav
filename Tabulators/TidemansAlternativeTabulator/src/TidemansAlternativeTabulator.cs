@@ -13,7 +13,7 @@ using MoonsetTechnologies.Voting.Tiebreakers;
 
 namespace MoonsetTechnologies.Voting.Tabulators
 {
-    class TidemansAlternativeTabulator : IRankedTabulator
+    public class TidemansAlternativeTabulator : IRankedTabulator
     {
         protected IEnumerable<IRankedBallot> Ballots { get; }
         protected ITiebreaker tiebreaker;
@@ -29,26 +29,17 @@ namespace MoonsetTechnologies.Voting.Tabulators
         protected virtual IEnumerable<Candidate> CondorcetCheck(TopCycle t) => t.SchwartzSet;
         protected virtual IEnumerable<Candidate> RetainSet(TopCycle t) => t.SmithSet;
 
-        public TidemansAlternativeTabulator(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
+        public TidemansAlternativeTabulator(IEnumerable<Candidate> candidates,
+            IEnumerable<IRankedBallot> ballots,
+            ITiebreaker tiebreaker,
+            IBatchEliminator batchEliminator)
         {
             Ballots = new List<IRankedBallot>(ballots);
             this.candidates = new List<Candidate>(candidates);
             topCycle = new TopCycle(Candidates, Ballots);
 
-            ITiebreaker firstDifference = new FirstDifference();
-            tiebreaker = new SeriesTiebreaker(
-                new ITiebreaker[] {
-                    new SequentialTiebreaker(
-                        new ITiebreaker[] {
-                          new LastDifference(),
-                          firstDifference,
-                        }.ToList()
-                    ),
-                    new LastDifference(),
-                    firstDifference,
-                }.ToList()
-            );
-            batchEliminator = new RunoffBatchEliminator(tiebreaker);
+            this.tiebreaker = tiebreaker;
+            this.batchEliminator = batchEliminator;
         }
         // General algorithm:
         //   if SchwartzSet is One Candidate
@@ -80,7 +71,7 @@ namespace MoonsetTechnologies.Voting.Tabulators
         }
     }
 
-    class TidemansAlternativeSmithTabulator : TidemansAlternativeTabulator
+    public class TidemansAlternativeSmithTabulator : TidemansAlternativeTabulator
     {
         // General algorithm:
         //   if SmithSet is One Candidate
@@ -93,14 +84,17 @@ namespace MoonsetTechnologies.Voting.Tabulators
         protected override IEnumerable<Candidate> CondorcetCheck(TopCycle t) => t.SmithSet;
         protected override IEnumerable<Candidate> RetainSet(TopCycle t) => t.SmithSet;
 
-        public TidemansAlternativeSmithTabulator(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
-            : base(candidates, ballots)
+        public TidemansAlternativeSmithTabulator(IEnumerable<Candidate> candidates,
+            IEnumerable<IRankedBallot> ballots,
+            ITiebreaker tiebreaker,
+            IBatchEliminator batchEliminator)
+            : base(candidates, ballots, tiebreaker, batchEliminator)
         {
 
         }
     }
 
-    class TidemansAlternativeSchwartzTabulator : TidemansAlternativeTabulator
+    public class TidemansAlternativeSchwartzTabulator : TidemansAlternativeTabulator
     {
         // General algorithm:
         //   if SchwartzSet is One Candidate
@@ -113,8 +107,11 @@ namespace MoonsetTechnologies.Voting.Tabulators
         protected override IEnumerable<Candidate> CondorcetCheck(TopCycle t) => t.SchwartzSet;
         protected override IEnumerable<Candidate> RetainSet(TopCycle t) => t.SchwartzSet;
 
-        public TidemansAlternativeSchwartzTabulator(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
-           : base(candidates, ballots)
+        public TidemansAlternativeSchwartzTabulator(IEnumerable<Candidate> candidates,
+            IEnumerable<IRankedBallot> ballots,
+            ITiebreaker tiebreaker,
+            IBatchEliminator batchEliminator)
+            : base(candidates, ballots, tiebreaker, batchEliminator)
         {
 
         }
