@@ -1,10 +1,11 @@
-﻿using System;
+﻿using MoonsetTechnologies.Voting.Tiebreaking;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MoonsetTechnologies.Voting.Analytics
+namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public interface IBatchEliminator
+    public interface IBatchEliminator : IUpdateTiebreaker
     {
         /// <summary>
         /// Get the set of elimination candidates.

@@ -5,6 +5,7 @@ using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting;
 using MoonsetTechnologies.Voting.Tiebreaking;
 using System.Linq;
+using MoonsetTechnologies.Voting.Tabulation;
 
 namespace MoonsetTechnologies.Voting.Development.Tests
 {
@@ -124,7 +125,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         [Fact]
         public void RankedVoteCountTest()
         {
-            IVoteCount vc = new RankedVoteCount(fixture.Candidates.Values, fixture.Ballots, fixture.tiebreaker, fixture.batchEliminator);
+            IVoteCount vc = new RankedVoteCount(fixture.Candidates.Values, fixture.Ballots, fixture.batchEliminator);
             Assert.Equal(20, vc.GetVoteCount(fixture.Candidates[0]));
             Assert.Equal(13, vc.GetVoteCount(fixture.Candidates[1]));
         }
@@ -132,7 +133,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         [Fact]
         public void RankedVoteCountsTest()
         {
-            IVoteCount vc = new RankedVoteCount(fixture.Candidates.Values, fixture.Ballots, fixture.tiebreaker, fixture.batchEliminator);
+            IVoteCount vc = new RankedVoteCount(fixture.Candidates.Values, fixture.Ballots, fixture.batchEliminator);
 
             Dictionary<Candidate, decimal> vcd;
             vcd = vc.GetVoteCounts();
@@ -147,7 +148,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             List<Candidate> c = new List<Candidate>(fixture.Candidates.Values);
             c.Remove(fixture.Candidates[2]);
 
-            IVoteCount vc = new RankedVoteCount(c, fixture.Ballots, fixture.tiebreaker, fixture.batchEliminator);
+            IVoteCount vc = new RankedVoteCount(c, fixture.Ballots, fixture.batchEliminator);
 
             Dictionary<Candidate, decimal> vcd;
             vcd = vc.GetVoteCounts();

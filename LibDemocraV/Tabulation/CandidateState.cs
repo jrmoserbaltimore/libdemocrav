@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MoonsetTechnologies.Voting.Analytics
+namespace MoonsetTechnologies.Voting.Tabulation
 {
     public class CandidateState
     {
@@ -18,6 +18,8 @@ namespace MoonsetTechnologies.Voting.Analytics
 
         public CandidateState()
         {
+            VoteCount = 0.0m;
+            State = States.elected;
         }
     }
 }

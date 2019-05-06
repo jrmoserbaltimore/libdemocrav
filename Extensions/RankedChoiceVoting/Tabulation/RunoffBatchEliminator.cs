@@ -4,12 +4,14 @@ using System.Text;
 using System.Linq;
 using MoonsetTechnologies.Voting.Tiebreaking;
 
-namespace MoonsetTechnologies.Voting.Analytics
+namespace MoonsetTechnologies.Voting.Tabulation
 {
     public class RunoffBatchEliminator : IBatchEliminator
     {
         private readonly ITiebreaker tiebreaker;
         private readonly int seats;
+
+        protected bool enableBatchElimination = true;
 
         public RunoffBatchEliminator(ITiebreaker tiebreakers, int seats = 1)
         {
@@ -50,8 +52,26 @@ namespace MoonsetTechnologies.Voting.Analytics
                 && (elected + retain.Count() > seats
                 || batchLosers.Sum(x => x.Value) + surplus >= retain.Min(x => x.Value)));
 
-            // Tie check
-            if (batchLosers.Count == 1)
+            bool enableBatchElimination = tiebreaker.FullyInformed && this.enableBatchElimination;
+
+            // Batch elimination disabled, so eliminate all in the batch except the
+            // candidate with the fewest votes, or the set of tied candidates with
+            // the fewest.
+            //
+            // Ties within the batch can be eliminated without a tiebreaker, so we
+            // eliminate the ties if they're tied for last place in a batch even if
+            // we're trying to eliminate one at a time.
+            if (!enableBatchElimination && batchLosers.Count > 1)
+            {
+                Candidate min = batchLosers.OrderBy(x => x.Value).First().Key;
+                foreach (Candidate c in batchLosers.Keys)
+                {
+                    if (batchLosers[c] > batchLosers[min])
+                        batchLosers.Remove(c);
+                }
+            }
+            // True tie check
+            else if (batchLosers.Count == 1)
             {
                 // Load all the ties into batchLosers
                 while (batchLosers.Max(x => x.Value) == retain.Min(x => x.Value))
@@ -64,11 +84,24 @@ namespace MoonsetTechnologies.Voting.Analytics
                 List<Candidate> ties = new List<Candidate>();
                 ties = tiebreaker.GetTieWinners(batchLosers.Keys).ToList();
 
-                // Delete all but the single loser
+                // Delete from the losers all but the tiewinners
                 foreach (Candidate c in ties)
+                {
+                    retain[c] = batchLosers[c];
                     batchLosers.Remove(c);
+                }
+
+                // Unbreakable tie.
+                if (batchLosers.Count > 1)
+                {
+                    throw new NotImplementedException();
+                }
             }
             return batchLosers.Keys;
         }
+
+        /// <inheritdoc/>
+        public void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
+            => tiebreaker.UpdateTiebreaker(candidateStates);
     }
 }

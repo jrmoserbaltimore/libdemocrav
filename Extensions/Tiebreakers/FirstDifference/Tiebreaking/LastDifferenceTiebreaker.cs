@@ -1,4 +1,5 @@
 ﻿using MoonsetTechnologies.Voting.Analytics;
+using MoonsetTechnologies.Voting.Tabulation;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,17 +12,17 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
         {
         }
 
-        public override void UpdateTiebreaker<T>(Dictionary<Candidate, T> CandidateStates)
+        public override void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
         {
             bool allLastDifferences = true;
-            foreach (Candidate c in CandidateStates.Keys)
+            foreach (Candidate c in candidateStates.Keys)
             {
-                foreach (Candidate d in CandidateStates.Keys)
+                foreach (Candidate d in candidateStates.Keys)
                 {
                     // Update winPairs whenever not a pairwise tie
-                    if (CandidateStates[c].VoteCount != CandidateStates[d].VoteCount)
+                    if (candidateStates[c].VoteCount != candidateStates[d].VoteCount)
                         winPairs[c][d] =
-                          (CandidateStates[c].VoteCount > CandidateStates[d].VoteCount);
+                          (candidateStates[c].VoteCount > candidateStates[d].VoteCount);
                     // Can't break this tie
                     if (!winPairs[c].ContainsKey(d))
                         allLastDifferences = false;

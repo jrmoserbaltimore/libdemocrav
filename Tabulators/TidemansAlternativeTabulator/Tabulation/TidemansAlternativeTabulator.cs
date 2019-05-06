@@ -16,7 +16,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
     public class TidemansAlternativeTabulator : IRankedTabulator
     {
         protected IEnumerable<IRankedBallot> Ballots { get; }
-        protected ITiebreaker tiebreaker;
         protected IBatchEliminator batchEliminator;
         public bool Complete => candidates.Count == 1;
         public IEnumerable<Candidate> SmithSet => topCycle.SmithSet;
@@ -30,15 +29,12 @@ namespace MoonsetTechnologies.Voting.Tabulation
         protected virtual IEnumerable<Candidate> RetainSet(TopCycle t) => t.SmithSet;
 
         public TidemansAlternativeTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<IRankedBallot> ballots,
-            ITiebreaker tiebreaker,
-            IBatchEliminator batchEliminator)
+            IEnumerable<IRankedBallot> ballots, IBatchEliminator batchEliminator)
         {
             Ballots = new List<IRankedBallot>(ballots);
             this.candidates = new List<Candidate>(candidates);
             topCycle = new TopCycle(Candidates, Ballots);
 
-            this.tiebreaker = tiebreaker;
             this.batchEliminator = batchEliminator;
         }
         // General algorithm:
@@ -60,7 +56,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             else
             {
                 // Drop everyone outside the Smith Set
-                IVoteCount vc = new RankedVoteCount(rSet, Ballots, tiebreaker, batchEliminator);
+                IVoteCount vc = new RankedVoteCount(rSet, Ballots, batchEliminator);
 
                 // Get rid of the candidate with the fewest votes
                 Candidate c = vc.GetVoteCounts().OrderBy(x => x.Value).First().Key;
@@ -86,9 +82,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
         public TidemansAlternativeSmithTabulator(IEnumerable<Candidate> candidates,
             IEnumerable<IRankedBallot> ballots,
-            ITiebreaker tiebreaker,
             IBatchEliminator batchEliminator)
-            : base(candidates, ballots, tiebreaker, batchEliminator)
+            : base(candidates, ballots, batchEliminator)
         {
 
         }
@@ -109,9 +104,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
         public TidemansAlternativeSchwartzTabulator(IEnumerable<Candidate> candidates,
             IEnumerable<IRankedBallot> ballots,
-            ITiebreaker tiebreaker,
             IBatchEliminator batchEliminator)
-            : base(candidates, ballots, tiebreaker, batchEliminator)
+            : base(candidates, ballots, batchEliminator)
         {
 
         }

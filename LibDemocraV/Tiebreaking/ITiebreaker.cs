@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using MoonsetTechnologies.Voting.Analytics;
+using MoonsetTechnologies.Voting.Tabulation;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
     public interface ITiebreaker : IUpdateTiebreaker
     {
-        bool AllTiesBreakable { get; }
+        /// <summary>
+        /// True if batch elimination will not affect tiebreakers occurring after batch elimination.
+        /// </summary>
+        bool FullyInformed { get; }
         /// <summary>
         /// Get all candidates who win the tie by this method.
         /// </summary>

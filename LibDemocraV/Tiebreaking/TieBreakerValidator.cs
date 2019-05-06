@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using MoonsetTechnologies.Voting.Analytics;
 using System.Linq;
+using MoonsetTechnologies.Voting.Tabulation;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
     class TieBreakerValidator : ITiebreaker
     {
         private readonly ITiebreaker t;
-        public bool AllTiesBreakable => t.AllTiesBreakable;
+        public bool FullyInformed => t.FullyInformed;
 
         public TieBreakerValidator(ITiebreaker tiebreaker)
         {
@@ -26,9 +26,9 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
             return winners;
         }
 
-        public void UpdateTiebreaker<T>(Dictionary<Candidate, T> CandidateStates) where T : CandidateState
+        public void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
         {
-            t.UpdateTiebreaker(CandidateStates);
+            t.UpdateTiebreaker(candidateStates);
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using MoonsetTechnologies.Voting.Analytics;
 using System.Linq;
+using MoonsetTechnologies.Voting.Tabulation;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
@@ -12,26 +12,16 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
     public class SequentialTiebreaker : ITiebreaker
     {
         private readonly IList<ITiebreaker> tiebreakers;
-        public bool AllTiesBreakable
-        {
-            get
-            {
-                // If any one tiebreaker can break all ties, all ties are breakable
-                foreach (ITiebreaker t in tiebreakers)
-                {
-                    if (t.AllTiesBreakable)
-                        return true;
-                }
-                // All ties might be breakable, but we can't test that
-                return false;
-            }
-        }
+        // Not fully informed until the first tiebreaker is fully informed.
+        /// <inheritdoc/>
+        public bool FullyInformed => tiebreakers.First().FullyInformed;
 
         public SequentialTiebreaker(IEnumerable<ITiebreaker> tiebreakers)
         {
             this.tiebreakers = tiebreakers.ToList();
         }
 
+        /// <inheritdoc/>
         public IEnumerable<Candidate> GetTieWinners(IEnumerable<Candidate> candidates)
         {
             IList<Candidate> winners = candidates.ToList();
@@ -45,7 +35,8 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
             return winners;
         }
 
-        public void UpdateTiebreaker<T>(Dictionary<Candidate, T> CandidateStates) where T : CandidateState
+        /// <inheritdoc/>
+        public void UpdateTiebreaker(Dictionary<Candidate, CandidateState> CandidateStates)
         {
             foreach (ITiebreaker t in tiebreakers)
                 t.UpdateTiebreaker(CandidateStates);

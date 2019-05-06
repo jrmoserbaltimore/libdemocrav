@@ -63,7 +63,7 @@ namespace MoonsetTechnologies.Voting.Utility
             if (batchEliminator is null)
                 batchEliminator = NewBatchEliminator(tiebreaker);
 
-            return new TidemansAlternativeTabulator(candidates, ballots, tiebreaker, batchEliminator);
+            return new TidemansAlternativeTabulator(candidates, ballots, batchEliminator);
         }
     }
 }

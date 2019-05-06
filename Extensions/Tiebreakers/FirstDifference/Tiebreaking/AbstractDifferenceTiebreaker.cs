@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using MoonsetTechnologies.Voting.Analytics;
 using System.Linq;
+using MoonsetTechnologies.Voting.Tabulation;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
@@ -14,7 +15,7 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
 
         protected bool allTiesBreakable = false;
 
-        public bool AllTiesBreakable => allTiesBreakable;
+        public bool FullyInformed => allTiesBreakable;
 
         public virtual IEnumerable<Candidate> GetTieWinners(IEnumerable<Candidate> candidates)
         {
@@ -38,7 +39,6 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
             return winners;
         }
 
-        public abstract void UpdateTiebreaker<T>(Dictionary<Candidate, T> CandidateStates)
-            where T : CandidateState;
+        public abstract void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates);
     }
 }
