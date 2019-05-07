@@ -12,37 +12,31 @@
 //     http://www.dia.govt.nz/diawebsite.NSF/Files/meekm/%24file/meekm.pdf
 //   The Meek STV reference rule
 //     https://prfound.org/resources/reference/reference-meek-rule/
+//
+// The decimal type avoids rounding error for up to 27 digits.
+// For 9 billion votes, precision up to 17 decimal places is
+// possible. Beyond ten is not generally necessary: OpaVote
+// uses 6, and the reference algorithm uses 9.
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
-using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Tiebreaking;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public class MeekSTVTabulator : ISTVTabulator
+    public class MeekSTVTabulator : AbstractRankedTabulator
     {
         private readonly MeekVoteCount voteCount;
         // number to elect
         private readonly int seats;
-        // Number of decimal places. The decimal type avoids
-        // rounding error for up to 27 digits. For 9 billion
-        // votes, precision up to 17 decimal places is possible.
-        // Beyond ten is not generally necessary:
-        // OpaVote uses 6, and the reference algorithm uses 9.
-        private readonly int precision = 9;
-        private const decimal omega = 0.000001m;
-        private decimal quota = 0.0m;
-        private readonly List<IRankedBallot> ballots;
-        private readonly ITiebreaker tiebreaker;
+
 
         public MeekSTVTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<IRankedBallot> ballots, int seats)
+            IEnumerable<IRankedBallot> ballots, int seats, int precision = 9)
         {
             ITiebreaker firstDifference = new FirstDifferenceTiebreaker();
-            tiebreaker = new SeriesTiebreaker(
+            ITiebreaker tiebreaker = new SeriesTiebreaker(
                 new ITiebreaker[] {
                     new SequentialTiebreaker(
                         new ITiebreaker[] {
@@ -55,8 +49,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 }.ToList()
             );
 
-            voteCount = new MeekVoteCount(candidates, ballots, new RunoffBatchEliminator(tiebreaker, seats),  seats, precision);
-            this.ballots = ballots.ToList();
+            voteCount = new MeekVoteCount(candidates, ballots,
+                new RunoffBatchEliminator(tiebreaker, seats),  seats, precision);
             this.seats = seats;
             // Do this once just to avoid (Complete == true) before the first count
             voteCount.CountBallots();
@@ -79,7 +73,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
         public void TabulateRound()
         {
             Dictionary<Candidate, CandidateState.States> tabulation;
-            List<Candidate> cs;
 
             // B.1 Test Count complete
             if (Complete)

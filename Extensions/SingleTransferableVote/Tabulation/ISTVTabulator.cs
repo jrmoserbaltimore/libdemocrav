@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public interface ISTVTabulator : IRankedTabulator
+    public interface ISTVTabulator : AbstractRankedTabulator
     {
     }
 }

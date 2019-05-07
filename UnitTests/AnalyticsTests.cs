@@ -126,6 +126,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         public void RankedVoteCountTest()
         {
             IVoteCount vc = new RankedVoteCount(fixture.Candidates.Values, fixture.Ballots, fixture.batchEliminator);
+            vc.CountBallots();
             Assert.Equal(20, vc.GetVoteCount(fixture.Candidates[0]));
             Assert.Equal(13, vc.GetVoteCount(fixture.Candidates[1]));
         }
@@ -135,6 +136,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         {
             IVoteCount vc = new RankedVoteCount(fixture.Candidates.Values, fixture.Ballots, fixture.batchEliminator);
 
+            vc.CountBallots();
             Dictionary<Candidate, decimal> vcd;
             vcd = vc.GetVoteCounts();
             // Do the numbers match expected?
@@ -150,6 +152,9 @@ namespace MoonsetTechnologies.Voting.Development.Tests
 
             IVoteCount vc = new RankedVoteCount(c, fixture.Ballots, fixture.batchEliminator);
 
+            vc.CountBallots();
+            vc.ApplyTabulation();
+            vc.CountBallots();
             Dictionary<Candidate, decimal> vcd;
             vcd = vc.GetVoteCounts();
 

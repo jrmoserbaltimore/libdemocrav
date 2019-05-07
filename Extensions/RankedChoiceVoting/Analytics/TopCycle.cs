@@ -2,41 +2,39 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using MoonsetTechnologies.Voting.Tabulation;
 
 namespace MoonsetTechnologies.Voting.Analytics
 {
     // API for this:
-    //  TopCycle t = TopCycle(candidates, ballots)
-    //  IEnumerable<Candidate> SmithSet = t.SmithSet;
-    //  IEnumerable<Candidate> SchwartzSet = t.SchwartzSet;
+    //  TopCycle t = TopCycle(ballots)
+    //  IEnumerable<Candidate> SmithSet = t.SmithSet(candidateStates);
+    //  IEnumerable<Candidate> SchwartzSet = t.SchwartzSet(candidateStates);
     /// <summary>
     /// Computes the Smith and Schwartz sets.
     /// </summary>
     public class TopCycle
     {
-        protected List<Candidate> smithSet;
-        protected List<Candidate> schwartzSet;
-        public IEnumerable<Candidate> SmithSet => smithSet;
-        public IEnumerable<Candidate> SchwartzSet => schwartzSet;
-
-        public TopCycle(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
-            : this(new PairwiseGraph(candidates, ballots))
+        protected List<IRankedBallot> ballots;
+        public TopCycle(IEnumerable<IRankedBallot> ballots)
         {
-            
+            this.ballots = ballots.ToList();
         }
 
-        public TopCycle(PairwiseGraph graph)
-        {
-            ComputeSets(graph, graph.Candidates);
-        }
+        public IEnumerable<Candidate> GetSmithSet(IEnumerable<Candidate> candidates)
+          => ComputeSets(new PairwiseGraph(candidates, ballots)).smithSet;
+
+        public IEnumerable<Candidate> GetSchwartzSet(IEnumerable<Candidate> candidates)
+          => ComputeSets(new PairwiseGraph(candidates, ballots)).schwartzSet;
 
         /// <summary>
         /// Compute Smith and Schwartz sets with Tarjan's Algorithm.
         /// </summary>
         /// <param name="graph">The pairwise graph.</param>
-        /// <param name="candidates">The candidates to consider.</param>
-        private void ComputeSets(PairwiseGraph graph, IEnumerable<Candidate> candidates)
+        private (IEnumerable<Candidate> smithSet, IEnumerable<Candidate> schwartzSet) ComputeSets(PairwiseGraph graph)
         {
+            List<Candidate> smithSet = null;
+            List<Candidate> schwartzSet;
             Dictionary<Candidate, int> linkId;
             Dictionary<Candidate, int> nodeId;
             Stack<Candidate> s;
@@ -149,6 +147,8 @@ namespace MoonsetTechnologies.Voting.Analytics
             // Must compute SmithSet first
             smithSet = getSet(true);
             schwartzSet = getSet(false);
+
+            return (smithSet, schwartzSet);
         }
     }
 }

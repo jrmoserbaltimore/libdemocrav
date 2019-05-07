@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public interface IRankedTabulator : ITabulator
+    public abstract class AbstractRankedTabulator : AbstractTabulator<IRankedBallot, AbstractRankedVoteCount>
     {
         IEnumerable<Candidate> SchwartzSet { get; }
         IEnumerable<Candidate> SmithSet { get; }

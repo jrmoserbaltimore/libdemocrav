@@ -23,10 +23,10 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         [Fact]
         public void TidemansAlternativeFactoryTest()
         {
-            AbstractTabulatorFactory<IRankedBallot, IRankedTabulator> factory
+            AbstractTabulatorFactory<IRankedBallot, AbstractRankedTabulator> factory
                 = new TidemansAlternativeTabulatorFactory();
 
-            IRankedTabulator t = factory.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
+            AbstractRankedTabulator t = factory.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
 
             Assert.NotNull(t);
             Assert.IsType<TidemansAlternativeTabulator>(t);
@@ -35,10 +35,10 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         [Fact]
         public void TidemansAlternativeTest()
         {
-            AbstractTabulatorFactory<IRankedBallot, IRankedTabulator> factory
+            AbstractTabulatorFactory<IRankedBallot, AbstractRankedTabulator> factory
                 = new TidemansAlternativeTabulatorFactory();
 
-            IRankedTabulator t = factory.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
+            AbstractRankedTabulator t = factory.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
 
             Assert.NotNull(t);
             Assert.IsType<TidemansAlternativeTabulator>(t);

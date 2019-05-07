@@ -12,7 +12,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// <summary>
         /// The Candidates still remaining in the current round.
         /// </summary>
-        IEnumerable<Candidate> Candidates { get; }
+        //IEnumerable<Candidate> Candidates { get; }
 
         /// <summary>
         /// True if tabulation is complete; else false.

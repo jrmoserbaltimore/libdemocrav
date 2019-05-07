@@ -5,7 +5,7 @@ using MoonsetTechnologies.Voting.Analytics;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    class InstantRunoffVoting : IRankedTabulator
+    class InstantRunoffVoting : AbstractRankedTabulator
     {
         protected IEnumerable<IRankedBallot> Ballots { get; }
         public bool Complete => candidates.Count == 1;

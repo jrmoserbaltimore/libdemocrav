@@ -122,12 +122,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
                     .Where(x => winners.Contains(x.Key))
                     .ToDictionary(x => x.Key, x => CandidateState.States.elected);
             }
-            return batchEliminator.GetEliminationCandidates(
-                candidateStates
-                  .Where(x => x.Value.State == CandidateState.States.hopeful)
-                  .ToDictionary(x => x.Key, x => x.Value.VoteCount),
-                candidateStates.Where(x => x.Value.State == CandidateState.States.elected).Count(),
-                surplus)
+            return batchEliminator.GetEliminationCandidates(candidateStates, surplus)
               .ToDictionary(x => x, x => CandidateState.States.defeated);
         }
 

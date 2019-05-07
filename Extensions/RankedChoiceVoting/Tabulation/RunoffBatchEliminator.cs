@@ -6,23 +6,25 @@ using MoonsetTechnologies.Voting.Tiebreaking;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public class RunoffBatchEliminator : IBatchEliminator
+    public class RunoffBatchEliminator : AbstractBatchEliminator
     {
-        private readonly ITiebreaker tiebreaker;
-        private readonly int seats;
 
         protected bool enableBatchElimination = true;
 
         public RunoffBatchEliminator(ITiebreaker tiebreakers, int seats = 1)
+            : base(tiebreakers, seats)
         {
-            this.tiebreaker = tiebreakers;
-            this.seats = seats;
+
         }
 
         /// <inheritdoc/>
-        public IEnumerable<Candidate> GetEliminationCandidates
-            (Dictionary<Candidate, decimal> hopefuls, int elected, decimal surplus = 0.0m)
+        public override IEnumerable<Candidate> GetEliminationCandidates
+            (Dictionary<Candidate, CandidateState> candidateStates, decimal surplus = 0.0m)
         {
+            Dictionary<Candidate, decimal> hopefuls = candidateStates
+                .Where(x => x.Value.State == CandidateState.States.hopeful)
+                .ToDictionary(x => x.Key, x => x.Value.VoteCount);
+            int elected = candidateStates.Where(x => x.Value.State == CandidateState.States.elected).Count();
             Dictionary<Candidate, decimal> retain = new Dictionary<Candidate, decimal>();
             Dictionary<Candidate, decimal> batchLosers = new Dictionary<Candidate, decimal>(hopefuls);
 
@@ -99,9 +101,5 @@ namespace MoonsetTechnologies.Voting.Tabulation
             }
             return batchLosers.Keys;
         }
-
-        /// <inheritdoc/>
-        public void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
-            => tiebreaker.UpdateTiebreaker(candidateStates);
     }
 }

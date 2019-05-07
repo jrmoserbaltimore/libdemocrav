@@ -7,14 +7,13 @@ using MoonsetTechnologies.Voting.Analytics;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public abstract class AbstractRankedVoteCount : AbstractVoteCount
+    public abstract class AbstractRankedVoteCount : AbstractVoteCount<IRankedBallot>
     {
-        protected int seats;
         public AbstractRankedVoteCount(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots,
             IBatchEliminator batchEliminator, int seats = 1)
-            : base(candidates, ballots, batchEliminator)
+            : base(candidates, ballots, batchEliminator, seats)
         {
-            this.seats = seats;
+            
         }
     }
 }

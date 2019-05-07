@@ -15,6 +15,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// <param name="surplus">Surplus votes.</param>
         /// <returns></returns>
         IEnumerable<Candidate> GetEliminationCandidates
-           (Dictionary<Candidate, decimal> hopefuls, int elected, decimal surplus = 0.0m);
+           (Dictionary<Candidate, CandidateState> candidateStates, decimal surplus = 0.0m);
     }
 }

@@ -10,7 +10,7 @@ using MoonsetTechnologies.Voting;
 namespace MoonsetTechnologies.Voting.Utility
 {
     public class TidemansAlternativeTabulatorFactory 
-        : AbstractTabulatorFactory<IRankedBallot, IRankedTabulator>
+        : AbstractTabulatorFactory<IRankedBallot, AbstractRankedTabulator>
     {
         readonly GenericTiebreakerFactory tiebreakerFactory;
 
@@ -49,11 +49,11 @@ namespace MoonsetTechnologies.Voting.Utility
             tiebreakerFactory = f as GenericTiebreakerFactory;
         }
 
-        public override IRankedTabulator CreateTabulator(IEnumerable<Candidate> candidates,
+        public override AbstractRankedTabulator CreateTabulator(IEnumerable<Candidate> candidates,
             IEnumerable<IRankedBallot> ballots)
           => CreateTabulator(candidates, ballots, null, null);
       
-        public IRankedTabulator CreateTabulator(IEnumerable<Candidate> candidates,
+        public AbstractRankedTabulator CreateTabulator(IEnumerable<Candidate> candidates,
             IEnumerable<IRankedBallot> ballots,
             ITiebreaker tiebreaker = null,
             IBatchEliminator batchEliminator = null)

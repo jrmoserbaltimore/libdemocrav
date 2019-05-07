@@ -6,10 +6,12 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public abstract class AbstractVoteCount : IVoteCount
+    public abstract class AbstractVoteCount<T> : IVoteCount
+        where T : IBallot
     {
+        protected readonly int seats;
         protected readonly IBatchEliminator batchEliminator;
-        protected readonly List<IBallot> ballots;
+        protected readonly List<T> ballots;
         protected readonly Dictionary<Candidate, CandidateState> candidateStates
             = new Dictionary<Candidate, CandidateState>();
 
@@ -22,14 +24,18 @@ namespace MoonsetTechnologies.Voting.Tabulation
             foreach (Candidate c in candidates)
                 candidateStates[c] = new CandidateState();
         }
-        protected AbstractVoteCount(IEnumerable<Candidate> candidates, IEnumerable<IBallot> ballots,
-            IBatchEliminator batchEliminator)
+        protected AbstractVoteCount(IEnumerable<Candidate> candidates, IEnumerable<T> ballots,
+            IBatchEliminator batchEliminator, int seats = 1)
         {
             InitializeCandidateStates(candidates);
 
             this.ballots = ballots.ToList();
 
             this.batchEliminator = batchEliminator;
+
+            this.seats = seats;
+            // State is not valid until ballots have been counted once.
+            CountBallots();
         }
 
         /// <inheritdoc/>

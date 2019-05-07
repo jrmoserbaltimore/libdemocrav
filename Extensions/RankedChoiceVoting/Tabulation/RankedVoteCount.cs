@@ -30,7 +30,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
             foreach (IRankedBallot b in ballots)
             {
-                IRankedVote vote = b.Votes.First();
+                IRankedVote vote = null;
                 foreach (IRankedVote v in b.Votes)
                 {
                     // Skip candidates not included in this count.
