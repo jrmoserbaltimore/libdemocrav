@@ -1,4 +1,4 @@
-﻿// These classes compute pairwise victories from complete ranked ballot sets.
+// These classes compute pairwise victories from complete ranked ballot sets.
 // These pairwise victories allow us to compute the Smith and Schwartz sets,
 // and thus support Condorcet systems like Smith-constrained IRV and Tideman's
 // Alternative.

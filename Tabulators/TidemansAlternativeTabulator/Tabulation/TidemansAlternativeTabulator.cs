@@ -1,4 +1,4 @@
-﻿// Tideman's Alternative single-winner ranked ballot tabulator
+// Tideman's Alternative single-winner ranked ballot tabulator
 // Implements three forms:
 //   - Smith-constrained, but elect Schwartz Set if one Candidate
 //   - Smith-constrained

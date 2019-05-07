@@ -1,4 +1,4 @@
-﻿using MoonsetTechnologies.Voting.Analytics;
+using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Tabulation;
 using System;
 using System.Collections.Generic;

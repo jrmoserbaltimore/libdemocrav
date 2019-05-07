@@ -1,4 +1,4 @@
-﻿// Meek STV proportional election implementation.
+// Meek STV proportional election implementation.
 //
 // Special thanks goes to the work of Brian Wichmann and David Hill:
 //

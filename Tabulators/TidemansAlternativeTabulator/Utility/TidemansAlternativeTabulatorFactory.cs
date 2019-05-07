@@ -1,4 +1,4 @@
-﻿using MoonsetTechnologies.Voting.Analytics;
+using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Tabulation;
 using MoonsetTechnologies.Voting.Tiebreaking;
 using System;
