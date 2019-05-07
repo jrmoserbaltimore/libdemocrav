@@ -21,10 +21,14 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
                 {
                     // Update winPairs whenever not a pairwise tie
                     if (candidateStates[c].VoteCount != candidateStates[d].VoteCount)
+                    {
+                        if (!winPairs.ContainsKey(c))
+                            winPairs[c] = new Dictionary<Candidate, bool>();
                         winPairs[c][d] =
                           (candidateStates[c].VoteCount > candidateStates[d].VoteCount);
+                    }
                     // Can't break this tie
-                    if (!winPairs[c].ContainsKey(d))
+                    else if (!(winPairs.ContainsKey(c) && winPairs[c].ContainsKey(d)))
                         allLastDifferences = false;
                 }
             }

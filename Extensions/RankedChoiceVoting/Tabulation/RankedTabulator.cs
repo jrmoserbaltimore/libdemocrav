@@ -4,9 +4,15 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public abstract class AbstractRankedTabulator : AbstractTabulator<IRankedBallot, AbstractRankedVoteCount>
+    public class RankedTabulator : AbstractTabulator<AbstractRankedVoteCount>
     {
         IEnumerable<Candidate> SchwartzSet { get; }
         IEnumerable<Candidate> SmithSet { get; }
+
+        /// <inheritdoc/>
+        public RankedTabulator(AbstractRankedVoteCount voteCount)
+            : base(voteCount)
+        {
+        }
     }
 }

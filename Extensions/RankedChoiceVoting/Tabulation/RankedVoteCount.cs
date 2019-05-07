@@ -53,20 +53,18 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 .ToDictionary(x => x.Key, x => x.Value);
 
             Dictionary<Candidate, CandidateState> elected =
-                candidateStates.Where(x => x.Value.State == CandidateState.States.hopeful)
+                candidateStates.Where(x => x.Value.State == CandidateState.States.elected)
                 .ToDictionary(x => x.Key, x => x.Value);
 
             Dictionary <Candidate, CandidateState.States> result;
 
             // Fill remaining seats
             if (hopefuls.Count() + elected.Count() <= seats)
-                result = hopefuls.ToDictionary(x => x.Key, x => x.Value.State);
+                result = hopefuls.ToDictionary(x => x.Key, x => CandidateState.States.elected);
             else
             {
                 // Check for elimination
-                result = batchEliminator.GetEliminationCandidates(
-                      hopefuls.ToDictionary(x => x.Key, x => x.Value.VoteCount),
-                      elected.Count)
+                result = batchEliminator.GetEliminationCandidates(candidateStates)
                     .ToDictionary(x => x, x => CandidateState.States.defeated);
             }
             // No elimination, despite more candidats than seats?  It's broken.

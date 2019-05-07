@@ -10,11 +10,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
     public interface ITabulator
     {
         /// <summary>
-        /// The Candidates still remaining in the current round.
-        /// </summary>
-        //IEnumerable<Candidate> Candidates { get; }
-
-        /// <summary>
         /// True if tabulation is complete; else false.
         /// </summary>
         bool Complete { get; }
@@ -22,5 +17,10 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// Iterate through the next round of tabulation
         /// </summary>
         void TabulateRound();
+
+        /// <summary>
+        /// Retrieve the results.
+        /// </summary>
+        Dictionary<Candidate, CandidateState> GetResults();
     }
 }

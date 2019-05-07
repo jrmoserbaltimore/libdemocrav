@@ -34,6 +34,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             this.batchEliminator = batchEliminator;
 
             this.seats = seats;
+
             // State is not valid until ballots have been counted once.
             CountBallots();
         }
@@ -100,6 +101,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 return false;
 
             SetStates(tabulation);
+
+            batchEliminator.UpdateTiebreaker(candidateStates);
             return true;
         }
 

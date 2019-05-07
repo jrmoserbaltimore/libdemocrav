@@ -110,14 +110,15 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         [Fact]
         public void TopCycleTest()
         {
-            TopCycle t = new TopCycle(fixture.Candidates.Values, fixture.Ballots);
+            TopCycle smithSet = new TopCycle(fixture.Ballots);
+            TopCycle schwartzSet = new TopCycle(fixture.Ballots);
             List<Candidate> c = new List<Candidate>();
 
-            c.AddRange(t.SmithSet);
+            c.AddRange(smithSet.GetTopCycle(fixture.Candidates.Values));
             Assert.Equal("Chris", c[0].Name);
 
             c.Clear();
-            c.AddRange(t.SchwartzSet);
+            c.AddRange(schwartzSet.GetTopCycle(fixture.Candidates.Values));
             Assert.Equal("Chris", c[0].Name);
 
         }
@@ -148,19 +149,37 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         public void RankedVoteCountsEliminationTest()
         {
             List<Candidate> c = new List<Candidate>(fixture.Candidates.Values);
-            c.Remove(fixture.Candidates[2]);
 
             IVoteCount vc = new RankedVoteCount(c, fixture.Ballots, fixture.batchEliminator);
 
-            vc.CountBallots();
+            Dictionary<Candidate, CandidateState> cS;
+
+            Dictionary<Candidate, decimal> vcd;
             vc.ApplyTabulation();
             vc.CountBallots();
-            Dictionary<Candidate, decimal> vcd;
+
+            // Test after one round
             vcd = vc.GetVoteCounts();
 
             // Do the numbers match expected?
-            Assert.Equal(20, vcd[fixture.Candidates[0]]);
-            Assert.Equal(13+15, vcd[fixture.Candidates[1]]);
+            Assert.Equal(20 + 5, vcd.Where(x => x.Key == fixture.Candidates[0]).Select(x => x.Value).First());
+            Assert.Equal(15 + 8, vcd.Where(x => x.Key == fixture.Candidates[2]).Select(x => x.Value).First());
+
+            // Complete tabulation
+            while (vc.GetTabulation().Count() > 0)
+            {
+                vc.ApplyTabulation();
+                vc.CountBallots();
+            }
+
+            vcd = vc.GetVoteCounts();
+
+            cS = vc.GetFullTabulation();
+            // Vote counts
+            Assert.Equal("Alex", cS.First().Key.Name);
+            Assert.Equal(20 + 8 + 5, cS.First().Value.VoteCount);
+            Assert.Equal(cS.First().Value.VoteCount, vcd.First().Value);
+            Assert.Single(vcd);
         }
     }
 }

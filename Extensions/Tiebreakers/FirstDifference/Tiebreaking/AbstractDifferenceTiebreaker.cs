@@ -39,6 +39,7 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
             return winners;
         }
 
+        /// <inheritdoc/>
         public abstract void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates);
     }
 }

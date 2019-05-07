@@ -23,30 +23,36 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         [Fact]
         public void TidemansAlternativeFactoryTest()
         {
-            AbstractTabulatorFactory<IRankedBallot, AbstractRankedTabulator> factory
+            AbstractTabulatorFactory<IRankedBallot, RankedTabulator> factory
                 = new TidemansAlternativeTabulatorFactory();
 
-            AbstractRankedTabulator t = factory.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
+            RankedTabulator t = factory.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
 
             Assert.NotNull(t);
-            Assert.IsType<TidemansAlternativeTabulator>(t);
+            Assert.IsType<RankedTabulator>(t);
         }
 
         [Fact]
         public void TidemansAlternativeTest()
         {
-            AbstractTabulatorFactory<IRankedBallot, AbstractRankedTabulator> factory
+            AbstractTabulatorFactory<IRankedBallot, RankedTabulator> factory
                 = new TidemansAlternativeTabulatorFactory();
 
-            AbstractRankedTabulator t = factory.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
+            RankedTabulator t = factory.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
 
             Assert.NotNull(t);
-            Assert.IsType<TidemansAlternativeTabulator>(t);
+            Assert.IsType<RankedTabulator>(t);
 
-            t.TabulateRound();
+            while (!t.Complete)
+                t.TabulateRound();
             Assert.True(t.Complete);
-            Assert.Single(t.Candidates);
-            Assert.Equal("Chris", t.Candidates.First().Name);
+
+            List<string> winners = t.GetResults()
+                .Where(x => x.Value.State == CandidateState.States.elected)
+                .Select(x => x.Key.Name).ToList();
+
+            Assert.Single(winners);
+            Assert.Equal("Chris", winners.First());
         }
     }
 }

@@ -19,7 +19,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         public CandidateState()
         {
             VoteCount = 0.0m;
-            State = States.elected;
+            State = States.hopeful;
         }
     }
 }

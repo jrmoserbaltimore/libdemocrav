@@ -25,71 +25,21 @@ using MoonsetTechnologies.Voting.Tiebreaking;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public class MeekSTVTabulator : AbstractRankedTabulator
+    public class MeekSTVTabulator : RankedTabulator
     {
-        private readonly MeekVoteCount voteCount;
         // number to elect
         private readonly int seats;
 
-
-        public MeekSTVTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<IRankedBallot> ballots, int seats, int precision = 9)
+        public MeekSTVTabulator(AbstractRankedVoteCount voteCount)
+            : base(voteCount)
         {
-            ITiebreaker firstDifference = new FirstDifferenceTiebreaker();
-            ITiebreaker tiebreaker = new SeriesTiebreaker(
-                new ITiebreaker[] {
-                    new SequentialTiebreaker(
-                        new ITiebreaker[] {
-                          new LastDifferenceTiebreaker(),
-                          firstDifference,
-                        }.ToList()
-                    ),
-                    new LastDifferenceTiebreaker(),
-                    firstDifference,
-                }.ToList()
-            );
 
-            voteCount = new MeekVoteCount(candidates, ballots,
-                new RunoffBatchEliminator(tiebreaker, seats),  seats, precision);
-            this.seats = seats;
-            // Do this once just to avoid (Complete == true) before the first count
-            voteCount.CountBallots();
         }
 
-        public IEnumerable<Candidate> SchwartzSet => throw new NotImplementedException();
-
-        public IEnumerable<Candidate> SmithSet => throw new NotImplementedException();
-
-        public IEnumerable<Candidate> Candidates => throw new NotImplementedException();
-
-        // It's okay to use CheckComplete() here because it will only
-        // change state when there are no more rounds to tabulate.
-        // This only occurs in a special case where the election has
-        // no more candidates in total than seats and CheckComplete()
-        // is called before TabulateRound();
-        /// <inheritdoc/>
-        public bool Complete => voteCount.GetTabulation().Count() == 0;
-
-        public void TabulateRound()
-        {
-            Dictionary<Candidate, CandidateState.States> tabulation;
-
-            // B.1 Test Count complete
-            if (Complete)
-                return;
-
-            // Perform iteration B.2
-            voteCount.CountBallots();
-
-            // Elect or defeat
-            tabulation = voteCount.GetTabulation();
-
-            // B.2.c Elect candidates, or B.3 defeat low candidates
-            // We won't have defeats if there were elections in B.2.c,
-            // but rule C may provide both winners and losers
-            voteCount.ApplyTabulation();
-
-            // B.4:  Next call enters at B.1
-        }
+        // AbstractTabulator's implementation follows:
+        //   B.1 - if (Complete) return
+        //   B.2 - voteCount.CountBallots()
+        //   B.2.c etc. - voteCount.ApplyTabulation()
+        //   B.4 - Re-enter TabulateRound() at B.1
     }
 }

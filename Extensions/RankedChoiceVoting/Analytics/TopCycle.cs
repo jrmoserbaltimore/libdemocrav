@@ -16,22 +16,30 @@ namespace MoonsetTechnologies.Voting.Analytics
     public class TopCycle
     {
         protected List<IRankedBallot> ballots;
-        public TopCycle(IEnumerable<IRankedBallot> ballots)
+        public enum TopCycleSets
         {
-            this.ballots = ballots.ToList();
+            smith = 1, // Generalize Top-Choice Assumption, GETCHA
+            schwartz = 2 // Generalized Optimal-Choice Axiom, GOCHA
         }
 
-        public IEnumerable<Candidate> GetSmithSet(IEnumerable<Candidate> candidates)
-          => ComputeSets(new PairwiseGraph(candidates, ballots)).smithSet;
+        private readonly TopCycleSets defaultSet;
+        public TopCycle(IEnumerable<IRankedBallot> ballots, TopCycleSets set = TopCycleSets.smith)
+        {
+            this.ballots = ballots.ToList();
+            defaultSet = set;
+        }
 
-        public IEnumerable<Candidate> GetSchwartzSet(IEnumerable<Candidate> candidates)
-          => ComputeSets(new PairwiseGraph(candidates, ballots)).schwartzSet;
+        protected IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> candidates, TopCycleSets set)
+            => ComputeSets(new PairwiseGraph(candidates, ballots), set);
+
+        public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> candidates)
+            => GetTopCycle(candidates, defaultSet);
 
         /// <summary>
         /// Compute Smith and Schwartz sets with Tarjan's Algorithm.
         /// </summary>
         /// <param name="graph">The pairwise graph.</param>
-        private (IEnumerable<Candidate> smithSet, IEnumerable<Candidate> schwartzSet) ComputeSets(PairwiseGraph graph)
+        private IEnumerable<Candidate> ComputeSets(PairwiseGraph graph, TopCycleSets set)
         {
             List<Candidate> smithSet = null;
             List<Candidate> schwartzSet;
@@ -146,9 +154,10 @@ namespace MoonsetTechnologies.Voting.Analytics
 
             // Must compute SmithSet first
             smithSet = getSet(true);
+            if (set == TopCycleSets.smith)
+                return smithSet;
             schwartzSet = getSet(false);
-
-            return (smithSet, schwartzSet);
+                return schwartzSet;
         }
     }
 }

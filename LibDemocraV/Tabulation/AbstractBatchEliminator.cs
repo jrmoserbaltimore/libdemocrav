@@ -19,7 +19,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// <inheritdoc/>
         public abstract IEnumerable<Candidate> GetEliminationCandidates(Dictionary<Candidate, CandidateState> candidateStates, decimal surplus = 0.0M);
         /// <inheritdoc/>
-        public void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
+        public virtual void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
             => tiebreaker.UpdateTiebreaker(candidateStates);
     }
 }

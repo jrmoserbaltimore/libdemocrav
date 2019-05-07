@@ -23,6 +23,8 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
                 foreach (Candidate d in candidateStates.Keys)
                 {
                     // Update winPairs only where all prior rounds have been ties.
+                    if (!winPairs.ContainsKey(c))
+                        winPairs[c] = new Dictionary<Candidate, bool>();
                     if (!winPairs[c].ContainsKey(d))
                     {
                         // If it's a tie, we can't break this tie yet

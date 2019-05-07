@@ -83,14 +83,20 @@ namespace MoonsetTechnologies.Voting.Tabulation
                     retain.Remove(min);
                 }
 
-                List<Candidate> ties = new List<Candidate>();
-                ties = tiebreaker.GetTieWinners(batchLosers.Keys).ToList();
-
-                // Delete from the losers all but the tiewinners
-                foreach (Candidate c in ties)
+                // Yes, it's a tie.
+                if (batchLosers.Count > 1)
                 {
-                    retain[c] = batchLosers[c];
-                    batchLosers.Remove(c);
+                    List<Candidate> tiewinners = tiebreaker.GetTieWinners(batchLosers.Keys).ToList();
+
+                    // Delete from the losers all but the tiewinners
+                    foreach (Candidate c in batchLosers.Keys)
+                    {
+                        if (tiewinners.Contains(c))
+                        {
+                            retain[c] = batchLosers[c];
+                            batchLosers.Remove(c);
+                        }
+                    }
                 }
 
                 // Unbreakable tie.

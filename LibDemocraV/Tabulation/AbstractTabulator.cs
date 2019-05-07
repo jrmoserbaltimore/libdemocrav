@@ -5,13 +5,22 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public abstract class AbstractTabulator<T, U> : ITabulator
-        where T : IBallot
-        where U : IVoteCount
+    public abstract class AbstractTabulator<T> : ITabulator
+        where T : IVoteCount
     {
-        protected U voteCount;
+        protected T voteCount;
+
+        public AbstractTabulator(T voteCount)
+        {
+            this.voteCount = voteCount;
+        }
+
         /// <inheritdoc/>
         public bool Complete => voteCount.GetTabulation().Count() == 0;
+
+        /// <inheritdoc/>
+        public virtual Dictionary<Candidate, CandidateState> GetResults()
+          => voteCount.GetFullTabulation();
 
         /// <inheritdoc/>
         public virtual void TabulateRound()
