@@ -27,9 +27,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
 {
     public class MeekSTVTabulator : RankedTabulator
     {
-        // number to elect
-        private readonly int seats;
-
         public MeekSTVTabulator(AbstractRankedVoteCount voteCount)
             : base(voteCount)
         {

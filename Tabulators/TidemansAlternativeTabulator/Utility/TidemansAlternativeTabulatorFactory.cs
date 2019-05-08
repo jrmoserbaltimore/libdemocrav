@@ -14,56 +14,12 @@ namespace MoonsetTechnologies.Voting.Utility
     {
         readonly GenericTiebreakerFactory tiebreakerFactory;
 
+
         private ITiebreaker NewTiebreaker() => tiebreakerFactory.CreateTiebreaker();
 
-        private IBatchEliminator NewBatchEliminator(ITiebreaker tiebreaker, TopCycle condorcetSet, TopCycle retentionSet)
+        private IBatchEliminator NewBatchEliminator(IBatchEliminator batchEliminator)
         {
-            return new TidemansAlternativeBatchEliminator(new RunoffBatchEliminator(tiebreaker),
-                condorcetSet, retentionSet);
-        }
-        public TidemansAlternativeTabulatorFactory()
-        {
-            // FIXME:  Implement this in the tiebreaker factory
-            // Generic tiebreaker factory is:
-            //   SeriesTiebreaker
-            //   {
-            //     SequentialTiebreaker
-            //     {
-            //       LastDifferenceTiebreaker,
-            //       FirstDifferenceTiebreaker
-            //     },
-            //     firstDifferenceTiebreaker
-            //   }
 
-            AbstractTiebreakerFactory f;
-            AbstractTiebreakerFactory firstDifference = new GenericTiebreakerFactory(typeof(FirstDifferenceTiebreaker));
-            List<AbstractTiebreakerFactory> factories = new List<AbstractTiebreakerFactory>();
-            factories.Add(new GenericTiebreakerFactory(typeof(LastDifferenceTiebreaker)));
-            factories.Add(firstDifference);
-            f = new GenericTiebreakerFactory(typeof(SequentialTiebreaker), factories);
-
-            factories = new List<AbstractTiebreakerFactory>();
-            factories.Add(f);
-            factories.Add(firstDifference);
-            f = new GenericTiebreakerFactory(typeof(SeriesTiebreaker), factories);
-            tiebreakerFactory = f as GenericTiebreakerFactory;
-
-            // Alternate implementation:
-            /*
-            ITiebreaker firstDifference = new FirstDifferenceTiebreaker();
-            ITiebreaker tiebreaker = new SeriesTiebreaker(
-                new ITiebreaker[] {
-                    new SequentialTiebreaker(
-                        new ITiebreaker[] {
-                          new LastDifferenceTiebreaker(),
-                          firstDifference,
-                        }.ToList()
-                    ),
-                    new LastDifferenceTiebreaker(),
-                    firstDifference,
-                }.ToList()
-            );
-            */
         }
 
         public override RankedTabulator CreateTabulator(IEnumerable<Candidate> candidates,
@@ -84,7 +40,7 @@ namespace MoonsetTechnologies.Voting.Utility
             IBatchEliminator batchEliminator = null)
         {
             RankedVoteCount voteCount;
-            TidemansAlternativeBatchEliminator bE;
+            IBatchEliminator bE;
             // Standard tiebreaker
             if (tiebreaker is null)
                 tiebreaker = NewTiebreaker();
@@ -94,7 +50,7 @@ namespace MoonsetTechnologies.Voting.Utility
                 batchEliminator = new RunoffBatchEliminator(tiebreaker);
 
             
-            bE = new TidemansAlternativeBatchEliminator(batchEliminator, condorcetSet, retentionSet);
+            bE = NewBatchEliminator(batchEliminator, condorcetSet, retentionSet);
             voteCount = new RankedVoteCount(candidates, ballots, bE);
 
             return new RankedTabulator(voteCount);
@@ -154,6 +110,20 @@ namespace MoonsetTechnologies.Voting.Utility
             TopCycle retentionSet = condorcetSet;
 
             return CreateTabulator(candidates, ballots, condorcetSet, retentionSet, tiebreaker, batchEliminator);
+        }
+
+        public override IBatchEliminator CreateBatchEliminator()
+        {
+            TopCycle condorcetSet = new TopCycle(ballots, TopCycle.TopCycleSets.schwartz);
+            TopCycle retentionSet = new TopCycle(ballots, TopCycle.TopCycleSets.smith);
+            return new TidemansAlternativeBatchEliminator(batchEliminator,
+                condorcetSet, retentionSet);
+
+        }
+
+        public override ITiebreaker CreateTiebreaker()
+        {
+            throw new NotImplementedException();
         }
     }
 }

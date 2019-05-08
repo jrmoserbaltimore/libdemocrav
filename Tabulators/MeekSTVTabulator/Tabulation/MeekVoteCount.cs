@@ -143,16 +143,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
             }
         }
 
-        public override decimal GetVoteCount(Candidate candidate)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Dictionary<Candidate, decimal> GetVoteCounts()
-        {
-            throw new NotImplementedException();
-        }
-
         // Reference rule B.1
         private bool CheckComplete()
         {

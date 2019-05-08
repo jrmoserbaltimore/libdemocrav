@@ -14,19 +14,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
         void CountBallots();
 
         /// <summary>
-        /// Gets the count of votes for a candidate.
-        /// </summary>
-        /// <param name="candidate">The candidate whose votes to count</param>
-        /// <returns>The number of votes received.</returns>
-        decimal GetVoteCount(Candidate candidate);
-
-        /// <summary>
-        /// Get the count of votes for all candidates.
-        /// </summary>
-        /// <returns>The number of votes each candidate receives.</returns>
-        Dictionary<Candidate, decimal> GetVoteCounts();
-
-        /// <summary>
         /// Get the winners and losers for the next round of tabulation.
         /// Winners should go to ElectCandidates(); losers should go to DefeatCandidates().
         /// </summary>

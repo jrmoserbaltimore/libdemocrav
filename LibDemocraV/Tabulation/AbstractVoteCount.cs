@@ -43,15 +43,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
         public abstract void CountBallots();
 
         /// <inheritdoc/>
-        public virtual decimal GetVoteCount(Candidate candidate)
-            => candidateStates[candidate].VoteCount;
-
-        /// <inheritdoc/>
-        public virtual Dictionary<Candidate, decimal> GetVoteCounts()
-            => candidateStates.Where(x => x.Value.State == CandidateState.States.elected
-                || x.Value.State == CandidateState.States.hopeful).ToDictionary(x => x.Key, x => x.Value.VoteCount);
-
-        /// <inheritdoc/>
         public abstract Dictionary<Candidate, CandidateState.States> GetTabulation();
 
         /// <inheritdoc/>
@@ -80,7 +71,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// Set the States of candidates.  Includes a validation check.
         /// </summary>
         /// <param name="candidates">The candidates for which to set state.</param>
-        /// <param name="state">The state.</param>
         protected virtual void SetStates(Dictionary<Candidate, CandidateState.States> candidates)
         {
             foreach (Candidate c in candidates.Keys)

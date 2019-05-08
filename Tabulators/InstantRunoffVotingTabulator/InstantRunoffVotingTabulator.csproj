@@ -10,4 +10,8 @@
     <ProjectReference Include="..\..\LibDemocraV\LibDemocraV.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Tabulation\" />
+  </ItemGroup>
+
 </Project>

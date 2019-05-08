@@ -6,7 +6,7 @@ using MoonsetTechnologies.Voting.Tiebreaking;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
-    class DifferenceTiebreakerFactory : AbstractTiebreakerFactory
+    public class DifferenceTiebreakerFactory : AbstractTiebreakerFactory
     {
         public DifferenceTiebreakerFactory()
         {
