@@ -44,7 +44,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             Assert.IsType<RankedTabulator>(t);
 
             while (!t.Complete)
-                t.TabulateRound();
+                t.ComputeTabulation();
             Assert.True(t.Complete);
 
             List<string> winners = t.GetResults()

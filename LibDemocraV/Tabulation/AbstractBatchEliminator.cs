@@ -21,5 +21,10 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// <inheritdoc/>
         public virtual void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
             => tiebreaker.UpdateTiebreaker(candidateStates);
+
+        public abstract class Builder
+        {
+
+        }
     }
 }

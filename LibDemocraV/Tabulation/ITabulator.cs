@@ -13,14 +13,25 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// True if tabulation is complete; else false.
         /// </summary>
         bool Complete { get; }
+
         /// <summary>
-        /// Iterate through the next round of tabulation
+        /// Perform the next round of tabulation.
         /// </summary>
         void TabulateRound();
 
         /// <summary>
-        /// Retrieve the results.
+        /// Get the winners and losers for this round next round of tabulation.
         /// </summary>
-        Dictionary<Candidate, CandidateState> GetResults();
+        /// <returns>The state of those Candidates who have become winners and losers
+        /// in this round of tabulation.  Returns an empty dictionary when tabulation is complete.</returns>
+        Dictionary<Candidate, CandidateState.States> GetTabulation();
+
+        /// <summary>
+        /// Get winners and losers at the current round, with vote counts.
+        /// </summary>
+        /// <returns>A full set of candidate states and votes.</returns>
+        Dictionary<Candidate, CandidateState> GetFullTabulation();
+
+
     }
 }

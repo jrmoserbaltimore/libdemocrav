@@ -5,39 +5,56 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public abstract class AbstractTabulator<T> : ITabulator
-        where T : IVoteCount
+    public abstract class AbstractTabulator<T, TType> : ITabulator
+        where T : IBallot
+        where TType: AbstractTabulator<T, TType>
     {
-        protected T voteCount;
+        protected int seats;
+        protected IBatchEliminator batchEliminator;
+        protected List<T> ballots;
+        protected readonly Dictionary<Candidate, CandidateState> candidateStates
+            = new Dictionary<Candidate, CandidateState>();
 
-        public AbstractTabulator(T voteCount)
+        /// <inheritdoc/>
+        public bool Complete => GetTabulation().Count() == 0;
+
+        /// <inheritdoc/>
+        public abstract void TabulateRound();
+
+        /// <inheritdoc/>
+        public abstract Dictionary<Candidate, CandidateState.States> GetTabulation();
+
+        /// <inheritdoc/>
+        public abstract Dictionary<Candidate, CandidateState> GetFullTabulation();
+
+        /// <summary>
+        /// Perform a ballot count and updates the internal state.
+        /// </summary>
+        protected abstract void CountBallots();
+
+        protected AbstractTabulator()
         {
-            this.voteCount = voteCount;
+
         }
 
-        /// <inheritdoc/>
-        public bool Complete => voteCount.GetTabulation().Count() == 0;
-
-        /// <inheritdoc/>
-        public virtual Dictionary<Candidate, CandidateState> GetResults()
-          => voteCount.GetFullTabulation();
-
-        /// <inheritdoc/>
-        public virtual void TabulateRound()
+        public abstract class Builder<BType>
+            where BType : Builder<BType>
         {
-            Dictionary<Candidate, CandidateState.States> tabulation;
+            protected IEnumerable<T> ballots;
+            protected IEnumerable<Candidate> candidates;
+            protected int seats;
 
-            // B.1 Test Count complete
-            if (Complete)
-                return;
+            public abstract void BuildTiebreaker();
 
-            // Perform iteration B.2
-            voteCount.CountBallots();
+            public abstract AbstractBatchEliminator BuildBatchEliminator();
 
-            // B.2.c Elect candidates, or B.3 defeat low candidates
-            // We won't have defeats if there were elections in B.2.c,
-            // but rule C may provide both winners and losers
-            voteCount.ApplyTabulation();
+            public abstract BType WithSeats(int seats);
+
+            public abstract BType WithCandidates(IEnumerable<Candidate> candidates);
+
+            public abstract BType WithBallots(IEnumerable<T> ballots);
+
+            public abstract TType Build();
         }
     }
 }
