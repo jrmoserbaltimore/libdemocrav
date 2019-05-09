@@ -1,12 +1,11 @@
-﻿using System;
+﻿using MoonsetTechnologies.Voting.Ballots;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public abstract class AbstractBasicTabulator<T, TType> : AbstractTabulator<T, TType>
-        where T : IBallot
-        where TType : AbstractTabulator<T, TType>
+    public abstract class AbstractBasicTabulator : AbstractTabulator
     {
         /// <inheritdoc/>
         public override void TabulateRound()
@@ -64,65 +63,42 @@ namespace MoonsetTechnologies.Voting.Tabulation
             CountBallots();
         }
 
-        /// <summary>
-        /// Set the States of candidates.  Includes a validation check.
-        /// </summary>
-        /// <param name="candidates">The candidates for which to set state.</param>
-        protected virtual void SetStates(Dictionary<Candidate, CandidateState.States> candidates)
+        // TODO:  Public pairwise graph implementation, for use by TopCycle
+
+
+        /// <inheritdoc/>
+        public override Dictionary<Candidate, CandidateState.States> GetTabulation()
         {
-            foreach (Candidate c in candidates.Keys)
+            Dictionary<Candidate, CandidateState> hopefuls =
+                candidateStates.Where(x => x.Value.State == CandidateState.States.hopeful)
+                .ToDictionary(x => x.Key, x => x.Value);
+
+            Dictionary<Candidate, CandidateState> elected =
+                candidateStates.Where(x => x.Value.State == CandidateState.States.elected)
+                .ToDictionary(x => x.Key, x => x.Value);
+
+            Dictionary<Candidate, CandidateState.States> result;
+
+            // Fill remaining seats
+            if (hopefuls.Count() + elected.Count() <= seats)
+                result = hopefuls.ToDictionary(x => x.Key, x => CandidateState.States.elected);
+            else
             {
-                // FIXME:  Improve exception
-                if (!candidateStates.ContainsKey(c))
-                    throw new ArgumentOutOfRangeException();
-                candidateStates[c].State = candidates[c];
+                // Check for elimination
+                result = batchEliminator.GetEliminationCandidates(candidateStates)
+                    .ToDictionary(x => x, x => CandidateState.States.defeated);
             }
+            // No elimination, despite more candidats than seats or everyone elected?  It's broken.
+            if (result.Count() == 0 && (hopefuls.Count() + elected.Count() > seats || hopefuls.Count() != 0))
+                throw new InvalidOperationException();
+            return result;
         }
 
-        /// <summary>
-        /// Initialize candidate states.
-        /// </summary>
-        /// <param name="candidates">The candidates in this election.</param>
-        protected virtual void InitializeCandidateStates(IEnumerable<Candidate> candidates)
+        protected AbstractBasicTabulator(IEnumerable<Candidate> candidates, IEnumerable<Ballot> ballots,
+            IBatchEliminator batchEliminator, int seats = 1)
+            : base(candidates, ballots, batchEliminator, seats)
         {
-            foreach (Candidate c in candidates)
-                candidateStates[c] = new CandidateState();
-        }
 
-        public class Builder : Builder<Builder>
-        {
-            public override void BuildTiebreaker()
-            {
-                throw new NotImplementedException();
-            }
-
-            public override AbstractBatchEliminator BuildBatchEliminator()
-            {
-                throw new NotImplementedException();
-            }
-
-            public override TType Build()
-            {
-                throw new NotImplementedException();
-            }
-
-            public override Builder WithSeats(int seats)
-            {
-                this.seats = seats;
-                return this;
-            }
-
-            public override Builder WithCandidates(IEnumerable<Candidate> candidates)
-            {
-                this.candidates = candidates;
-                return this;
-            }
-
-            public override Builder WithBallots(IEnumerable<T> ballots)
-            {
-                this.ballots = ballots;
-                return this;
-            }
         }
     }
 }

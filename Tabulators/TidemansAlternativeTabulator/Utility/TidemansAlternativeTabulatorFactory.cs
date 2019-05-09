@@ -6,122 +6,64 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MoonsetTechnologies.Voting;
+using MoonsetTechnologies.Voting.Ballots;
 
 namespace MoonsetTechnologies.Voting.Utility
-{
-    public class TidemansAlternativeTabulatorFactory 
-        : AbstractTabulatorFactory<IRankedBallot, RankedTabulator>
+{ 
+    // General algorithm:
+    //   if CondorcetSet is One Candidate
+    //     Winner is Candidate in CondorcetSet
+    //   else
+    //     Eliminate Candidates not in RetainSet
+    //     Eliminate Candidate with Fewest Votes
+
+    // Variants as (CondorcetSet, RetainSet):
+    //   Tideman's Alternative:  (schwartz, smith)
+    //   Tideman's Alternative Schwartz:  (schwartz, schwartz)
+    //   Tideman's Alternative Smith:  (smith, smith)
+    public class TidemansAlternativeTabulatorFactory : AbstractTabulatorFactory
     {
-        readonly GenericTiebreakerFactory tiebreakerFactory;
+        TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;
+        TopCycle.TopCycleSets retainSet = TopCycle.TopCycleSets.smith;
 
-
-        private ITiebreaker NewTiebreaker() => tiebreakerFactory.CreateTiebreaker();
-
-        private IBatchEliminator NewBatchEliminator(IBatchEliminator batchEliminator)
+        public TidemansAlternativeTabulatorFactory WithCondorcetSet(TopCycle.TopCycleSets set)
         {
-
+            TidemansAlternativeTabulatorFactory f = new TidemansAlternativeTabulatorFactory
+            {
+                condorcetSet = set,
+                retainSet = set
+            };
+            return f;
         }
 
-        public override RankedTabulator CreateTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<IRankedBallot> ballots)
-          => CreateTabulator(candidates, ballots, null, null);
-
-        public RankedTabulator CreateTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<IRankedBallot> ballots,
-            ITiebreaker tiebreaker = null,
-            IBatchEliminator batchEliminator = null)
-            => CreateTidemansAlternativeTabulator(candidates, ballots, tiebreaker, batchEliminator);
-
-        public RankedTabulator CreateTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<IRankedBallot> ballots,
-            TopCycle condorcetSet,
-            TopCycle retentionSet,
-            ITiebreaker tiebreaker = null,
-            IBatchEliminator batchEliminator = null)
+        public TidemansAlternativeTabulatorFactory WithRetainSet(TopCycle.TopCycleSets set)
         {
-            RankedVoteCount voteCount;
-            IBatchEliminator bE;
-            // Standard tiebreaker
-            if (tiebreaker is null)
-                tiebreaker = NewTiebreaker();
-
-            // The default batch eliminator is a standard runoff batch eliminator
-            if (batchEliminator is null)
-                batchEliminator = new RunoffBatchEliminator(tiebreaker);
-
-            
-            bE = NewBatchEliminator(batchEliminator, condorcetSet, retentionSet);
-            voteCount = new RankedVoteCount(candidates, ballots, bE);
-
-            return new RankedTabulator(voteCount);
+            TidemansAlternativeTabulatorFactory f = new TidemansAlternativeTabulatorFactory
+            {
+                condorcetSet = set,
+                retainSet = set
+            };
+            return f;
         }
 
-        // Predefined standard tabulators
-
-        // General algorithm:
-        //   if SchwartzSet is One Candidate
-        //     Winner is Candidate in SchwartzSet
-        //   else
-        //     Eliminate Candidates not in SmithSet
-        //     Eliminate Candidate with Fewest Votes
-
-        public RankedTabulator CreateTidemansAlternativeTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<IRankedBallot> ballots,
-            ITiebreaker tiebreaker = null,
-            IBatchEliminator batchEliminator = null)
+        private IBatchEliminator NewBatchEliminator(IEnumerable<Ballot> ballots)
         {
-            TopCycle condorcetSet = new TopCycle(ballots, TopCycle.TopCycleSets.schwartz);
-            TopCycle retentionSet = new TopCycle(ballots, TopCycle.TopCycleSets.smith);
-
-            return CreateTabulator(candidates, ballots, condorcetSet, retentionSet, tiebreaker, batchEliminator);
+            return new TidemansAlternativeBatchEliminator(
+                new RunoffBatchEliminator(new DifferenceTiebreakerFactory().CreateTiebreaker()),
+                new TopCycle(ballots, condorcetSet),
+                new TopCycle(ballots, retainSet));
         }
 
-        // General algorithm:
-        //   if SmithSet is One Candidate
-        //     Winner is Candidate in SmithSet
-        //   else
-        //     Eliminate Candidates not in SmithSet
-        //     Eliminate Candidate with Fewest Votes
+        public override AbstractTabulator CreateTabulator(IEnumerable<Candidate> candidates,
+            IEnumerable<Ballot> ballots)
+            => new RankedTabulator(candidates, ballots, NewBatchEliminator(ballots));
 
-        public RankedTabulator CreateTidemansAlternativeSmithTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<IRankedBallot> ballots,
-            ITiebreaker tiebreaker = null,
-            IBatchEliminator batchEliminator = null)
+        public override Ballot CreateBallot(IEnumerable<Vote> votes)
         {
-            TopCycle condorcetSet = new TopCycle(ballots, TopCycle.TopCycleSets.smith);
-            TopCycle retentionSet = condorcetSet;
-
-            return CreateTabulator(candidates, ballots, condorcetSet, retentionSet, tiebreaker, batchEliminator);
+            throw new NotImplementedException();
         }
 
-        // General algorithm:
-        //   if SchwartzSet is One Candidate
-        //     Winner is Candidate in SchwartzSet
-        //   else
-        //     Eliminate Candidates not in SchwartzSet
-        //     Eliminate Candidate with Fewest Votes
-
-        public RankedTabulator CreateTidemansAlternativeSchwartzTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<IRankedBallot> ballots,
-            ITiebreaker tiebreaker = null,
-            IBatchEliminator batchEliminator = null)
-        {
-            TopCycle condorcetSet = new TopCycle(ballots, TopCycle.TopCycleSets.schwartz);
-            TopCycle retentionSet = condorcetSet;
-
-            return CreateTabulator(candidates, ballots, condorcetSet, retentionSet, tiebreaker, batchEliminator);
-        }
-
-        public override IBatchEliminator CreateBatchEliminator()
-        {
-            TopCycle condorcetSet = new TopCycle(ballots, TopCycle.TopCycleSets.schwartz);
-            TopCycle retentionSet = new TopCycle(ballots, TopCycle.TopCycleSets.smith);
-            return new TidemansAlternativeBatchEliminator(batchEliminator,
-                condorcetSet, retentionSet);
-
-        }
-
-        public override ITiebreaker CreateTiebreaker()
+        public override Vote CreateVote(Candidate candidate, decimal value)
         {
             throw new NotImplementedException();
         }

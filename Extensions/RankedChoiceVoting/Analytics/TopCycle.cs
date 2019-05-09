@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using MoonsetTechnologies.Voting.Tabulation;
+using MoonsetTechnologies.Voting.Ballots;
 
 namespace MoonsetTechnologies.Voting.Analytics
 {
@@ -15,7 +16,7 @@ namespace MoonsetTechnologies.Voting.Analytics
     /// </summary>
     public class TopCycle
     {
-        protected List<IRankedBallot> ballots;
+        protected List<Ballot> ballots;
         public enum TopCycleSets
         {
             smith = 1, // Generalize Top-Choice Assumption, GETCHA
@@ -23,7 +24,7 @@ namespace MoonsetTechnologies.Voting.Analytics
         }
 
         private readonly TopCycleSets defaultSet;
-        public TopCycle(IEnumerable<IRankedBallot> ballots, TopCycleSets set = TopCycleSets.smith)
+        public TopCycle(IEnumerable<Ballot> ballots, TopCycleSets set = TopCycleSets.smith)
         {
             this.ballots = ballots.ToList();
             defaultSet = set;

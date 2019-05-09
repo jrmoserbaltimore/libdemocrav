@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using MoonsetTechnologies.Voting.Ballots;
 using MoonsetTechnologies.Voting.Tabulation;
 
 namespace MoonsetTechnologies.Voting.Analytics
@@ -77,10 +78,10 @@ namespace MoonsetTechnologies.Voting.Analytics
     /// </summary>
     class ManipulationResistance
     {
-        ITabulator tabulator;
-        List<IBallot> ballots;
+        RankedTabulator tabulator;
+        List<Ballot> ballots;
 
-        public ManipulationResistance(ITabulator tabulator)
+        public ManipulationResistance(RankedTabulator tabulator)
         {
             this.tabulator = tabulator;
         }

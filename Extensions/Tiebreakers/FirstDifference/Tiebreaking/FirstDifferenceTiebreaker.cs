@@ -4,9 +4,12 @@ using System.Text;
 using MoonsetTechnologies.Voting.Analytics;
 using System.Linq;
 using MoonsetTechnologies.Voting.Tabulation;
+using MoonsetTechnologies.Voting.Utility;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
+
+    [TiebreakerTypeId("16a6295a-e18e-4d4c-8ccc-cab059ffff5d")]
     public class FirstDifferenceTiebreaker : AbstractDifferenceTiebreaker
     {
 

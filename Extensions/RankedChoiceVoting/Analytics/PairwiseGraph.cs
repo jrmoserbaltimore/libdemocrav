@@ -2,8 +2,10 @@
 // These pairwise victories allow us to compute the Smith and Schwartz sets,
 // and thus support Condorcet systems like Smith-constrained IRV and Tideman's
 // Alternative.
+using MoonsetTechnologies.Voting.Ballots;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 // FIXME:  The API for this is simply:
@@ -156,20 +158,20 @@ namespace MoonsetTechnologies.Voting.Analytics
         /// </summary>
         /// <param name="candidates">Candidates to be considered in the race.</param>
         /// <param name="ballots">Ranked ballots in the election.</param>
-        public PairwiseGraph(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
+        public PairwiseGraph(IEnumerable<Candidate> candidates, IEnumerable<Ballot> ballots)
             : this(candidates)
         {
             // Iterate each ballot and count who wins and who ties.
             // This can support tied ranks and each ballot is O(SUM(1..n)) and o(n).
-            foreach (IRankedBallot b in ballots)
+            foreach (Ballot b in ballots)
             {
                 // Track who is not ranked by the end
                 List<Candidate> unranked = new List<Candidate>(graph.Keys);
-                foreach (IRankedVote v in b.Votes)
+                foreach (Vote v in b.Votes)
                     unranked.Remove(v.Candidate);
 
                 // Iterate to compare each pair.
-                List<IRankedVote> votes = new List<IRankedVote>(b.Votes);
+                List<Vote> votes = b.Votes.ToList();
                 for (int i = 0; i < votes.Count; i++)
                 {
                     // Candidate is not counted, so skip

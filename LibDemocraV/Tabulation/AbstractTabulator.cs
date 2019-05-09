@@ -1,3 +1,4 @@
+using MoonsetTechnologies.Voting.Ballots;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,13 +6,11 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public abstract class AbstractTabulator<T, TType> : ITabulator
-        where T : IBallot
-        where TType: AbstractTabulator<T, TType>
+    public abstract class AbstractTabulator
     {
         protected int seats;
         protected IBatchEliminator batchEliminator;
-        protected List<T> ballots;
+        protected List<Ballot> ballots;
         protected readonly Dictionary<Candidate, CandidateState> candidateStates
             = new Dictionary<Candidate, CandidateState>();
 
@@ -32,29 +31,47 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// </summary>
         protected abstract void CountBallots();
 
-        protected AbstractTabulator()
+        /// <summary>
+        /// Initialize candidate states.
+        /// </summary>
+        /// <param name="candidates">The candidates in this election.</param>
+        protected virtual void InitializeCandidateStates(IEnumerable<Candidate> candidates)
         {
-
+            foreach (Candidate c in candidates)
+                candidateStates[c] = new CandidateState();
         }
 
-        public abstract class Builder<BType>
-            where BType : Builder<BType>
+        /// <summary>
+        /// Set the States of candidates.  Includes a validation check.
+        /// </summary>
+        /// <param name="candidates">The candidates for which to set state.</param>
+        protected virtual void SetStates(Dictionary<Candidate, CandidateState.States> candidates)
         {
-            protected IEnumerable<T> ballots;
-            protected IEnumerable<Candidate> candidates;
-            protected int seats;
+            foreach (Candidate c in candidates.Keys)
+            {
+                // FIXME:  Improve exception
+                if (!candidateStates.ContainsKey(c))
+                    throw new ArgumentOutOfRangeException();
+                candidateStates[c].State = candidates[c];
+            }
+        }
 
-            public abstract void BuildTiebreaker();
+        protected AbstractTabulator(IEnumerable<Candidate> candidates, IEnumerable<Ballot> ballots,
+            IBatchEliminator batchEliminator, int seats = 1)
+        {
+            if (seats < 1)
+                throw new ArgumentOutOfRangeException("seats", "seats must be at least one.");
+            // Count() throws ArgumentNullException when candidates is null
+            if (candidates.Count() < 2)
+                throw new ArgumentOutOfRangeException("candidates", "must be at least two candidates");
+            // Count() throws ArgumentNullException when ballots is null
+            if (ballots.Count() < 1)
+                throw new ArgumentOutOfRangeException("ballots", "Require at least one ballot");
 
-            public abstract AbstractBatchEliminator BuildBatchEliminator();
-
-            public abstract BType WithSeats(int seats);
-
-            public abstract BType WithCandidates(IEnumerable<Candidate> candidates);
-
-            public abstract BType WithBallots(IEnumerable<T> ballots);
-
-            public abstract TType Build();
+            seats = this.seats;
+            ballots = this.ballots.ToList();
+            batchEliminator = this.batchEliminator;
+            InitializeCandidateStates(candidates);
         }
     }
 }

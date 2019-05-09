@@ -6,6 +6,7 @@ using MoonsetTechnologies.Voting;
 using MoonsetTechnologies.Voting.Tiebreaking;
 using System.Linq;
 using MoonsetTechnologies.Voting.Tabulation;
+using MoonsetTechnologies.Voting.Ballots;
 
 namespace MoonsetTechnologies.Voting.Development.Tests
 {
@@ -13,7 +14,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
     {
         // indexed by candidate number in the input
         public Dictionary<int, Candidate> Candidates { get;  private set; }
-        public List<IRankedBallot> Ballots { get;  private set; }
+        public List<Ballot> Ballots { get;  private set; }
 
         public ITiebreaker tiebreaker;
         public IBatchEliminator batchEliminator;
@@ -49,10 +50,10 @@ namespace MoonsetTechnologies.Voting.Development.Tests
 
         // XXX:  Horrendous parser.  Just enough to limp along.
         // FIXME:  use the real data format filter when implemented.
-        private (Dictionary<int, Candidate> candidates, List<IRankedBallot>) DecodeBallots(string input)
+        private (Dictionary<int, Candidate> candidates, List<Ballot>) DecodeBallots(string input)
         {
             Dictionary<int, Candidate> cout = new Dictionary<int, Candidate>();
-            List<IRankedBallot> bout = new List<IRankedBallot>();
+            List<Ballot> bout = new List<Ballot>();
 
             List<string> lines = new List<string>(input.Split("\n"));
 
@@ -68,19 +69,19 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                 }
                 else if (chunks[0] == "b")
                 {
-                    List<RankedVote> v = new List<RankedVote>();
+                    List<Vote> v = new List<Vote>();
                     List<string> votes = new List<string>(chunks[2].Split(" "));
 
                     // Add a ranked vote at each sequential rank for each sequential candidate.
                     for (int i = 0; i < votes.Count; i++)
                     {
                         int cnum = Convert.ToInt32(votes[i]);
-                        v.Add(new RankedVote(cout[cnum], i + 1));
+                        v.Add(new Vote(cout[cnum], i + 1));
                     }
 
                     // Create as many ballots as there are noted in field 2
                     for (int i = 0; i < Convert.ToInt32(chunks[1]); i++)
-                        bout.Add(new RankedBallot(v));
+                        bout.Add(new Ballot(v));
 
                 }
             }

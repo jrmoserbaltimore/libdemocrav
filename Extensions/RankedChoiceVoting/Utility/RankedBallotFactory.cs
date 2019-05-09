@@ -6,6 +6,7 @@ using MoonsetTechnologies.Voting;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
+    /*
     [BallotTypeId(typeof(RankedBallot))]
     public class RankedBallotFactory : AbstractBallotFactory
     {
@@ -25,4 +26,5 @@ namespace MoonsetTechnologies.Voting.Utility
             throw new ArgumentException("votes is not IEnumerable<IRankedVote>");
         }
     }
+    */
 }

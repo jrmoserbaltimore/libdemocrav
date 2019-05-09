@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Extensions\Tiebreakers\FirstDifference\FirstDifference.csproj" />
+    <ProjectReference Include="..\..\SingleTransferableVote\SingleTransferableVote.csproj" />
   </ItemGroup>
 
   <ItemGroup>

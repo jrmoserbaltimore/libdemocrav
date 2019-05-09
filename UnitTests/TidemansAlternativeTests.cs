@@ -21,33 +21,22 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         }
 
         [Fact]
-        public void TidemansAlternativeFactoryTest()
-        {
-            AbstractTabulatorFactory<IRankedBallot, RankedTabulator> factory
-                = new TidemansAlternativeTabulatorFactory();
-
-            RankedTabulator t = factory.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
-
-            Assert.NotNull(t);
-            Assert.IsType<RankedTabulator>(t);
-        }
-
-        [Fact]
         public void TidemansAlternativeTest()
         {
-            AbstractTabulatorFactory<IRankedBallot, RankedTabulator> factory
+            AbstractTabulatorFactory f
                 = new TidemansAlternativeTabulatorFactory();
 
-            RankedTabulator t = factory.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
+            AbstractTabulator t 
+                = f.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
 
             Assert.NotNull(t);
             Assert.IsType<RankedTabulator>(t);
 
             while (!t.Complete)
-                t.ComputeTabulation();
+                t.TabulateRound();
             Assert.True(t.Complete);
 
-            List<string> winners = t.GetResults()
+            List<string> winners = t.GetFullTabulation()
                 .Where(x => x.Value.State == CandidateState.States.elected)
                 .Select(x => x.Key.Name).ToList();
 

@@ -1,3 +1,4 @@
+using MoonsetTechnologies.Voting.Ballots;
 using MoonsetTechnologies.Voting.Tabulation;
 using MoonsetTechnologies.Voting.Tiebreaking;
 using System;
@@ -6,15 +7,13 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
-    public abstract class AbstractTabulatorFactory<T,U>
-        where T : IBallot
-        where U : ITabulator
+    public abstract class AbstractTabulatorFactory
     {
-        public abstract U CreateTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<T> ballots);
+        public abstract AbstractTabulator CreateTabulator(IEnumerable<Candidate> candidates,
+            IEnumerable<Ballot> ballots);
 
-        public abstract IBatchEliminator CreateBatchEliminator();
+        public abstract Ballot CreateBallot(IEnumerable<Vote> votes);
 
-        public abstract ITiebreaker CreateTiebreaker();
+        public abstract Vote CreateVote(Candidate candidate, decimal value);
     }
 }

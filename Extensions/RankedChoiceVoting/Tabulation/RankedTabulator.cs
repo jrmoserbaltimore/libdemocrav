@@ -1,18 +1,28 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using System.Linq;
+using MoonsetTechnologies.Voting.Ballots;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public class RankedTabulator : AbstractTabulator<IRankedBallot>
+    public class RankedTabulator : AbstractBasicTabulator
     {
-        IEnumerable<Candidate> SchwartzSet { get; }
-        IEnumerable<Candidate> SmithSet { get; }
 
         /// <inheritdoc/>
-        public override void CountBallots()
+        public RankedTabulator(IEnumerable<Candidate> candidates, IEnumerable<Ballot> ballots,
+            IBatchEliminator batchEliminator, int seats = 1)
+            : base(candidates, ballots, batchEliminator, seats)
         {
+
+        }
+
+        // A simple count of who has the most votes.
+        /// <inheritdoc/>
+        protected override void CountBallots()
+        {
+            if (seats > 1)
+                throw new ArgumentOutOfRangeException("seats", "This algorithm can't count multiple seats.");
             Dictionary<Candidate, CandidateState> candidates
                 = candidateStates
                    .Where(x => x.Value.State == CandidateState.States.hopeful
@@ -22,10 +32,10 @@ namespace MoonsetTechnologies.Voting.Tabulation
             foreach (Candidate c in candidateStates.Keys)
                 candidateStates[c].VoteCount = 0.0m;
 
-            foreach (IRankedBallot b in ballots)
+            foreach (Ballot b in ballots)
             {
-                IRankedVote vote = null;
-                foreach (IRankedVote v in b.Votes)
+                Vote vote = null;
+                foreach (Vote v in b.Votes)
                 {
                     // Skip candidates not included in this count.
                     if (!candidates.Keys.Contains(v.Candidate))
@@ -37,68 +47,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 if (!(vote is null))
                     candidateStates[vote.Candidate].VoteCount += 1.0m;
             }
-        }
-
-        /// <inheritdoc/>
-        public override Dictionary<Candidate, CandidateState.States> GetTabulation()
-        {
-            Dictionary<Candidate, CandidateState> hopefuls =
-                candidateStates.Where(x => x.Value.State == CandidateState.States.hopeful)
-                .ToDictionary(x => x.Key, x => x.Value);
-
-            Dictionary<Candidate, CandidateState> elected =
-                candidateStates.Where(x => x.Value.State == CandidateState.States.elected)
-                .ToDictionary(x => x.Key, x => x.Value);
-
-            Dictionary<Candidate, CandidateState.States> result;
-
-            // Fill remaining seats
-            if (hopefuls.Count() + elected.Count() <= seats)
-                result = hopefuls.ToDictionary(x => x.Key, x => CandidateState.States.elected);
-            else
-            {
-                // Check for elimination
-                result = batchEliminator.GetEliminationCandidates(candidateStates)
-                    .ToDictionary(x => x, x => CandidateState.States.defeated);
-            }
-            // No elimination, despite more candidats than seats?  It's broken.
-            if (result.Count() == 0 && hopefuls.Count() + elected.Count() > seats)
-                throw new InvalidOperationException();
-            return result;
-        }
-
-        /// <inheritdoc/>
-        private RankedTabulator()
-            : base()
-        {
-
-        }
-        public class Builder : Builder<RankedTabulator>
-        {
-            public override RankedTabulator Build()
-            {
-                RankedTabulator tabulator = new RankedTabulator();
-
-                tabulator.InitializeCandidateStates(candidates);
-                tabulator.ballots = ballots.ToList();
-                tabulator.seats = seats;
-                tabulator.batchEliminator = BuildBatchEliminator();
-
-                // State isn't valid until first round of tabulation is performed
-                tabulator.ComputeTabulation();
-                return tabulator;
-            }
-
-            public override AbstractBatchEliminator BuildBatchEliminator()
-            {
-                throw new NotImplementedException();
-            }
-
-            public override void BuildTiebreaker()
-            {
-                throw new NotImplementedException();
-            }
-
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
+    /*
     public class InstantRunoffVotingFactory
         : AbstractTabulatorFactory<IRankedBallot, RankedTabulator>
     {
@@ -44,4 +45,5 @@ namespace MoonsetTechnologies.Voting.Utility
             return new RankedTabulator(voteCount);
         }
     }
+    */
 }

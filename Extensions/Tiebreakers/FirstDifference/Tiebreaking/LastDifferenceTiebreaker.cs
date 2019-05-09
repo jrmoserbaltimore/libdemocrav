@@ -1,11 +1,13 @@
 using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Tabulation;
+using MoonsetTechnologies.Voting.Utility;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
+    [TiebreakerTypeId("e7b8e618-1fee-4552-8b5b-b0616a90f03c")]
     public class LastDifferenceTiebreaker : AbstractDifferenceTiebreaker
     {
         public LastDifferenceTiebreaker()
