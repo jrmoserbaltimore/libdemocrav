@@ -3,16 +3,19 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using MoonsetTechnologies.Voting.Tiebreaking;
+using MoonsetTechnologies.Voting.Analytics;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public class RunoffBatchEliminator : AbstractBatchEliminator
+    public class RunoffBatchEliminator : AbstractRankedBatchEliminator
     {
 
         protected bool enableBatchElimination = true;
 
-        public RunoffBatchEliminator(ITiebreaker tiebreakers, int seats = 1)
-            : base(tiebreakers, seats)
+        public RunoffBatchEliminator(AbstractTiebreaker tiebreakers,
+            RankedTabulationAnalytics analytics,
+            int seats = 1)
+            : base(tiebreakers, analytics, seats)
         {
 
         }

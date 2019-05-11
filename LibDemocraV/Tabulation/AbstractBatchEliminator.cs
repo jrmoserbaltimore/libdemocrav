@@ -1,3 +1,4 @@
+using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Tiebreaking;
 using System;
 using System.Collections.Generic;
@@ -5,26 +6,27 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public abstract class AbstractBatchEliminator : IBatchEliminator
+    public abstract class AbstractBatchEliminator
     {
-        protected readonly ITiebreaker tiebreaker;
+        protected readonly AbstractTiebreaker tiebreaker;
+        protected readonly AbstractTabulationAnalytics analytics;
         protected readonly int seats;
 
-        public AbstractBatchEliminator(ITiebreaker tiebreakers, int seats = 1)
+        public AbstractBatchEliminator(AbstractTiebreaker tiebreaker,
+            AbstractTabulationAnalytics analytics, int seats = 1)
         {
-            this.tiebreaker = tiebreakers;
+            this.tiebreaker = tiebreaker;
+            this.analytics = analytics;
             this.seats = seats;
         }
 
-        /// <inheritdoc/>
-        public abstract IEnumerable<Candidate> GetEliminationCandidates(Dictionary<Candidate, CandidateState> candidateStates, decimal surplus = 0.0M);
-        /// <inheritdoc/>
-        public virtual void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
-            => tiebreaker.UpdateTiebreaker(candidateStates);
-
-        public abstract class Builder
-        {
-
-        }
+        /// <summary>
+        /// Get the set of elimination candidates.
+        /// </summary>
+        /// <param name="candidateStates">CandidateState at the current tabulation and vote count.</param>
+        /// <param name="surplus">Surplus votes for systems that use this.</param>
+        /// <returns>An IEnumerable of Candidates to eliminate.</returns>
+        public abstract IEnumerable<Candidate> GetEliminationCandidates(Dictionary<Candidate, CandidateState> candidateStates,
+            decimal surplus = 0.0m);
     }
 }

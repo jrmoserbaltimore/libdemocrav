@@ -18,8 +18,4 @@
     <None Remove="Storage\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Core\Analytics\" />
-  </ItemGroup>
-
 </Project>

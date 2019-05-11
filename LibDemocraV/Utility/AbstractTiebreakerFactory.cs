@@ -11,6 +11,7 @@ namespace MoonsetTechnologies.Voting.Utility
         {
         }
 
-        public abstract ITiebreaker CreateTiebreaker();
+        public abstract AbstractTiebreaker CreateTiebreaker(TabulationMediator mediator);
+
     }
 }

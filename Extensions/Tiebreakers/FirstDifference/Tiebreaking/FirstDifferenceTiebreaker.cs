@@ -12,12 +12,12 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
     [TiebreakerTypeId("16a6295a-e18e-4d4c-8ccc-cab059ffff5d")]
     public class FirstDifferenceTiebreaker : AbstractDifferenceTiebreaker
     {
-
-        public FirstDifferenceTiebreaker()
+        public FirstDifferenceTiebreaker() : base()
         {
         }
 
-        public override void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
+        /// <inheritdoc/>
+        protected override void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
         {
             bool allFirstDifferences = true;
 

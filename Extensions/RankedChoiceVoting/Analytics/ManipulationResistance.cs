@@ -78,10 +78,10 @@ namespace MoonsetTechnologies.Voting.Analytics
     /// </summary>
     class ManipulationResistance
     {
-        RankedTabulator tabulator;
+        RunoffTabulator tabulator;
         List<Ballot> ballots;
 
-        public ManipulationResistance(RankedTabulator tabulator)
+        public ManipulationResistance(RunoffTabulator tabulator)
         {
             this.tabulator = tabulator;
         }

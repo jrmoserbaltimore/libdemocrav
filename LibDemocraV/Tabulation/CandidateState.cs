@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public class CandidateState
+    public class CandidateState : ICloneable
     {
         public enum States
         {
@@ -20,6 +20,11 @@ namespace MoonsetTechnologies.Voting.Tabulation
         {
             VoteCount = 0.0m;
             State = States.hopeful;
+        }
+
+        public object Clone()
+        {
+            return MemberwiseClone();
         }
     }
 }

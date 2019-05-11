@@ -26,7 +26,7 @@ using MoonsetTechnologies.Voting.Tiebreaking;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public class MeekSTVTabulator : RankedTabulator
+    public class MeekSTVTabulator : RunoffTabulator
     {
         private decimal quota = 0.0m;
         private decimal surplus = 0.0m;
@@ -84,6 +84,54 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 };
                 candidateStates[c] = cs;
             }
+        }
+
+
+
+        /// <inheritdoc/>
+        public override void CountBallots()
+        {
+            // The s>=surplus check is skipped the first iteration.
+            // We implement this by having surplus greater than the
+            // number of whole ballots.
+            surplus = Convert.ToDecimal(ballots.Count) + 1;
+            const decimal omega = 0.000001m;
+            IEnumerable<Candidate> elected;
+
+            // B.1 skip all this if we're finished.
+            if (CheckComplete())
+                return;
+
+            do
+            {
+                decimal s = surplus;
+                bool kfStasis;
+
+                DistributeVotes();
+                quota = ComputeQuota();
+                elected = GetWinners(quota);
+                surplus = ComputeSurplus(quota);
+                // B.2.e Counting continues at B1, next tabulation round.
+                if (elected.Count() > 0)
+                    break;
+                // B.2.e Iteration complete, no election, go to B.3
+                else if (surplus >= s || omega > surplus)
+                    break;
+                // B.2.f Update keep factors.  Also detect stasis.
+                kfStasis = UpdateKeepFactors(quota);
+                // Upon Stasis, we must eliminate candidates (B.3)
+                // We know:
+                //   - Elected < Seats
+                //   - Elected + Hopeful > Seats
+                // Therefor IsComplete() is false and will not change state.
+                // Re-entering this body is guaranteed to return to this state.
+                // Elimination is required.
+                if (kfStasis)
+                    break;
+            } while (true);
+
+            // Update our tiebreaker algorithms
+            batchEliminator.UpdateTiebreaker(candidateStates);
         }
     }
 }

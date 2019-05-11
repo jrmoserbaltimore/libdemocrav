@@ -7,6 +7,8 @@ using MoonsetTechnologies.Voting.Tiebreaking;
 using System.Linq;
 using MoonsetTechnologies.Voting.Tabulation;
 using MoonsetTechnologies.Voting.Ballots;
+using MoonsetTechnologies.Voting.Utility;
+using Xunit.Abstractions;
 
 namespace MoonsetTechnologies.Voting.Development.Tests
 {
@@ -16,8 +18,9 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         public Dictionary<int, Candidate> Candidates { get;  private set; }
         public List<Ballot> Ballots { get;  private set; }
 
-        public ITiebreaker tiebreaker;
-        public IBatchEliminator batchEliminator;
+        public AbstractTiebreaker tiebreaker;
+
+        public ITestOutputHelper output;
 
         public BallotSetFixture()
         {
@@ -32,20 +35,8 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             // Decode the above into a thing.
             (Candidates, Ballots) = DecodeBallots(ballotSet);
 
-            ITiebreaker firstDifference = new FirstDifferenceTiebreaker();
-            tiebreaker = new SeriesTiebreaker(
-                new ITiebreaker[] {
-                    new SequentialTiebreaker(
-                        new ITiebreaker[] {
-                          new LastDifferenceTiebreaker(),
-                          firstDifference,
-                        }.ToList()
-                    ),
-                    new LastDifferenceTiebreaker(),
-                    firstDifference,
-                }.ToList()
-            );
-            batchEliminator = new RunoffBatchEliminator(tiebreaker);
+            AbstractTiebreaker firstDifference = new FirstDifferenceTiebreaker();
+            tiebreaker = firstDifference;
         }
 
         // XXX:  Horrendous parser.  Just enough to limp along.
@@ -88,6 +79,28 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             return (cout, bout);
         }
 
+        public void PrintTabulationState(TabulationStateEventArgs e)
+        {
+            foreach (Candidate c in e.CandidateStates.Keys)
+            {
+                output.WriteLine("  {0}\t{1}\t{2}", e.CandidateStates[c].VoteCount,
+                    c.Name,
+                    e.CandidateStates[c].State.ToString());
+            }
+
+            RankedTabulationStateEventArgs re = e as RankedTabulationStateEventArgs;
+            if (!(re is null))
+            {
+                output.WriteLine("  Smith Set:");
+                foreach (Candidate c in re.SmithSet)
+                    output.WriteLine("    {0}", c.Name);
+                output.WriteLine("  Schwartz Set:");
+                foreach (Candidate c in re.SchwartzSet)
+                    output.WriteLine("    {0}", c.Name);
+            }
+            output.WriteLine("  Notes:\t{0}", e.Note);
+            output.WriteLine("\n");
+        }
     }
 
     public class AnalyticsTests : IClassFixture<BallotSetFixture>
@@ -122,65 +135,6 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             c.AddRange(schwartzSet.GetTopCycle(fixture.Candidates.Values));
             Assert.Equal("Chris", c[0].Name);
 
-        }
-
-        [Fact]
-        public void RankedVoteCountTest()
-        {
-            IVoteCount vc = new RankedVoteCount(fixture.Candidates.Values, fixture.Ballots, fixture.batchEliminator);
-            vc.CountBallots();
-            Assert.Equal(20, vc.GetVoteCount(fixture.Candidates[0]));
-            Assert.Equal(13, vc.GetVoteCount(fixture.Candidates[1]));
-        }
-
-        [Fact]
-        public void RankedVoteCountsTest()
-        {
-            IVoteCount vc = new RankedVoteCount(fixture.Candidates.Values, fixture.Ballots, fixture.batchEliminator);
-
-            vc.CountBallots();
-            Dictionary<Candidate, decimal> vcd;
-            vcd = vc.GetVoteCounts();
-            // Do the numbers match expected?
-            Assert.Equal(20, vcd[fixture.Candidates[0]]);
-            Assert.Equal(13, vcd[fixture.Candidates[1]]);
-        }
-
-        [Fact]
-        public void RankedVoteCountsEliminationTest()
-        {
-            List<Candidate> c = new List<Candidate>(fixture.Candidates.Values);
-
-            IVoteCount vc = new RankedVoteCount(c, fixture.Ballots, fixture.batchEliminator);
-
-            Dictionary<Candidate, CandidateState> cS;
-
-            Dictionary<Candidate, decimal> vcd;
-            vc.ApplyTabulation();
-            vc.CountBallots();
-
-            // Test after one round
-            vcd = vc.GetVoteCounts();
-
-            // Do the numbers match expected?
-            Assert.Equal(20 + 5, vcd.Where(x => x.Key == fixture.Candidates[0]).Select(x => x.Value).First());
-            Assert.Equal(15 + 8, vcd.Where(x => x.Key == fixture.Candidates[2]).Select(x => x.Value).First());
-
-            // Complete tabulation
-            while (vc.GetTabulation().Count() > 0)
-            {
-                vc.ApplyTabulation();
-                vc.CountBallots();
-            }
-
-            vcd = vc.GetVoteCounts();
-
-            cS = vc.GetFullTabulation();
-            // Vote counts
-            Assert.Equal("Alex", cS.First().Key.Name);
-            Assert.Equal(20 + 8 + 5, cS.First().Value.VoteCount);
-            Assert.Equal(cS.First().Value.VoteCount, vcd.First().Value);
-            Assert.Single(vcd);
         }
     }
 }

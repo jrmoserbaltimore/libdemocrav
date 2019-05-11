@@ -26,12 +26,18 @@ namespace MoonsetTechnologies.Voting.Utility
         TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;
         TopCycle.TopCycleSets retainSet = TopCycle.TopCycleSets.smith;
 
+        public TidemansAlternativeTabulatorFactory()
+            : base()
+        {
+            //SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
+        }
+
         public TidemansAlternativeTabulatorFactory WithCondorcetSet(TopCycle.TopCycleSets set)
         {
             TidemansAlternativeTabulatorFactory f = new TidemansAlternativeTabulatorFactory
             {
                 condorcetSet = set,
-                retainSet = set
+                retainSet = retainSet
             };
             return f;
         }
@@ -40,23 +46,19 @@ namespace MoonsetTechnologies.Voting.Utility
         {
             TidemansAlternativeTabulatorFactory f = new TidemansAlternativeTabulatorFactory
             {
-                condorcetSet = set,
+                condorcetSet = condorcetSet,
                 retainSet = set
             };
             return f;
         }
 
-        private IBatchEliminator NewBatchEliminator(IEnumerable<Ballot> ballots)
+        public override AbstractTabulator CreateTabulator()
         {
-            return new TidemansAlternativeBatchEliminator(
-                new RunoffBatchEliminator(new DifferenceTiebreakerFactory().CreateTiebreaker()),
-                new TopCycle(ballots, condorcetSet),
-                new TopCycle(ballots, retainSet));
-        }
+            TabulationMediator mediator = new TabulationMediator();
 
-        public override AbstractTabulator CreateTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<Ballot> ballots)
-            => new RankedTabulator(candidates, ballots, NewBatchEliminator(ballots));
+            TidemansAlternativeTabulator t = new TidemansAlternativeTabulator(mediator, tiebreakerFactory);
+            return t;
+        }
 
         public override Ballot CreateBallot(IEnumerable<Vote> votes)
         {

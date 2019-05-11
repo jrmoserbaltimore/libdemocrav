@@ -7,18 +7,21 @@ using MoonsetTechnologies.Voting.Tiebreaking;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public class TidemansAlternativeBatchEliminator : AbstractBatchEliminator
+    public class TidemansAlternativeBatchEliminator : RunoffBatchEliminator
     {
-        protected readonly TopCycle condorcetSet;
-        protected readonly TopCycle retentionSet;
-        protected readonly IBatchEliminator batchEliminator;
+        protected readonly TopCycle.TopCycleSets condorcetSet;
+        protected readonly TopCycle.TopCycleSets retentionSet;
 
-        public TidemansAlternativeBatchEliminator(IBatchEliminator batchEliminator, TopCycle condorcetSet, TopCycle retentionSet, int seats = 1)
-            : base(null, seats)
+        public TidemansAlternativeBatchEliminator(AbstractTiebreaker tiebreaker,
+            RankedTabulationAnalytics analytics,
+            int seats = 1,
+            TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz,
+            TopCycle.TopCycleSets retentionSet = TopCycle.TopCycleSets.smith)
+            : base(tiebreaker, analytics, seats)
         {
             this.condorcetSet = condorcetSet;
             this.retentionSet = retentionSet;
-            this.batchEliminator = batchEliminator;
+
         }
 
         /// <inheritdoc/>
@@ -32,12 +35,10 @@ namespace MoonsetTechnologies.Voting.Tabulation
                   || x.Value.State == CandidateState.States.hopeful)
                   .ToDictionary(x => x.Key, null).Keys.ToList();
 
-            cCheck = condorcetSet.GetTopCycle(inputSet).ToList();
+            cCheck = (analytics as RankedTabulationAnalytics).GetTopCycle(inputSet, condorcetSet).ToList();
             // Reduce these to the appropriate checks
-            rSet = retentionSet.GetTopCycle(inputSet).ToList();
+            rSet = (analytics as RankedTabulationAnalytics).GetTopCycle(inputSet, retentionSet).ToList();
 
-            // Update tiebreakers before we send results back
-            batchEliminator.UpdateTiebreaker(candidateStates);
             // Condorcet winner!
             if (cCheck.Count == 1)
             {
@@ -56,13 +57,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
             else
             {
                 // Top cycle is all candidates, so use a runoff batch eliminator
-                return batchEliminator.GetEliminationCandidates(candidateStates);
+                return base.GetEliminationCandidates(candidateStates);
             }
         }
-
-        // We use a batch eliminator which has its own tiebreaker
-        /// <inheritdoc/>
-        public override void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
-            => batchEliminator.UpdateTiebreaker(candidateStates);
     }
 }

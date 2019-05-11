@@ -7,52 +7,81 @@ using MoonsetTechnologies.Voting.Tiebreaking;
 using System.Linq;
 using MoonsetTechnologies.Voting.Utility;
 using MoonsetTechnologies.Voting.Tabulation;
+using Xunit.Abstractions;
 
 namespace MoonsetTechnologies.Voting.Development.Tests
 {
     public class InstantRunoffVotingTests : IClassFixture<BallotSetFixture>
     {
+        private readonly ITestOutputHelper output;
 
         readonly BallotSetFixture fixture;
 
-        public InstantRunoffVotingTests(BallotSetFixture fixture)
+        public InstantRunoffVotingTests(ITestOutputHelper testOutputHelper, BallotSetFixture fixture)
         {
             this.fixture = fixture;
+            fixture.output = output = testOutputHelper;
         }
 
         [Fact]
         public void IRVFactoryTest()
         {
-            AbstractTabulatorFactory<IRankedBallot, RankedTabulator> factory
-                = new InstantRunoffVotingFactory();
+            InstantRunoffVotingTabulatorFactory f;
+            f = new InstantRunoffVotingTabulatorFactory();
 
-            RankedTabulator t = factory.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
+            // Use Last Difference
+            f.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
+
+            AbstractTabulator t = f.CreateTabulator();
 
             Assert.NotNull(t);
-            Assert.IsType<RankedTabulator>(t);
+            Assert.IsType<InstantRunoffVotingTabulator>(t);
         }
 
         [Fact]
         public void IRVTest()
         {
-            AbstractTabulatorFactory<IRankedBallot, RankedTabulator> factory
-                = new TidemansAlternativeTabulatorFactory();
+            List<string> winners = null;
+            InstantRunoffVotingTabulatorFactory f;
+            AbstractTabulator t;
 
-            RankedTabulator t = factory.CreateTabulator(fixture.Candidates.Values, fixture.Ballots);
-
-            Assert.NotNull(t);
-            Assert.IsType<RankedTabulator>(t);
-
-            while (!t.Complete)
-                t.ComputeTabulation();
-            Assert.True(t.Complete);
-
-            List<string> winners = t.GetResults()
+            void Monitor_TabulationComplete(object sender, TabulationStateEventArgs e)
+            {
+                winners = e.CandidateStates
                 .Where(x => x.Value.State == CandidateState.States.elected)
                 .Select(x => x.Key.Name).ToList();
 
+                output.WriteLine("Tabulation completion data:");
+                fixture.PrintTabulationState(e);
+            }
+
+            void Monitor_RoundComplete (object sender, TabulationStateEventArgs e)
+            {
+                output.WriteLine("Round completion data:");
+                fixture.PrintTabulationState(e);
+            }
+
+            f = new InstantRunoffVotingTabulatorFactory();
+
+            // Use Last Difference
+            f.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
+
+            t = f.CreateTabulator();
+
+            Assert.NotNull(t);
+            Assert.IsType<InstantRunoffVotingTabulator>(t);
+
+            t.Monitor.TabulationComplete += Monitor_TabulationComplete;
+            t.Monitor.RoundComplete += Monitor_RoundComplete;
+
+            t.Tabulate(fixture.Ballots);
+
+            t.Monitor.TabulationComplete -= Monitor_TabulationComplete;
+            t.Monitor.RoundComplete -= Monitor_RoundComplete;
+
+            Assert.NotNull(winners);
             Assert.Single(winners);
-            Assert.Equal("Chris", winners.First());
+            Assert.Equal("Alex", winners.First());
         }
     }
 }

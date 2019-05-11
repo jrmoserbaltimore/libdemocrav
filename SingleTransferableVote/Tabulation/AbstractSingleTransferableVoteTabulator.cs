@@ -6,7 +6,7 @@ using MoonsetTechnologies.Voting.Ballots;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public abstract class AbstractSingleTransferableVoteTabulator : RankedTabulator
+    public abstract class AbstractSingleTransferableVoteTabulator : RunoffTabulator
     {
 
         /// <inheritdoc/>

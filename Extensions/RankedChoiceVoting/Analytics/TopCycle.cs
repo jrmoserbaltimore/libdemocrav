@@ -30,7 +30,7 @@ namespace MoonsetTechnologies.Voting.Analytics
             defaultSet = set;
         }
 
-        protected IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> candidates, TopCycleSets set)
+        public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> candidates, TopCycleSets set)
             => ComputeSets(new PairwiseGraph(candidates, ballots), set);
 
         public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> candidates)

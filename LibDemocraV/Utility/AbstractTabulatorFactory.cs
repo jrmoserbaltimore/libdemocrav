@@ -9,11 +9,16 @@ namespace MoonsetTechnologies.Voting.Utility
 {
     public abstract class AbstractTabulatorFactory
     {
-        public abstract AbstractTabulator CreateTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<Ballot> ballots);
+        protected AbstractTiebreakerFactory tiebreakerFactory;
+        public abstract AbstractTabulator CreateTabulator();
 
         public abstract Ballot CreateBallot(IEnumerable<Vote> votes);
 
         public abstract Vote CreateVote(Candidate candidate, decimal value);
+
+        public void SetTiebreaker(AbstractTiebreakerFactory tiebreakerFactory)
+        {
+            this.tiebreakerFactory = tiebreakerFactory;
+        }
     }
 }
