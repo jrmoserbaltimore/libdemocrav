@@ -3,22 +3,17 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using MoonsetTechnologies.Voting.Ballots;
+using MoonsetTechnologies.Voting.Utility;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
     public abstract class AbstractSingleTransferableVoteTabulator : RunoffTabulator
     {
-
-        /// <inheritdoc/>
-        public AbstractSingleTransferableVoteTabulator(IEnumerable<Candidate> candidates, IEnumerable<Ballot> ballots,
-            IBatchEliminator batchEliminator, int seats = 1)
-            : base(candidates, ballots, batchEliminator, seats)
+        public AbstractSingleTransferableVoteTabulator(TabulationMediator mediator,
+            AbstractTiebreakerFactory tiebreakerFactory,
+            int seats = 1)
+            : base(mediator, tiebreakerFactory, seats)
         {
-
         }
-
-        // A simple count of who has the most votes.
-        /// <inheritdoc/>
-        protected abstract override void CountBallots();
     }
 }

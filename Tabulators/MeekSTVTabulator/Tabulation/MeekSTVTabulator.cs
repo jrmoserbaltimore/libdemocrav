@@ -28,11 +28,13 @@ using MoonsetTechnologies.Voting.Utility;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public class MeekSTVTabulator : AbstractTabulator
+    public class MeekSTVTabulator : AbstractSingleTransferableVoteTabulator
     {
         private decimal quota = 0.0m;
         private decimal surplus = 0.0m;
         private readonly int precision = 9;
+        private bool kfStasis = false;
+        private bool surplusStasis = false;
         // Round up to precision
         private decimal RoundUp(decimal d)
         {
@@ -60,34 +62,47 @@ namespace MoonsetTechnologies.Voting.Tabulation
             batchEliminator = new RunoffBatchEliminator(tiebreakerFactory.CreateTiebreaker(mediator), a, seats);
         }
 
-        // FIXME:  need to ensure TabulateRound is actually counting winners and doing eliminations
-        // or elections.  That code hasn't been reworked yet.
-
         /// <inheritdoc/>
         protected override TabulationStateEventArgs TabulateRound()
         {
+            mediator.UpdateTiebreaker(CandidateStatesCopy);
             IEnumerable<Candidate> startSet =
-                candidateStates.
-                Where(x => new[] { CandidateState.States.hopeful, CandidateState.States.elected }
+                candidateStates
+                .Where(x => new[] { CandidateState.States.hopeful, CandidateState.States.elected }
                      .Contains(x.Value.State)).Select(x => x.Key).ToList();
 
-            mediator.UpdateTiebreaker(CandidateStatesCopy);
+            IEnumerable<Candidate> winners;
+            IEnumerable<Candidate> eliminationCandidates;
+            // Mutually exclusive, and exclusive with electing winners
+            string note = kfStasis ? "KeepFactor Stasis, so eliminating candidates." : null;
+            note = surplusStasis ? "Surplus Stasis, so eliminating candidates." : note;
 
-            IEnumerable<Candidate> eliminationCandidates
-                = batchEliminator.GetEliminationCandidates(CandidateStatesCopy);
-
-            if (!(eliminationCandidates?.Count() > 0))
-                throw new InvalidOperationException("Called TabulateRound() after completion.");
-            foreach (Candidate c in eliminationCandidates)
-                SetState(c, CandidateState.States.defeated);
-            // If we're done, there will be only enough hopefuls to fill remaining seats
+            // B.1:  if we have fewer hopefuls than open seats, elect everyone
             if (IsComplete())
             {
-                IEnumerable<Candidate> elected =
-                  candidateStates.Where(x => x.Value.State == CandidateState.States.hopeful)
-                  .Select(x => x.Key).ToList();
-                foreach (Candidate c in elected)
-                    SetState(c, CandidateState.States.elected);
+                winners = candidateStates
+                    .Where(x => x.Value.State == CandidateState.States.hopeful)
+                    .Select(x => x.Key).ToList();
+                note = "Fewer hopeful candidates than open seats, so elected all.";
+            }
+            else
+            {
+                // Meek's Method iterates until it elects winners or hits a no-winner state.
+                // On a winner state, it repeats the iteration
+                winners = GetNewWinners(quota).ToList();
+            }
+
+            // Elect our winners either way
+            foreach (Candidate c in winners)
+                SetState(c, CandidateState.States.elected);
+
+            if (winners.Count() == 0)
+            {
+                eliminationCandidates = batchEliminator.GetEliminationCandidates(CandidateStatesCopy);
+                if (!(eliminationCandidates?.Count() > 0))
+                    throw new InvalidOperationException("Called TabulateRound() but no winners or losers.");
+                foreach (Candidate c in eliminationCandidates)
+                    SetState(c, CandidateState.States.defeated);
             }
 
             return new RankedTabulationStateEventArgs
@@ -97,13 +112,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 SmithSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet)
             };
         }
-
-        // AbstractTabulator's implementation follows:
-        //   B.1 - if (Complete) return
-        //   B.2 - voteCount.CountBallots()
-        //   B.2.c etc. - voteCount.ApplyTabulation()
-        //   B.4 - Re-enter TabulateRound() at B.1
-
 
         /// <inheritdoc/>
         protected override void SetState(Candidate candidate, CandidateState.States state)
@@ -241,15 +249,22 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 return (noChange || increase);
             }
 
+            // Reset this in case we immediately elect or hit surplus
+            kfStasis = surplusStasis = false;
+
             do
             {
                 decimal s = surplus;
-                bool kfStasis;
-
+                // B.2.a
                 DistributeVotes();
+                // B.2.b
                 quota = ComputeQuota();
-                elected = GetWinners(quota);
+                // B.2.c
+                elected = GetNewWinners(quota);
+                // B.2.d
                 surplus = ComputeSurplus(quota);
+                if (surplus >= s)
+                    surplusStasis = true;
                 // B.2.e Counting continues at B1, next tabulation round.
                 if (elected.Count() > 0)
                     break;
@@ -271,7 +286,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         }
 
         // Reference rule B.2.c, returns null if no hopefuls get elected.
-        private IEnumerable<Candidate> GetWinners(decimal quota)
+        private IEnumerable<Candidate> GetNewWinners(decimal quota)
         {
             List<Candidate> winners = new List<Candidate>();
             Dictionary<Candidate, decimal> hopefuls = candidateStates
@@ -284,40 +299,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
                     winners.Add(c);
             }
             return winners;
-        }
-
-        // XXX:  Validate the below
-        private Dictionary<Candidate, CandidateState.States> GetTabulation()
-        {
-            List<Candidate> winners = null;
-            if (!IsComplete())
-                winners = GetWinners(quota).ToList();
-            else
-            {
-                CandidateState.States s = CandidateState.States.elected;
-                // Reference rule step C
-                // Count number of electeds
-                Dictionary<Candidate, CandidateState.States> elected =
-                    candidateStates.Where(x => x.Value.State == CandidateState.States.elected)
-                    .ToDictionary(x => x.Key, x => s);
-                // If we've filled all seats, defeat everyone else; else elect them all.
-                if (elected.Count() == seats)
-                    s = CandidateState.States.defeated;
-
-                elected = candidateStates.Where(x => x.Value.State == CandidateState.States.hopeful)
-                        .ToDictionary(x => x.Key, x => s);
-
-                return elected;
-            }
-
-            if (winners.Count() > 0)
-            {
-                return candidateStates
-                    .Where(x => winners.Contains(x.Key))
-                    .ToDictionary(x => x.Key, x => CandidateState.States.elected);
-            }
-            return batchEliminator.GetEliminationCandidates(candidateStates, surplus)
-              .ToDictionary(x => x, x => CandidateState.States.defeated);
         }
     }
 }

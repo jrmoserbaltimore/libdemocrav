@@ -19,6 +19,7 @@
     <ProjectReference Include="..\Extensions\Tiebreakers\FirstDifference\FirstDifference.csproj" />
     <ProjectReference Include="..\LibDemocraV\LibDemocraV.csproj" />
     <ProjectReference Include="..\Tabulators\InstantRunoffVotingTabulator\InstantRunoffVotingTabulator.csproj" />
+    <ProjectReference Include="..\Tabulators\MeekSTVTabulator\MeekSTVTabulator.csproj" />
     <ProjectReference Include="..\Tabulators\TidemansAlternativeTabulator\TidemansAlternativeTabulator.csproj" />
   </ItemGroup>
 

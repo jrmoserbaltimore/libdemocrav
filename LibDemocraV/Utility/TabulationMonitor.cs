@@ -8,29 +8,33 @@ namespace MoonsetTechnologies.Voting.Utility
     public class TabulationMonitor
     {
         /// <summary>
-        /// Provides a full tabulation, including final vote counts, after each round of tabulation.
-        /// </summary>
-        public event EventHandler<TabulationStateEventArgs> RoundComplete;
-        /// <summary>
         /// Provides analytics of a vote count.
         /// </summary>
         public event EventHandler<TabulationStateEventArgs> CountComplete;
         /// <summary>
-        /// Provides a full tabulation, including vote counts, when a tabulator calls to update the tiebreaker.
+        /// Provides a full tabulation, including final vote counts, after each round of tabulation.
         /// </summary>
-        public event EventHandler<TabulationStateEventArgs> TiebreakerUpdate;
+        public event EventHandler<TabulationStateEventArgs> RoundComplete;
+        /// <summary>
+        /// Provides a full tabulation, including final vote counts, at the end of tabulation.
+        /// </summary>
+        public event EventHandler<TabulationStateEventArgs> TabulationComplete;
+        /// <summary>
+        /// Raises informational messages about detailed tabulation events.
+        /// </summary>
+        public event EventHandler<TabulationStateEventArgs> TabulationInfo;
         /// <summary>
         /// Provides updates to the tiebreaker's state after tiebreaking state has changed
         /// </summary>
         public event EventHandler<TiebreakerStateEventArgs> TiebreakerStateChange;
         /// <summary>
+        /// Provides a full tabulation, including vote counts, when a tabulator calls to update the tiebreaker.
+        /// </summary>
+        public event EventHandler<TabulationStateEventArgs> TiebreakerUpdate;
+        /// <summary>
         /// Provides winners and losers of a tiebreaking computation, with tie winners having State = elected and losers State = defeated.
         /// </summary>
         public event EventHandler<TabulationStateEventArgs> Tiebreaking;
-        /// <summary>
-        /// Provides a full tabulation, including final vote counts, at the end of tabulation.
-        /// </summary>
-        public event EventHandler<TabulationStateEventArgs> TabulationComplete;
 
         private void SendEvent(EventHandler<TabulationStateEventArgs> handler,
             Dictionary<Candidate, CandidateState> candidateStates,
