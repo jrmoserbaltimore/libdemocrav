@@ -95,7 +95,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// <summary>
         /// Perform a ballot count and updates the internal state.
         /// </summary>
-        protected void CountBallots()
+        protected virtual void CountBallots()
         {
             // Zero all the vote counts
             foreach (CandidateState c in candidateStates.Values)
