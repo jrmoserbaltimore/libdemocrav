@@ -26,6 +26,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             a = new RankedTabulationAnalytics(ballots, seats);
             analytics = a;
             batchEliminator = new RunoffBatchEliminator(tiebreakerFactory.CreateTiebreaker(mediator), a, seats);
+            this.seats = seats;
         }
 
         // A simple count of who has the most votes.
