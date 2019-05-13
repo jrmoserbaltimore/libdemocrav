@@ -8,12 +8,9 @@ using MoonsetTechnologies.Voting.Utility;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public class TidemansAlternativeTabulator : RunoffTabulator
+    public class InstantRunoffVotingTabulator : RunoffTabulator
     {
-        TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;
-        TopCycle.TopCycleSets retainSet = TopCycle.TopCycleSets.smith;
-
-        public TidemansAlternativeTabulator(TabulationMediator mediator,
+        public InstantRunoffVotingTabulator(TabulationMediator mediator,
             AbstractTiebreakerFactory tiebreakerFactory,
             int seats = 1)
             : base(mediator, tiebreakerFactory, seats)
@@ -28,9 +25,9 @@ namespace MoonsetTechnologies.Voting.Tabulation
             RankedTabulationAnalytics analytics;
             analytics = new RankedTabulationAnalytics(ballots, seats);
 
-            batchEliminator = new TidemansAlternativeBatchEliminator(
-                tiebreakerFactory.CreateTiebreaker(mediator), analytics, seats,
-                condorcetSet, retainSet);
+
+            batchEliminator = new RunoffBatchEliminator(
+                tiebreakerFactory.CreateTiebreaker(mediator), analytics, seats);
         }
     }
 }

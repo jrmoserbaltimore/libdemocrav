@@ -16,8 +16,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LICENSE.md = LICENSE.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SingleTransferableVote", "Extensions\SingleTransferableVote\SingleTransferableVote.csproj", "{783DC28D-0AB5-4A61-B9E2-8E0BD4073961}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MeekSTVTabulator", "Tabulators\MeekSTVTabulator\MeekSTVTabulator.csproj", "{C0B6D922-01AC-4CF3-9E75-0343EE16C2D2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RankedChoiceVoting", "Extensions\RankedChoiceVoting\RankedChoiceVoting.csproj", "{6D63A3DB-B19E-4655-AA7E-2A8C30A072EB}"
@@ -26,13 +24,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tabulators", "Tabulators", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Storage", "Storage", "{A295CC6F-E5B3-4F3E-BB59-8639470CBD59}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReadableBallotFormat", "Storage\ReadableBallotFormat\ReadableBallotFormat.csproj", "{49E93780-2C1A-43B0-A6C8-E2B656B36669}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReadableBallotFormat", "Storage\ReadableBallotFormat\ReadableBallotFormat.csproj", "{49E93780-2C1A-43B0-A6C8-E2B656B36669}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extensions", "Extensions", "{DF93480A-F69C-4B64-AED4-AA5BD21FB401}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tiebreakers", "Tiebreakers", "{40C998C1-413A-480D-A02E-F7136F0A4F89}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FirstDifference", "Extensions\Tiebreakers\FirstDifference\FirstDifference.csproj", "{3D162569-B5D9-4F36-9BCC-5441A64827F9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FirstDifference", "Extensions\Tiebreakers\FirstDifference\FirstDifference.csproj", "{3D162569-B5D9-4F36-9BCC-5441A64827F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SingleTransferableVote", "SingleTransferableVote\SingleTransferableVote.csproj", "{EF2EEA18-FEE9-495A-BB68-E5985EB3E918}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,10 +56,6 @@ Global
 		{7543818F-048C-4D7C-B7AD-1C8FD35A94E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7543818F-048C-4D7C-B7AD-1C8FD35A94E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7543818F-048C-4D7C-B7AD-1C8FD35A94E5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{783DC28D-0AB5-4A61-B9E2-8E0BD4073961}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{783DC28D-0AB5-4A61-B9E2-8E0BD4073961}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{783DC28D-0AB5-4A61-B9E2-8E0BD4073961}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{783DC28D-0AB5-4A61-B9E2-8E0BD4073961}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C0B6D922-01AC-4CF3-9E75-0343EE16C2D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C0B6D922-01AC-4CF3-9E75-0343EE16C2D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0B6D922-01AC-4CF3-9E75-0343EE16C2D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -76,6 +72,10 @@ Global
 		{3D162569-B5D9-4F36-9BCC-5441A64827F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3D162569-B5D9-4F36-9BCC-5441A64827F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D162569-B5D9-4F36-9BCC-5441A64827F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF2EEA18-FEE9-495A-BB68-E5985EB3E918}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF2EEA18-FEE9-495A-BB68-E5985EB3E918}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF2EEA18-FEE9-495A-BB68-E5985EB3E918}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF2EEA18-FEE9-495A-BB68-E5985EB3E918}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -83,12 +83,12 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{A78FB21F-93D1-400E-B25D-A43FEA666852} = {59FF135E-FC21-4E90-9CA8-1244DC45862C}
 		{7543818F-048C-4D7C-B7AD-1C8FD35A94E5} = {59FF135E-FC21-4E90-9CA8-1244DC45862C}
-		{783DC28D-0AB5-4A61-B9E2-8E0BD4073961} = {DF93480A-F69C-4B64-AED4-AA5BD21FB401}
 		{C0B6D922-01AC-4CF3-9E75-0343EE16C2D2} = {59FF135E-FC21-4E90-9CA8-1244DC45862C}
 		{6D63A3DB-B19E-4655-AA7E-2A8C30A072EB} = {DF93480A-F69C-4B64-AED4-AA5BD21FB401}
 		{49E93780-2C1A-43B0-A6C8-E2B656B36669} = {A295CC6F-E5B3-4F3E-BB59-8639470CBD59}
 		{40C998C1-413A-480D-A02E-F7136F0A4F89} = {DF93480A-F69C-4B64-AED4-AA5BD21FB401}
 		{3D162569-B5D9-4F36-9BCC-5441A64827F9} = {40C998C1-413A-480D-A02E-F7136F0A4F89}
+		{EF2EEA18-FEE9-495A-BB68-E5985EB3E918} = {DF93480A-F69C-4B64-AED4-AA5BD21FB401}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4E99287A-4CE9-4647-96B8-ABF0B8B504EA}

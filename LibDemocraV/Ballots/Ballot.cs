@@ -1,35 +1,34 @@
-﻿using System;
-using System.Collections;
+﻿using MoonsetTechnologies.Voting.Utility;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MoonsetTechnologies.Voting
+namespace MoonsetTechnologies.Voting.Ballots
 {
-   
+    // A ranked ballot
     [BallotTypeId("eaf87c88-6352-42d0-a048-250c09da2d89")]
-    public class RankedBallot : IRankedBallot
+    public class Ballot
     {
-        protected List<IRankedVote> votes = new List<IRankedVote>();
-        public IEnumerable<IRankedVote> Votes => votes;
-        IEnumerable<IVote> IBallot.Votes => Votes;
+        protected List<Vote> votes = new List<Vote>();
+        public IEnumerable<Vote> Votes => votes;
 
-        public RankedBallot(IEnumerable<IRankedVote> votes)
+        public Ballot(IEnumerable<Vote> votes)
         {
-            foreach (RankedVote v in votes)
-                this.votes.Add(new RankedVote(v.Candidate, v.Value));
+            foreach (Vote v in votes)
+                this.votes.Add(new Vote(v.Candidate, v.Value));
         }
 
-        public RankedBallot(IRankedBallot ballot, IRankedVote vote)
+        public Ballot(Ballot ballot, Vote vote)
             : this(ballot.Votes)
         {
             this.votes.Add(vote);
         }
- 
+
         /// <inheritdoc/>
         public string Encode()
         {
-            string output = "";
-            List<IRankedVote> vs = new List<IRankedVote>();
+            string output;
+            List<Vote> vs = new List<Vote>();
             vs.Sort();
 
             // Start with the first candidate
@@ -37,7 +36,7 @@ namespace MoonsetTechnologies.Voting
 
             // Encode A>B>C=D>E
             // This encoding supports equal votes.
-            for(int i=1; i < vs.Count; i++)
+            for (int i = 1; i < vs.Count; i++)
             {
                 if (vs[i].Value == vs[i - 1].Value)
                     output += "=";

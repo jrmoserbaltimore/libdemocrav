@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MoonsetTechnologies.Voting.Analytics
+namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public class CandidateState
+    public class CandidateState : ICloneable
     {
         public enum States
         {
@@ -18,6 +18,13 @@ namespace MoonsetTechnologies.Voting.Analytics
 
         public CandidateState()
         {
+            VoteCount = 0.0m;
+            State = States.hopeful;
+        }
+
+        public object Clone()
+        {
+            return MemberwiseClone();
         }
     }
 }

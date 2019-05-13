@@ -1,34 +1,21 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MoonsetTechnologies.Voting
+namespace MoonsetTechnologies.Voting.Utility
 {
-    public interface IBallot
-    {
-        IEnumerable<IVote> Votes { get; }
-        string Encode();
-    }
     /// <summary>
-    /// A Vote object.  Immutable.
-    /// </summary>
-     public interface IVote
-    {
-        Candidate Candidate { get; }
-    }
-
-    /// <summary>
-    /// Attach this to classes implementing IBallot and to types related to those.
+    /// Attach this to classes implementing Ballot and to types related to those.
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Class |
         System.AttributeTargets.Struct,
-        AllowMultiple = true,
+        AllowMultiple = false,
         Inherited = false)
     ]
     public class BallotTypeId : System.Attribute
     {
-        private Guid Id;
+        public Guid Id { get; set; }
 
         public BallotTypeId(Guid id)
         {

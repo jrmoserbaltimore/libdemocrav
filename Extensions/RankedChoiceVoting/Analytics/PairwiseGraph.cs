@@ -1,9 +1,11 @@
-﻿// These classes compute pairwise victories from complete ranked ballot sets.
+// These classes compute pairwise victories from complete ranked ballot sets.
 // These pairwise victories allow us to compute the Smith and Schwartz sets,
 // and thus support Condorcet systems like Smith-constrained IRV and Tideman's
 // Alternative.
+using MoonsetTechnologies.Voting.Ballots;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 // FIXME:  The API for this is simply:
@@ -12,7 +14,7 @@ using System.Text;
 //     g.Wins(candidate);
 //     g.Ties(candidate);
 //     g.Losses(candidate);
-//     g.GetVoteCount(c1, g2);
+//     g.GetVoteCount(c1, c2);
 //
 // Aside from that, the internals are ham-fisted.
 namespace MoonsetTechnologies.Voting.Analytics
@@ -156,20 +158,20 @@ namespace MoonsetTechnologies.Voting.Analytics
         /// </summary>
         /// <param name="candidates">Candidates to be considered in the race.</param>
         /// <param name="ballots">Ranked ballots in the election.</param>
-        public PairwiseGraph(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
+        public PairwiseGraph(IEnumerable<Candidate> candidates, IEnumerable<Ballot> ballots)
             : this(candidates)
         {
             // Iterate each ballot and count who wins and who ties.
             // This can support tied ranks and each ballot is O(SUM(1..n)) and o(n).
-            foreach (IRankedBallot b in ballots)
+            foreach (Ballot b in ballots)
             {
                 // Track who is not ranked by the end
                 List<Candidate> unranked = new List<Candidate>(graph.Keys);
-                foreach (IRankedVote v in b.Votes)
+                foreach (Vote v in b.Votes)
                     unranked.Remove(v.Candidate);
 
                 // Iterate to compare each pair.
-                List<IRankedVote> votes = new List<IRankedVote>(b.Votes);
+                List<Vote> votes = b.Votes.ToList();
                 for (int i = 0; i < votes.Count; i++)
                 {
                     // Candidate is not counted, so skip
@@ -229,18 +231,19 @@ namespace MoonsetTechnologies.Voting.Analytics
             }  
         }
 
-        public virtual (int v1, int v2) GetVoteCount(Candidate c1, Candidate c2)
+        public virtual (decimal v1, decimal v2) GetVoteCount(Candidate c1, Candidate c2)
         {
             return graph[c1].GetVoteCount(c2);
         }
 
-        protected virtual Dictionary<Candidate, (int v1, int v2)> VoteCounts(Candidate candidate)
+        protected virtual Dictionary<Candidate, (decimal v1, decimal v2)> VoteCounts(Candidate candidate)
         {
-            Dictionary<Candidate, (int, int)> output = new Dictionary<Candidate, (int, int)>();
+            Dictionary<Candidate, (decimal, decimal)> output = new Dictionary<Candidate, (decimal, decimal)>();
             foreach (Candidate c in graph.Keys)
             {
                 if (c == candidate)
                     continue;
+
                 output[c] = GetVoteCount(candidate, c);
             }
             return output;
@@ -249,7 +252,7 @@ namespace MoonsetTechnologies.Voting.Analytics
         public IEnumerable<Candidate> Wins(Candidate candidate)
         {
             List<Candidate> output = new List<Candidate>();
-            Dictionary<Candidate, (int v1, int v2)> votes = VoteCounts(candidate);
+            Dictionary<Candidate, (decimal v1, decimal v2)> votes = VoteCounts(candidate);
 
             foreach (Candidate c in votes.Keys)
                 if (votes[c].v1 > votes[c].v2)
@@ -261,7 +264,7 @@ namespace MoonsetTechnologies.Voting.Analytics
         public IEnumerable<Candidate> Ties(Candidate candidate)
         {
             List<Candidate> output = new List<Candidate>();
-            Dictionary<Candidate, (int v1, int v2)> votes = VoteCounts(candidate);
+            Dictionary<Candidate, (decimal v1, decimal v2)> votes = VoteCounts(candidate);
 
             foreach (Candidate c in votes.Keys)
                 if (votes[c].v1 == votes[c].v2)
@@ -273,7 +276,7 @@ namespace MoonsetTechnologies.Voting.Analytics
         public IEnumerable<Candidate> Losses(Candidate candidate)
         {
             List<Candidate> output = new List<Candidate>();
-            Dictionary<Candidate, (int v1, int v2)> votes = VoteCounts(candidate);
+            Dictionary<Candidate, (decimal v1, decimal v2)> votes = VoteCounts(candidate);
 
             foreach (Candidate c in votes.Keys)
                 if (votes[c].v1 < votes[c].v2)

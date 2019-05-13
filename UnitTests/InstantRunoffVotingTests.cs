@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Xunit;
 using MoonsetTechnologies.Voting.Analytics;
@@ -11,23 +11,38 @@ using Xunit.Abstractions;
 
 namespace MoonsetTechnologies.Voting.Development.Tests
 {
-    public class TidemansAlternativeTests : IClassFixture<BallotSetFixture>
+    public class InstantRunoffVotingTests : IClassFixture<BallotSetFixture>
     {
         private readonly ITestOutputHelper output;
 
         readonly BallotSetFixture fixture;
 
-        public TidemansAlternativeTests(ITestOutputHelper testOutputHelper, BallotSetFixture fixture)
+        public InstantRunoffVotingTests(ITestOutputHelper testOutputHelper, BallotSetFixture fixture)
         {
             this.fixture = fixture;
             fixture.output = output = testOutputHelper;
         }
 
         [Fact]
-        public void TidemansAlternativeTest()
+        public void IRVFactoryTest()
+        {
+            InstantRunoffVotingTabulatorFactory f;
+            f = new InstantRunoffVotingTabulatorFactory();
+
+            // Use Last Difference
+            f.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
+
+            AbstractTabulator t = f.CreateTabulator();
+
+            Assert.NotNull(t);
+            Assert.IsType<InstantRunoffVotingTabulator>(t);
+        }
+
+        [Fact]
+        public void IRVTest()
         {
             List<string> winners = null;
-            TidemansAlternativeTabulatorFactory f;
+            InstantRunoffVotingTabulatorFactory f;
             AbstractTabulator t;
 
             void Monitor_TabulationComplete(object sender, TabulationStateEventArgs e)
@@ -40,12 +55,13 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                 fixture.PrintTabulationState(e);
             }
 
-            void Monitor_RoundComplete(object sender, TabulationStateEventArgs e)
+            void Monitor_RoundComplete (object sender, TabulationStateEventArgs e)
             {
                 output.WriteLine("Round completion data:");
                 fixture.PrintTabulationState(e);
             }
-            f = new TidemansAlternativeTabulatorFactory();
+
+            f = new InstantRunoffVotingTabulatorFactory();
 
             // Use Last Difference
             f.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
@@ -53,7 +69,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             t = f.CreateTabulator();
 
             Assert.NotNull(t);
-            Assert.IsType<TidemansAlternativeTabulator>(t);
+            Assert.IsType<InstantRunoffVotingTabulator>(t);
 
             t.Monitor.TabulationComplete += Monitor_TabulationComplete;
             t.Monitor.RoundComplete += Monitor_RoundComplete;
@@ -65,7 +81,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
 
             Assert.NotNull(winners);
             Assert.Single(winners);
-            Assert.Equal("Chris", winners.First());
+            Assert.Equal("Alex", winners.First());
         }
     }
 }

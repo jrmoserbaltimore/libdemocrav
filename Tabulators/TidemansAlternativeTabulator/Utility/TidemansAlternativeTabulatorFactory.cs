@@ -1,4 +1,4 @@
-﻿using MoonsetTechnologies.Voting.Analytics;
+using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Tabulation;
 using MoonsetTechnologies.Voting.Tiebreaking;
 using System;
@@ -6,64 +6,68 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MoonsetTechnologies.Voting;
+using MoonsetTechnologies.Voting.Ballots;
 
 namespace MoonsetTechnologies.Voting.Utility
-{
-    public class TidemansAlternativeTabulatorFactory 
-        : AbstractTabulatorFactory<IRankedBallot, IRankedTabulator>
+{ 
+    // General algorithm:
+    //   if CondorcetSet is One Candidate
+    //     Winner is Candidate in CondorcetSet
+    //   else
+    //     Eliminate Candidates not in RetainSet
+    //     Eliminate Candidate with Fewest Votes
+
+    // Variants as (CondorcetSet, RetainSet):
+    //   Tideman's Alternative:  (schwartz, smith)
+    //   Tideman's Alternative Schwartz:  (schwartz, schwartz)
+    //   Tideman's Alternative Smith:  (smith, smith)
+    public class TidemansAlternativeTabulatorFactory : AbstractTabulatorFactory
     {
-        readonly GenericTiebreakerFactory tiebreakerFactory;
+        TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;
+        TopCycle.TopCycleSets retainSet = TopCycle.TopCycleSets.smith;
 
-        private ITiebreaker NewTiebreaker() => tiebreakerFactory.CreateTiebreaker();
-
-        private IBatchEliminator NewBatchEliminator(ITiebreaker tiebreaker = null)
-        {
-            if (tiebreaker is null)
-                tiebreaker = NewTiebreaker();
-            return new RunoffBatchEliminator(tiebreaker);
-        }
         public TidemansAlternativeTabulatorFactory()
+            : base()
         {
-            // Generic tiebreaker factory is:
-            //   SeriesTiebreaker
-            //   {
-            //     SequentialTiebreaker
-            //     {
-            //       LastDifferenceTiebreaker,
-            //       FirstDifferenceTiebreaker
-            //     },
-            //     firstDifferenceTiebreaker
-            //   }
-
-            AbstractTiebreakerFactory f;
-            AbstractTiebreakerFactory firstDifference = new GenericTiebreakerFactory(typeof(FirstDifferenceTiebreaker));
-            List<AbstractTiebreakerFactory> factories = new List<AbstractTiebreakerFactory>();
-            factories.Add(new GenericTiebreakerFactory(typeof(LastDifferenceTiebreaker)));
-            factories.Add(firstDifference);
-            f = new GenericTiebreakerFactory(typeof(SequentialTiebreaker), factories);
-
-            factories = new List<AbstractTiebreakerFactory>();
-            factories.Add(f);
-            factories.Add(firstDifference);
-            f = new GenericTiebreakerFactory(typeof(SeriesTiebreaker), factories);
-            tiebreakerFactory = f as GenericTiebreakerFactory;
+            //SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
         }
 
-        public override IRankedTabulator CreateTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<IRankedBallot> ballots)
-          => CreateTabulator(candidates, ballots, null, null);
-      
-        public IRankedTabulator CreateTabulator(IEnumerable<Candidate> candidates,
-            IEnumerable<IRankedBallot> ballots,
-            ITiebreaker tiebreaker = null,
-            IBatchEliminator batchEliminator = null)
+        public TidemansAlternativeTabulatorFactory WithCondorcetSet(TopCycle.TopCycleSets set)
         {
-            if (tiebreaker is null)
-                tiebreaker = NewTiebreaker();
-            if (batchEliminator is null)
-                batchEliminator = NewBatchEliminator(tiebreaker);
+            TidemansAlternativeTabulatorFactory f = new TidemansAlternativeTabulatorFactory
+            {
+                condorcetSet = set,
+                retainSet = retainSet
+            };
+            return f;
+        }
 
-            return new TidemansAlternativeTabulator(candidates, ballots, tiebreaker, batchEliminator);
+        public TidemansAlternativeTabulatorFactory WithRetainSet(TopCycle.TopCycleSets set)
+        {
+            TidemansAlternativeTabulatorFactory f = new TidemansAlternativeTabulatorFactory
+            {
+                condorcetSet = condorcetSet,
+                retainSet = set
+            };
+            return f;
+        }
+
+        public override AbstractTabulator CreateTabulator()
+        {
+            TabulationMediator mediator = new TabulationMediator();
+
+            TidemansAlternativeTabulator t = new TidemansAlternativeTabulator(mediator, tiebreakerFactory);
+            return t;
+        }
+
+        public override Ballot CreateBallot(IEnumerable<Vote> votes)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Vote CreateVote(Candidate candidate, decimal value)
+        {
+            throw new NotImplementedException();
         }
     }
 }

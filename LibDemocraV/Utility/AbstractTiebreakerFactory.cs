@@ -9,14 +9,9 @@ namespace MoonsetTechnologies.Voting.Utility
     {
         public AbstractTiebreakerFactory()
         {
-
         }
 
-        public AbstractTiebreakerFactory(IEnumerable<AbstractTiebreakerFactory> factories)
-        {
+        public abstract AbstractTiebreaker CreateTiebreaker(TabulationMediator mediator);
 
-        }
-
-        public abstract ITiebreaker CreateTiebreaker();
     }
 }

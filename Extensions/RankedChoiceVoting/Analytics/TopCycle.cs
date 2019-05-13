@@ -1,42 +1,49 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using MoonsetTechnologies.Voting.Tabulation;
+using MoonsetTechnologies.Voting.Ballots;
 
 namespace MoonsetTechnologies.Voting.Analytics
 {
     // API for this:
-    //  TopCycle t = TopCycle(candidates, ballots)
-    //  IEnumerable<Candidate> SmithSet = t.SmithSet;
-    //  IEnumerable<Candidate> SchwartzSet = t.SchwartzSet;
+    //  TopCycle t = TopCycle(ballots)
+    //  IEnumerable<Candidate> SmithSet = t.SmithSet(candidateStates);
+    //  IEnumerable<Candidate> SchwartzSet = t.SchwartzSet(candidateStates);
     /// <summary>
     /// Computes the Smith and Schwartz sets.
     /// </summary>
     public class TopCycle
     {
-        protected List<Candidate> smithSet;
-        protected List<Candidate> schwartzSet;
-        public IEnumerable<Candidate> SmithSet => smithSet;
-        public IEnumerable<Candidate> SchwartzSet => schwartzSet;
-
-        public TopCycle(IEnumerable<Candidate> candidates, IEnumerable<IRankedBallot> ballots)
-            : this(new PairwiseGraph(candidates, ballots))
+        protected List<Ballot> ballots;
+        public enum TopCycleSets
         {
-            
+            smith = 1, // Generalize Top-Choice Assumption, GETCHA
+            schwartz = 2 // Generalized Optimal-Choice Axiom, GOCHA
         }
 
-        public TopCycle(PairwiseGraph graph)
+        private readonly TopCycleSets defaultSet;
+        public TopCycle(IEnumerable<Ballot> ballots, TopCycleSets set = TopCycleSets.smith)
         {
-            ComputeSets(graph, graph.Candidates);
+            this.ballots = ballots.ToList();
+            defaultSet = set;
         }
+
+        public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> candidates, TopCycleSets set)
+            => ComputeSets(new PairwiseGraph(candidates, ballots), set);
+
+        public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> candidates)
+            => GetTopCycle(candidates, defaultSet);
 
         /// <summary>
         /// Compute Smith and Schwartz sets with Tarjan's Algorithm.
         /// </summary>
         /// <param name="graph">The pairwise graph.</param>
-        /// <param name="candidates">The candidates to consider.</param>
-        private void ComputeSets(PairwiseGraph graph, IEnumerable<Candidate> candidates)
+        private IEnumerable<Candidate> ComputeSets(PairwiseGraph graph, TopCycleSets set)
         {
+            List<Candidate> smithSet = null;
+            List<Candidate> schwartzSet;
             Dictionary<Candidate, int> linkId;
             Dictionary<Candidate, int> nodeId;
             Stack<Candidate> s;
@@ -148,7 +155,10 @@ namespace MoonsetTechnologies.Voting.Analytics
 
             // Must compute SmithSet first
             smithSet = getSet(true);
+            if (set == TopCycleSets.smith)
+                return smithSet;
             schwartzSet = getSet(false);
+                return schwartzSet;
         }
     }
 }
