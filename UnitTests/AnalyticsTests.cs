@@ -97,6 +97,22 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                 output.WriteLine("  Schwartz Set:");
                 foreach (Candidate c in re.SchwartzSet)
                     output.WriteLine("    {0}", c.Name);
+                if (!(re.PairwiseGraph is null))
+                {
+                    output.WriteLine("  Pairwise Contests:");
+                    List<Candidate> c = re.PairwiseGraph.Candidates.ToList();
+                    for (int i = 0; i < c.Count; i++)
+                    {
+                        for (int j = i+1; j < c.Count; j++)
+                        {
+                            (decimal vi, decimal vj) = re.PairwiseGraph.GetVoteCount(c[i], c[j]);
+                            if (vi >= vj)
+                                output.WriteLine("    {0}, {1}\t{2}\tvs\t{3}", vi, vj, c[i].Name, c[j].Name);
+                            else
+                                output.WriteLine("    {0}, {1}\t{2}\tvs\t{3}", vj, vi, c[j].Name, c[i].Name);
+                        }
+                    }
+                }
             }
             output.WriteLine("  Notes:\t{0}", e.Note);
             output.WriteLine("\n");

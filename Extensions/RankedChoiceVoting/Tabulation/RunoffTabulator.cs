@@ -82,11 +82,13 @@ namespace MoonsetTechnologies.Voting.Tabulation
                     SetState(c, CandidateState.States.elected);
             }
 
+            PairwiseGraph pairwiseGraph = new PairwiseGraph(startSet, ballots);
             return new RankedTabulationStateEventArgs
             {
                 CandidateStates = CandidateStatesCopy,
                 SchwartzSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet),
-                SmithSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet)
+                SmithSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet),
+                PairwiseGraph = pairwiseGraph
             };
         }
     }
