@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
 
@@ -26,11 +26,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="resources\tidemandata\" />
+    <Folder Include="resources\electiondata\tidemandata\" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="resources\tidemandata\A1.HIL">
+    <None Update="resources\electiondata\BurlingtonVt2009.HIL">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="resources\electiondata\tidemandata\A1.HIL">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
