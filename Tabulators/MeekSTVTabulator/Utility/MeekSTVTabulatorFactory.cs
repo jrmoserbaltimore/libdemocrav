@@ -7,9 +7,9 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
-    public class InstantRunoffVotingTabulatorFactory : AbstractTabulatorFactory
+    public class MeekSTVTabulatorFactory : AbstractTabulatorFactory
     {
-        public InstantRunoffVotingTabulatorFactory()
+        public MeekSTVTabulatorFactory()
         : base()
         {
             //SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
@@ -24,7 +24,7 @@ namespace MoonsetTechnologies.Voting.Utility
         {
             TabulationMediator mediator = new TabulationMediator();
 
-            InstantRunoffVotingTabulator t = new InstantRunoffVotingTabulator(mediator, tiebreakerFactory);
+            MeekSTVTabulator t = new MeekSTVTabulator(mediator, tiebreakerFactory);
             return t;
         }
 

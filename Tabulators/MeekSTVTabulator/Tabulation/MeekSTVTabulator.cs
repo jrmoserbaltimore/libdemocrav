@@ -71,7 +71,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 .Where(x => new[] { CandidateState.States.hopeful, CandidateState.States.elected }
                      .Contains(x.Value.State)).Select(x => x.Key).ToList();
 
-            IEnumerable<Candidate> winners;
+            IEnumerable<Candidate> winners = new List<Candidate>();
             IEnumerable<Candidate> eliminationCandidates;
             // Mutually exclusive, and exclusive with electing winners
             string note = kfStasis ? "KeepFactor Stasis, so eliminating candidates." : null;
@@ -80,10 +80,16 @@ namespace MoonsetTechnologies.Voting.Tabulation
             // B.1:  if we have fewer hopefuls than open seats, elect everyone
             if (IsComplete())
             {
-                winners = candidateStates
-                    .Where(x => x.Value.State == CandidateState.States.hopeful)
-                    .Select(x => x.Key).ToList();
-                note = "Fewer hopeful candidates than open seats, so elected all.";
+                int count = candidateStates
+                    .Where(x => x.Value.State == CandidateState.States.elected)
+                    .Count();
+                if (count < seats)
+                {
+                    winners = candidateStates
+                        .Where(x => x.Value.State == CandidateState.States.hopeful)
+                        .Select(x => x.Key).ToList();
+                    note = "Fewer hopeful candidates than open seats, so elected all.";
+                }
             }
             else
             {
@@ -98,9 +104,19 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
             if (winners.Count() == 0)
             {
-                eliminationCandidates = batchEliminator.GetEliminationCandidates(CandidateStatesCopy);
-                if (!(eliminationCandidates?.Count() > 0))
-                    throw new InvalidOperationException("Called TabulateRound() but no winners or losers.");
+                if (IsComplete())
+                {
+                    eliminationCandidates = candidateStates
+                        .Where(x => x.Value.State == CandidateState.States.hopeful)
+                        .Select(x => x.Key).ToList();
+                    note = "Filled seats, so eliminated all remainig hopefuls.";
+                }
+                else
+                {
+                    eliminationCandidates = batchEliminator.GetEliminationCandidates(CandidateStatesCopy);
+                    if (!(eliminationCandidates?.Count() > 0))
+                        throw new InvalidOperationException("Called TabulateRound() but no winners or losers.");
+                }
                 foreach (Candidate c in eliminationCandidates)
                     SetState(c, CandidateState.States.defeated);
             }
@@ -233,6 +249,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 bool increase = false;
                 foreach (MeekCandidateState c in candidateStates.Values)
                 {
+                    if (!(new[] { CandidateState.States.hopeful, CandidateState.States.elected }.Contains(c.State)))
+                        continue;
                     decimal kf = c.KeepFactor;
                     // XXX: does the reference rule intend we round up
                     // between each operation, or multiply by (q/v) and

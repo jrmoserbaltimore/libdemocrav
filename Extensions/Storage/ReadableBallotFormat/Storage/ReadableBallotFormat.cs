@@ -4,6 +4,7 @@ using System.Text;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Text.RegularExpressions;
+using MoonsetTechnologies.Voting.Ballots;
 
 // This implements the Readable Ballot Format, designed for hand-modification
 // and visual examination.  This format allows exporting ballots for visual
@@ -50,13 +51,13 @@ using System.Text.RegularExpressions;
 
 namespace MoonsetTechnologies.Voting.Storage
 {
-    class ReadableBallotFormat : IBallotStorage
+    class ReadableBallotFormat // : IBallotStorage
     {
         private const string headerLine = "Readable Ballot Format";
-        protected List<IBallot> ballots;
-        public IEnumerable<IBallot> Ballots => ballots;
+        protected List<Ballot> ballots;
+        public IEnumerable<Ballot> Ballots => ballots;
 
-        public ReadableBallotFormat(IEnumerable<IBallot> ballots, FileStream file)
+        public ReadableBallotFormat(IEnumerable<Ballot> ballots, FileStream file)
         {
 
         }

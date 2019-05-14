@@ -5,7 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\LibDemocraV\LibDemocraV.csproj" />
+    <ProjectReference Include="..\..\..\LibDemocraV\LibDemocraV.csproj" />
+    <ProjectReference Include="..\StorageBase\Storage.csproj" />
   </ItemGroup>
 
 </Project>

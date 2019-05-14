@@ -36,6 +36,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             IEnumerable<Candidate> withdrawn = null,
             int seats = 1)
         {
+            TabulationStateEventArgs state;
             InitializeTabulation(ballots, withdrawn, seats);
             if (seats < 1)
                 throw new ArgumentOutOfRangeException("seats", "seats must be at least one.");
@@ -53,7 +54,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             do
             {
                 CountBallots();
-                TabulationStateEventArgs state = TabulateRound();
+                state = TabulateRound();
 
                 // Make copies of candidateStates to prevent errors if written to by client code
                 mediator.CompleteRound(state);
@@ -62,6 +63,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
             // Perform a final count
             CountBallots();
+            state = TabulateRound();
             mediator.CompleteTabulation(CandidateStatesCopy);
         }
 
@@ -74,8 +76,14 @@ namespace MoonsetTechnologies.Voting.Tabulation
             int possibleWinnerCount;
 
             possibleWinnerCount = candidateStates.Where(x =>
-                new[] { CandidateState.States.elected, CandidateState.States.hopeful }
+                new[] { CandidateState.States.elected}
                 .Contains(x.Value.State)).Count();
+            // So far, elected fewer candidates than seats, so include hopefuls
+            if (possibleWinnerCount < seats)
+                possibleWinnerCount = candidateStates.Where(x =>
+                  new[] { CandidateState.States.elected, CandidateState.States.hopeful }
+                  .Contains(x.Value.State)).Count();
+
             // We're done counting if we have fewer hopeful+elected than seats
             return (possibleWinnerCount <= seats);
         }
