@@ -5,9 +5,11 @@ using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Ballots;
 using MoonsetTechnologies.Voting.Tiebreaking;
 using MoonsetTechnologies.Voting.Utility;
+using MoonsetTechnologies.Voting.Utility.Attributes;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
+    [Condorcet]
     public class TidemansAlternativeTabulator : RunoffTabulator
     {
         TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;

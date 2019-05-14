@@ -29,7 +29,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         public void A1Test()
         {
             AbstractBallotStorage s = new DavidHillFormat();
-            FileStream file = new FileStream("./resources/tidemandata/A1.HIL", FileMode.Open);
+            FileStream file = new FileStream("./resources/electiondata/BurlingtonVT2009.HIL", FileMode.Open);
             IEnumerable<CountedBallot> ballots = s.LoadBallots(file);
 
             Assert.NotNull(ballots);
@@ -57,7 +57,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                 fixture.PrintTabulationState(e);
             }
 
-            f = new MeekSTVTabulatorFactory();
+            f = new TidemansAlternativeTabulatorFactory();
 
             // Use Last Difference
             f.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
@@ -69,7 +69,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             t.Monitor.TabulationComplete += Monitor_TabulationComplete;
             t.Monitor.RoundComplete += Monitor_RoundComplete;
 
-            t.Tabulate(bset,null,3);
+            t.Tabulate(bset,null,1);
 
             t.Monitor.TabulationComplete -= Monitor_TabulationComplete;
             t.Monitor.RoundComplete -= Monitor_RoundComplete;
