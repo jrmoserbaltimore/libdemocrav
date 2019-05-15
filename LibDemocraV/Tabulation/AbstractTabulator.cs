@@ -63,7 +63,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
             // Perform a final count
             CountBallots();
-            state = TabulateRound();
             mediator.CompleteTabulation(CandidateStatesCopy);
         }
 
@@ -71,12 +70,20 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// Determine if tabulation is complete.
         /// </summary>
         /// <returns>True if complete, false otherwise.</returns>
-        protected virtual bool IsComplete()
+        protected bool IsComplete()
+          => candidateStates.Where(x => new[] { CandidateState.States.hopeful }
+                .Contains(x.Value.State)).Count() == 0;
+
+        /// <summary>
+        /// Determine if no further rounds are possible.
+        /// </summary>
+        /// <returns>True if all seats are elected or there are only as many hopefuls as open seats; false otherwise.</returns>
+        protected bool IsFinalRound()
         {
             int possibleWinnerCount;
 
             possibleWinnerCount = candidateStates.Where(x =>
-                new[] { CandidateState.States.elected}
+                new[] { CandidateState.States.elected }
                 .Contains(x.Value.State)).Count();
             // So far, elected fewer candidates than seats, so include hopefuls
             if (possibleWinnerCount < seats)
@@ -86,6 +93,40 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
             // We're done counting if we have fewer hopeful+elected than seats
             return (possibleWinnerCount <= seats);
+        }
+        
+        /// <summary>
+        /// Sets final winners when IsFinalRound() is true.
+        /// </summary>
+        protected void SetFinalWinners()
+        {
+            IEnumerable<Candidate> defeated = new List<Candidate>();
+
+            // If we're done, there will be only enough hopefuls to fill remaining seats
+            if (IsFinalRound())
+            {
+                IEnumerable<Candidate> elected =
+                  candidateStates.Where(x => x.Value.State == CandidateState.States.elected)
+                  .Select(x => x.Key).ToList();
+                IEnumerable<Candidate> hopeful =
+                  candidateStates.Where(x => x.Value.State == CandidateState.States.hopeful)
+                  .Select(x => x.Key).ToList();
+                // seats should always be 1
+                if (elected.Count() + hopeful.Count() <= seats)
+                    elected = hopeful;
+                else if (elected.Count() == seats)
+                {
+                    elected = null;
+                    defeated = hopeful;
+                }
+                else if (elected.Count() > seats)
+                    throw new InvalidOperationException("Somehow elected more candidates than seats.");
+
+                foreach (Candidate c in elected)
+                    SetState(c, CandidateState.States.elected);
+                foreach (Candidate c in defeated)
+                    SetState(c, CandidateState.States.defeated);
+            }
         }
 
         /// <summary>
