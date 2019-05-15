@@ -83,9 +83,22 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         {
             foreach (Candidate c in e.CandidateStates.Keys)
             {
-                output.WriteLine("  {0}\t{1}\t{2}", e.CandidateStates[c].VoteCount,
-                    c.Name,
-                    e.CandidateStates[c].State.ToString());
+                MeekCandidateState mc = e.CandidateStates[c] as MeekCandidateState;
+                if (!(mc is null))
+                    output.WriteLine("  {0}\t{1}\t{2}\t{3}",
+                        mc.VoteCount, c.Name, mc.State.ToString(), mc.KeepFactor);
+                else
+                    output.WriteLine("  {0}\t{1}\t{2}", e.CandidateStates[c].VoteCount,
+                        c.Name,
+                        e.CandidateStates[c].State.ToString());
+            }
+
+            MeekSTVTabulationStateEventArgs me = e as MeekSTVTabulationStateEventArgs;
+
+            if (!(me is null))
+            {
+                output.WriteLine("  Surplus:\t{0}", me.Surplus);
+                output.WriteLine("  Quota:\t{0}", me.Quota);
             }
 
             RankedTabulationStateEventArgs re = e as RankedTabulationStateEventArgs;

@@ -66,23 +66,23 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 Where(x => new[] { CandidateState.States.hopeful, CandidateState.States.elected }
                      .Contains(x.Value.State)).Select(x => x.Key).ToList();
 
-            mediator.UpdateTiebreaker(CandidateStatesCopy);
-            IEnumerable<Candidate> eliminationCandidates
-                = batchEliminator.GetEliminationCandidates(CandidateStatesCopy);
-            if (!(eliminationCandidates?.Count() > 0))
-                throw new InvalidOperationException("Called TabulateRound() after completion.");
-            foreach (Candidate c in eliminationCandidates)
-                SetState(c, CandidateState.States.defeated);
-            // If we're done, there will be only enough hopefuls to fill remaining seats
-            if (IsComplete())
-            {
-                IEnumerable<Candidate> elected =
-                  candidateStates.Where(x => x.Value.State == CandidateState.States.hopeful)
-                  .Select(x => x.Key).ToList();
-                foreach (Candidate c in elected)
-                    SetState(c, CandidateState.States.elected);
-            }
+            IEnumerable<Candidate> eliminationCandidates;
 
+            if (IsComplete())
+                throw new InvalidOperationException("Called TabulateRound() after completion.");
+            // If we're done, there will be only enough hopefuls to fill remaining seats
+            if (IsFinalRound())
+                SetFinalWinners();
+            else
+            {
+                mediator.UpdateTiebreaker(CandidateStatesCopy);
+                eliminationCandidates = batchEliminator.GetEliminationCandidates(CandidateStatesCopy);
+                if (!(eliminationCandidates?.Count() > 0))
+                    throw new InvalidOperationException("Called TabulateRound() after completion.");
+                foreach (Candidate c in eliminationCandidates)
+                    SetState(c, CandidateState.States.defeated);
+
+            }
             PairwiseGraph pairwiseGraph = new PairwiseGraph(startSet, ballots);
             return new RankedTabulationStateEventArgs
             {
