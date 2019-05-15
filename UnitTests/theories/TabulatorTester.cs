@@ -120,7 +120,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests.theories
             var allData = new List<object[]>();
 
             bool condorcet;
-            condorcet = tabulator.GetCustomAttributes(typeof(Condorcet)).Count() > 0;
+            condorcet = tabulator.GetCustomAttributes(typeof(SmithEfficient)).Count() > 0;
             List<JsonElement> testCases = new List<JsonElement>();
             FileStream file = new FileStream(path, FileMode.Open);
 

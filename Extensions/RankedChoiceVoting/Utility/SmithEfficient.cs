@@ -11,9 +11,9 @@ namespace MoonsetTechnologies.Voting.Utility.Attributes
         AllowMultiple = false,
         Inherited = false)
     ]
-    public class Condorcet : System.Attribute
+    public class SmithEfficient : System.Attribute
     {
-        public Condorcet()
+        public SmithEfficient()
         {
             
         }

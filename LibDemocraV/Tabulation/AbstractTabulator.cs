@@ -187,12 +187,10 @@ namespace MoonsetTechnologies.Voting.Tabulation
         }
 
         protected AbstractTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory,
-            int seats = 1)
+            AbstractTiebreakerFactory tiebreakerFactory)
         {
             this.mediator = mediator;
             this.tiebreakerFactory = tiebreakerFactory;
-            this.seats = seats;
         }
     }
 }
