@@ -10,6 +10,7 @@ using MoonsetTechnologies.Voting.Utility.Attributes;
 namespace MoonsetTechnologies.Voting.Tabulation
 {
     [SmithEfficient]
+    [TabulationAlgorithm("Tideman's Alternative")]
     public class TidemansAlternativeTabulator : RunoffTabulator
     {
         TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;

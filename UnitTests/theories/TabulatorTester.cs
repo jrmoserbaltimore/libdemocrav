@@ -13,7 +13,7 @@ using System.Text.Json;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MoonsetTechnologies.Voting.Development.Tests.theories
+namespace MoonsetTechnologies.Voting.Development.Tests.Theories
 {
 
     public class TidemansAlternativeTabulatorTester
@@ -30,6 +30,18 @@ namespace MoonsetTechnologies.Voting.Development.Tests.theories
         {
             base.TabulationTest(ballots, winners);
         }
+    }
+
+    public class TabulatorTestCase
+    {
+        public IEnumerable<Candidate> SmithSet { get; set; }
+        public IEnumerable<Candidate> SchwartzSet { get; set; }
+        // Withdrawn candidates, for additional test cases from the same data
+        public IEnumerable<Candidate> Withdrawn { get; set; }
+        public IEnumerable<Ballot> Ballots { get; set; }
+        public IEnumerable<IEnumerable<CandidateState>> RoundStates { get; set; }
+        public IEnumerator<JsonElement> Configurations;
+
     }
 
     public abstract class TabulatorTester<T>
@@ -115,22 +127,33 @@ namespace MoonsetTechnologies.Voting.Development.Tests.theories
         // Notably, when these sets are one candidate, the algorithms should select that
         // candidate as winner; for multiple candidates, a single winner may vary, and is
         // questionable.
-        public static IEnumerable<object[]> TestFile(string path, Type tabulator, int seats)
+        public static IEnumerable<object[]> TestFile(string path, Type tabulator)
         {
             var allData = new List<object[]>();
-
-            bool condorcet;
-            condorcet = tabulator.GetCustomAttributes(typeof(SmithEfficient)).Count() > 0;
-            List<JsonElement> testCases = new List<JsonElement>();
+            HashSet<JsonElement> testCases = new HashSet<JsonElement>();
             FileStream file = new FileStream(path, FileMode.Open);
-
             JsonDocument dom = JsonDocument.Parse(file);
 
-            if (condorcet)
-                testCases.AddRange(dom.RootElement.EnumerateArray()
-                .Where(x => x.GetProperty("attributes")
-                     .GetProperty("smith set").GetArrayLength() == 1));
+            string algorithm;
+
+            algorithm = (tabulator.GetCustomAttributes(typeof(TabulationAlgorithm)) as TabulationAlgorithm)
+                ?.Algorithm;
+
+            // FIXME:  start by selecting everything that matches the tabulation algorithm.
             
+            // Condorcet is always indicated when Smith Set is one.
+            if (tabulator.GetCustomAttributes(typeof(SmithEfficient)).Count() > 0)
+                testCases.UnionWith(dom.RootElement.EnumerateArray()
+                    .Where(x => x.GetProperty("attributes")
+                     .GetProperty("smith set").GetArrayLength() == 1));
+
+            if (tabulator.GetCustomAttributes(typeof(SchwartzEfficient)).Count() > 0)
+                testCases.UnionWith(dom.RootElement.EnumerateArray()
+                    .Where(x => x.GetProperty("attributes")
+                     .GetProperty("smith set").GetArrayLength() == 1));
+
+            // FIXME:  use the information in testCases to construct a bunch of TabulatorTestCase objects
+
             return allData;
 
         }

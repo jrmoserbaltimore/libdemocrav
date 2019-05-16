@@ -1,79 +1,77 @@
 ﻿{
+  "filename": "BurlingtonVt2009.HIL",
+  "attributes": {
+    "smith set": [ "Andy Montroll" ]
+  },
   "results": [
     {
-      "filename": "BurlingtonVt2009.HIL",
-      "attributes": {
-        "smith set": [ "Andy Montroll" ]
-      },
-      "results": [
+      "seats": 1,
+      "class": [
         {
-          "class": [
+          "algorithm": "tideman's alternative",
+          "configuration": [
             {
-              "algorithm": "tideman's alternative",
-              "configuration": [
-                {
-                  "condorcet set": "schwartz",
-                  "retention set": "smith"
-                },
-                {
-                  "condorcet set": "smith",
-                  "retention set": "smith"
-                },
-                {
-                  "condorcet set": "schwartz",
-                  "retention set": "schwartz"
-                }
-              ]
+              "condorcet set": "schwartz",
+              "retention set": "smith"
             },
             {
-              "algorithm": "instant runoff voting",
-              "configuration": [
-                {
-                  "condorcet set": "smith"
-                },
-                {
-                  "condorcet set": "schwartz"
-                }
-              ]
-            }
-          ],
-          "rounds": [
+              "condorcet set": "smith",
+              "retention set": "smith"
+            },
             {
-              "eliminate": [ "James Simpson", "Write-in", "Dan Smith", "Bob Kiss", "Kurt Wright" ]
+              "condorcet set": "schwartz",
+              "retention set": "schwartz"
             }
           ]
         },
         {
-          "class": [
+          "algorithm": "instant runoff voting",
+          "configuration": [
             {
-              "algorithm": "instant runoff voting",
-              "configuration": [
-                {
-                  "condorcet set": null
-                }
-              ]
-            }
-          ],
-          "rounds": [
-            {
-              "eliminate": [ "James Simpson" ],
-              "batch":  true
+              "condorcet set": "smith"
             },
             {
-              "eliminate": [ "Write-in" ],
-              "batch": true
-            },
-            {
-              "eliminate": [ "Dan Smith" ],
-              "batch": true
-            },
-            {
-              "eliminate": [ "Andy Montroll" ]
-            },
-            {
-              "eliminate": [ "Kurt Wright" ]
+              "condorcet set": "schwartz"
             }
           ]
+        }
+      ],
+      "rounds": [
+        {
+          "eliminate": [ "James Simpson", "Write-in", "Dan Smith", "Bob Kiss", "Kurt Wright" ]
+        }
+      ]
+    },
+    {
+      "seats": 1,
+      "class": [
+        {
+          "algorithm": "instant runoff voting",
+          "configuration": [
+            {
+              "condorcet set": null
+            }
+          ]
+        }
+      ],
+      "rounds": [
+        {
+          "eliminate": [ "James Simpson" ],
+          "batch": true
+        },
+        {
+          "eliminate": [ "Write-in" ],
+          "batch": true
+        },
+        {
+          "eliminate": [ "Dan Smith" ],
+          "batch": true
+        },
+        {
+          "eliminate": [ "Andy Montroll" ]
+        },
+        {
+          "eliminate": [ "Kurt Wright" ]
         }
       ]
     }
