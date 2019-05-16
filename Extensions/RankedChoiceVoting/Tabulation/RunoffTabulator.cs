@@ -87,7 +87,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             {
                 CandidateStates = CandidateStatesCopy,
                 SchwartzSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet),
-                SmithSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet),
+                SmithSet = (analytics as RankedTabulationAnalytics).GetSmithSet(startSet),
                 PairwiseGraph = pairwiseGraph
             };
         }
