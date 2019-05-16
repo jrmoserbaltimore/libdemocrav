@@ -11,77 +11,20 @@ using Xunit.Abstractions;
 
 namespace MoonsetTechnologies.Voting.Development.Tests
 {
-    public class InstantRunoffVotingTests : IClassFixture<BallotSetFixture>
+    public class InstantRunoffVotingTests : AbstractTabulatorTest
     {
-        private readonly ITestOutputHelper output;
-
-        readonly BallotSetFixture fixture;
-
-        public InstantRunoffVotingTests(ITestOutputHelper testOutputHelper, BallotSetFixture fixture)
+       public InstantRunoffVotingTests(ITestOutputHelper testOutputHelper, BallotSetFixture fixture)
+            : base(testOutputHelper, fixture)
         {
-            this.fixture = fixture;
-            fixture.output = output = testOutputHelper;
+            tabulatorFactory = new InstantRunoffVotingTabulatorFactory();
+            // Use Last Difference by default
+            tabulatorFactory.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
         }
 
-        [Fact]
-        public void IRVFactoryTest()
-        {
-            InstantRunoffVotingTabulatorFactory f;
-            f = new InstantRunoffVotingTabulatorFactory();
-
-            // Use Last Difference
-            f.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
-
-            AbstractTabulator t = f.CreateTabulator();
-
-            Assert.NotNull(t);
-            Assert.IsType<InstantRunoffVotingTabulator>(t);
-        }
-
-        [Fact]
-        public void IRVTest()
-        {
-            List<string> winners = null;
-            InstantRunoffVotingTabulatorFactory f;
-            AbstractTabulator t;
-
-            void Monitor_TabulationComplete(object sender, TabulationStateEventArgs e)
-            {
-                winners = e.CandidateStates
-                .Where(x => x.Value.State == CandidateState.States.elected)
-                .Select(x => x.Key.Name).ToList();
-
-                output.WriteLine("Tabulation completion data:");
-                fixture.PrintTabulationState(e);
-            }
-
-            void Monitor_RoundComplete (object sender, TabulationStateEventArgs e)
-            {
-                output.WriteLine("Round completion data:");
-                fixture.PrintTabulationState(e);
-            }
-
-            f = new InstantRunoffVotingTabulatorFactory();
-
-            // Use Last Difference
-            f.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
-
-            t = f.CreateTabulator();
-
-            Assert.NotNull(t);
-            Assert.IsType<InstantRunoffVotingTabulator>(t);
-
-            t.Monitor.TabulationComplete += Monitor_TabulationComplete;
-            t.Monitor.RoundComplete += Monitor_RoundComplete;
-
-            t.Tabulate(fixture.Ballots);
-
-            t.Monitor.TabulationComplete -= Monitor_TabulationComplete;
-            t.Monitor.RoundComplete -= Monitor_RoundComplete;
-
-            Assert.NotNull(winners);
-            Assert.Single(winners);
-            Assert.Equal("Alex", winners.First());
-        }
+        [Theory]
+        [MemberData(nameof(GetFlatTests), parameters: new object[] { @"resources\testcases\TidemanTests.simpletabulatortest", "instant runoff voting" })]
+        [MemberData(nameof(GetFlatTests), parameters: new object[] { @"resources\testcases\HistoricElections.simpletabulatortest", "instant runoff voting" })]
+        public void InstantRunoffVotingTabulatorTest(string filename, int seats, IEnumerable<string> winners)
+            => TabulatorTest(filename, seats, winners);
     }
 }

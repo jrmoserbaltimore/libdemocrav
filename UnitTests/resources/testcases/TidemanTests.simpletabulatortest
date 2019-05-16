@@ -1,0 +1,3 @@
+﻿"../electiondata/tidemandata/A1.HIL" "condorcet" 1 "Candidate  1"
+"../electiondata/tidemandata/A1.HIL" "instant runoff voting" 1 "Candidate  1"
+"../electiondata/tidemandata/A1.HIL" "meek-stv" 3 "Candidate  9" "Candidate  8" "Candidate  3"
