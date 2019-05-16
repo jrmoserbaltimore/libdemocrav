@@ -70,6 +70,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
 
             Assert.NotNull(t);
 
+            output.WriteLine("Testing file {0}", filename);
             t.Monitor.TabulationComplete += Monitor_TabulationComplete;
             t.Monitor.RoundComplete += Monitor_RoundComplete;
 
@@ -129,6 +130,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                 {
                     w.Add(parts[i]);
                 }
+                
                 return (parts[0], parts[1], Convert.ToInt32(parts[2]), w);
             }
 
@@ -142,7 +144,16 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                             = readTestLine();
                         // Get absolute path of file
                         fn = Path.GetFullPath(dname + Path.DirectorySeparatorChar + fn);
-                        if (algo != algorithm)
+
+                        // When a Condorcet method encounters a one-seat
+                        if ( ((algorithm == "condorcet-smith" && algo == "smith set")
+                            || (algorithm == "condorcet-schwartz"
+                                && new[] { "smith set", "schwartz set" }.Contains(algo)))
+                            && seats == 1)
+                        {
+                            // just don't hit the continue block
+                        }
+                        else if (algo != algorithm)
                             continue;
                         allData.Add(new object[] { fn, seats, winners });
                     }

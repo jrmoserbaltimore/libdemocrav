@@ -19,9 +19,9 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         }
 
         [Theory]
-        [MemberData(nameof(GetFlatTests), parameters: new object[] { @"resources\testcases\TidemanTests.simpletabulatortest", "condorcet" })]
+        [MemberData(nameof(GetFlatTests), parameters: new object[] { @"resources\testcases\TidemanTests.simpletabulatortest", "condorcet-schwartz" })]
         [MemberData(nameof(GetFlatTests), parameters: new object[] { @"resources\testcases\TidemanTests.simpletabulatortest", "tideman's alternative" })]
-        [MemberData(nameof(GetFlatTests), parameters: new object[] { @"resources\testcases\HistoricElections.simpletabulatortest", "condorcet" })]
+        [MemberData(nameof(GetFlatTests), parameters: new object[] { @"resources\testcases\HistoricElections.simpletabulatortest", "condorcet-schwartz" })]
         public void TidemansAlternativeTest(string filename, int seats, IEnumerable<string> winners)
             => TabulatorTest(filename, seats, winners);
     }
