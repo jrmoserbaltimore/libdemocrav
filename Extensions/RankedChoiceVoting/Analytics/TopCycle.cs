@@ -69,7 +69,7 @@ namespace MoonsetTechnologies.Voting.Analytics
                 List<Candidate> neighbors = new List<Candidate>(graph.Wins(c));
                 if (isSmith)
                     neighbors.AddRange(graph.Ties(c));
-                foreach (Candidate d in graph.Wins(c))
+                foreach (Candidate d in neighbors)
                 {
                     // Visit first so it will be on the stack when we do the next check,
                     // unless it's already visited and thus won't be on the stack.
