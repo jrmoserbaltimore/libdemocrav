@@ -1,4 +1,5 @@
 ﻿using MoonsetTechnologies.Voting.Ballots;
+using MoonsetTechnologies.Voting.Storage;
 using MoonsetTechnologies.Voting.Tabulation;
 using MoonsetTechnologies.Voting.Tiebreaking;
 using MoonsetTechnologies.Voting.Utility;
@@ -58,7 +59,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests.Theories
             output = testOutputHelper;
         }
 
-        public virtual void TabulationTest(IEnumerable<Ballot> ballots, string[] winners)
+        public virtual void TabulationTest(IEnumerable<Ballot> ballots, TabulatorTestCase results)
         {
             List<string> elected = null;
             AbstractTabulatorFactory f;
@@ -100,7 +101,6 @@ namespace MoonsetTechnologies.Voting.Development.Tests.Theories
 
             Assert.NotNull(elected);
             Assert.Single(elected);
-            Assert.Equal(winners.Single(), elected.Single());
         }
 
         // Constraints:
@@ -127,35 +127,69 @@ namespace MoonsetTechnologies.Voting.Development.Tests.Theories
         // Notably, when these sets are one candidate, the algorithms should select that
         // candidate as winner; for multiple candidates, a single winner may vary, and is
         // questionable.
+
+        // FIXME:  So much bad validation here
         public static IEnumerable<object[]> TestFile(string path, Type tabulator)
         {
             var allData = new List<object[]>();
+            List<Candidate> smithSet = null;
+            List<Candidate> schwartzSet = null;
             HashSet<JsonElement> testCases = new HashSet<JsonElement>();
-            FileStream file = new FileStream(path, FileMode.Open);
-            JsonDocument dom = JsonDocument.Parse(file);
+            FileStream file;
+            JsonDocument dom;
+            using (file = new FileStream(path, FileMode.Open))
+                dom = JsonDocument.Parse(file);
 
             string algorithm;
 
             algorithm = (tabulator.GetCustomAttributes(typeof(TabulationAlgorithm)) as TabulationAlgorithm)
                 ?.Algorithm;
 
-            // FIXME:  start by selecting everything that matches the tabulation algorithm.
-            
+            // start by selecting everything that matches the tabulation algorithm.
+            testCases.UnionWith(
+              dom.RootElement.GetProperty("results").EnumerateArray()
+                .Where(x => !(x.GetProperty("class").EnumerateArray()
+                   .Where(y => y.GetProperty("algorithm").GetString() == algorithm) is null))
+            );
+
             // Condorcet is always indicated when Smith Set is one.
             if (tabulator.GetCustomAttributes(typeof(SmithEfficient)).Count() > 0)
-                testCases.UnionWith(dom.RootElement.EnumerateArray()
-                    .Where(x => x.GetProperty("attributes")
-                     .GetProperty("smith set").GetArrayLength() == 1));
+            {
+                foreach (JsonElement j in dom.RootElement.GetProperty("attributes").GetProperty("smith set").EnumerateArray())
+                    smithSet.Add(MakeCandidate(j.GetString()));
+            }
+            if (smithSet.Count == 1)
+                schwartzSet = smithSet;
 
-            if (tabulator.GetCustomAttributes(typeof(SchwartzEfficient)).Count() > 0)
-                testCases.UnionWith(dom.RootElement.EnumerateArray()
-                    .Where(x => x.GetProperty("attributes")
-                     .GetProperty("smith set").GetArrayLength() == 1));
+            else if (tabulator.GetCustomAttributes(typeof(SchwartzEfficient)).Count() > 0)
+            {
+                foreach (JsonElement j in dom.RootElement.GetProperty("attributes").GetProperty("schwartz set").EnumerateArray())
+                    schwartzSet.Add(MakeCandidate(j.GetString()));
+            }
+
+            // no matching data
+            if (testCases.Count == 0 && smithSet.Count == 0)
+            {
+                return allData;
+            }
+
+            string fn = dom.RootElement.GetProperty("filename").ToString();
+            BallotSet ballots;
+
+            using (file = new FileStream(path, FileMode.Open))
+            {
+                ballots = new BallotSet(new DavidHillFormat().LoadBallots(file));
+            }
+
+            // Condorcet-efficiency test
+            if (testCases.Count == 0 && schwartzSet.Count == 1)
+            {
+                allData.Add(new object[] { ballots, new TabulatorTestCase { SmithSet = smithSet, SchwartzSet = smithSet } });
+            }
 
             // FIXME:  use the information in testCases to construct a bunch of TabulatorTestCase objects
 
             return allData;
-
         }
         protected void PrintTabulationState(TabulationStateEventArgs e)
         {
@@ -195,5 +229,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests.Theories
             output.WriteLine("  Notes:\t{0}", e.Note);
             output.WriteLine("\n");
         }
+
+        public static Candidate MakeCandidate(string name) => new Candidate(new Person(name));
     }
 }
