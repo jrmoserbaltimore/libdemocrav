@@ -22,6 +22,8 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
             {
                 foreach (Candidate d in candidateStates.Keys)
                 {
+                    if (c == d)
+                        continue;
                     // Update winPairs whenever not a pairwise tie
                     if (candidateStates[c].VoteCount != candidateStates[d].VoteCount)
                     {

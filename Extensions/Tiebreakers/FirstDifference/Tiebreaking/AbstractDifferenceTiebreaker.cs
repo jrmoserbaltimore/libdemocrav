@@ -47,6 +47,8 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
             {
                 foreach (Candidate d in candidates)
                 {
+                    if (c == d)
+                        continue;
                     if (winPairs.ContainsKey(c))
                     {
                         if (winPairs[c].ContainsKey(d))

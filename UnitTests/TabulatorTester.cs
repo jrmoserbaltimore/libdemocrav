@@ -146,7 +146,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                         fn = Path.GetFullPath(dname + Path.DirectorySeparatorChar + fn);
 
                         // When a Condorcet method encounters a one-seat
-                        if ( ((algorithm == "condorcet-smith" && algo == "smith set")
+                        if (((algorithm == "condorcet-smith" && algo == "smith set")
                             || (algorithm == "condorcet-schwartz"
                                 && new[] { "smith set", "schwartz set" }.Contains(algo)))
                             && seats == 1)
@@ -154,8 +154,10 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                             // just don't hit the continue block
                         }
                         else if (algo != algorithm)
+                        {
                             continue;
-                        allData.Add(new object[] { fn, seats, winners });
+                        }
+                            allData.Add(new object[] { fn, seats, winners });
                     }
                 }
             }
