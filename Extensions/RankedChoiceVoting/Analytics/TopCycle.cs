@@ -46,15 +46,12 @@ namespace MoonsetTechnologies.Voting.Analytics
             List<Candidate> schwartzSet;
             Dictionary<Candidate, int> linkId;
             Dictionary<Candidate, int> nodeId;
+            List<List<Candidate>> stronglyConnectedComponents;
             Stack<Candidate> s;
             int i = 0;
 
             void dfs(Candidate c, bool isSmith)
             {
-                // Skip this node when isSmith is false and the node is not in the
-                // Smith Set, of which the Schwartz Set is a subset.
-                if (!isSmith && !smithSet.Contains(c))
-                    return;
                 // Only search if not yet visited.
                 if (nodeId.ContainsKey(c))
                     return;
@@ -66,24 +63,32 @@ namespace MoonsetTechnologies.Voting.Analytics
                 i++;
 
                 // Visit each neighbor
-                List<Candidate> neighbors = new List<Candidate>(graph.Wins(c));
+                HashSet<Candidate> neighbors = graph.Wins(c).ToHashSet();
                 if (isSmith)
-                    neighbors.AddRange(graph.Ties(c));
+                    neighbors.UnionWith(graph.Ties(c));
                 foreach (Candidate d in neighbors)
                 {
                     // Visit first so it will be on the stack when we do the next check,
                     // unless it's already visited and thus won't be on the stack.
-                    dfs(d, isSmith);
-                    // It's on the stack, so set linkId to the low-link value
-                    if (s.Contains(d))
+                    if (!nodeId.ContainsKey(d))
+                    {
+                        dfs(d, isSmith);
                         linkId[c] = Math.Min(linkId[c], linkId[d]);
+                    }
+                    // It's on the stack, so set linkId to the nodeId
+                    else if (s.Contains(d))
+                        linkId[c] = Math.Min(linkId[c], nodeId[d]);
                 }
                 // We've visited all neighbors, did we find a SCC?
                 if (linkId[c] == nodeId[c])
                 {
-                    // Remove all associated members of the SCC
-                    while (s.Count > 0 && linkId[s.Peek()] == linkId[c])
-                        s.Pop();
+                    // move this SCC from the stack to our list of SCCs
+                    List<Candidate> scc = new List<Candidate>();                    
+                    do
+                    {
+                        scc.Add(s.Pop());
+                    } while (!scc.Contains(c));
+                    stronglyConnectedComponents.Add(scc);
                 }
             }
 
@@ -92,6 +97,7 @@ namespace MoonsetTechnologies.Voting.Analytics
                 linkId = new Dictionary<Candidate, int>();
                 nodeId = new Dictionary<Candidate, int>();
                 s = new Stack<Candidate>();
+                stronglyConnectedComponents = new List<List<Candidate>>();
                 i = 0;
                 // Visit each node in the graph as a starting point.
                 foreach (Candidate c in graph.Candidates)
@@ -100,39 +106,44 @@ namespace MoonsetTechnologies.Voting.Analytics
                 // Find every SCC that cannot be reached by any other SCC.
                 // In the Smith Set, this is one SCC; in the Schwartz Set,
                 // we may have several.
-                Dictionary<(int, int), bool> reachable = new Dictionary<(int, int), bool>();
-                List<int> dominating = new List<int>();
+                Dictionary<(List<Candidate>, List<Candidate>), bool> reachable = new Dictionary<(List<Candidate>, List<Candidate>), bool>();
+                List<List<Candidate>> dominating = new List<List<Candidate>>();
                 List<Candidate> output = new List<Candidate>();
 
                 // Special thanks to https://stackoverflow.com/a/55526085/5601193
                 foreach (Candidate k in linkId.Keys)
                 {
+                    List<Candidate> scck = stronglyConnectedComponents.Where(x => x.Contains(k)).Single();
                     foreach(Candidate l in linkId.Keys)
                     {
+                        List<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
                         foreach (Candidate m in linkId.Keys)
                         {
+                            List<Candidate> sccm = stronglyConnectedComponents.Where(x => x.Contains(m)).Single();
                             // Assigns from itself, below, sometimes, so must exist
-                            if (!reachable.ContainsKey((linkId[l], linkId[m])))
-                                reachable[(linkId[l], linkId[m])] = false;
+                            if (!reachable.ContainsKey((sccl, sccm)))
+                                reachable[(sccl, sccm)] = false;
+                            if (reachable[(sccl, sccm)])
+                                continue;
                             // The SCC containing (l) can reach the SCC containing (m) if
                             //  - (l) defeats (m)
                             //  - (l) ties with (m) and it's the Smith Set
                             //  - (l) is already known to reach (m)
                             //  - (l) can reach (k) and (k) can reach (m)
-                            reachable[(linkId[l], linkId[m])] =
+                            reachable[(sccl, sccm)] =
                                 graph.Wins(l).Contains(m) ||
                                 (isSmith && graph.Ties(l).Contains(m)) ||
-                                reachable[(linkId[l], linkId[m])] ||
-                                (reachable[(linkId[l], linkId[k])] && reachable[(linkId[k], linkId[m])]);
+                                reachable[(sccl, sccm)] ||
+                                (reachable[(sccl, scck)] && reachable[(scck, sccm)]);
                         }
                     }
                 }
 
                 // Time to find all dominating SCCs
-                dominating.AddRange(linkId.Values.Distinct());
-                foreach (int j in linkId.Values.Distinct())
+                dominating.AddRange(stronglyConnectedComponents);
+                foreach (List<Candidate> j in stronglyConnectedComponents)
                 {
-                    foreach (int k in linkId.Values.Distinct())
+                    foreach (List<Candidate> k in stronglyConnectedComponents)
                     {
                         // Reaching itself doesn't count
                         if (j == k)
@@ -144,21 +155,16 @@ namespace MoonsetTechnologies.Voting.Analytics
                 }
 
                 // Select all the candidates from the SCCs
-                foreach (Candidate c in linkId.Keys)
-                {
-                    if (dominating.Contains(linkId[c]))
-                        output.Add(c);
-                }
-
+                foreach (List<Candidate> scc in dominating)
+                        output.AddRange(scc);
                 return output;
             }
 
-            // Must compute SmithSet first
-            smithSet = getSet(true);
+            // Return whichever
             if (set == TopCycleSets.smith)
-                return smithSet;
-            schwartzSet = getSet(false);
-                return schwartzSet;
+                return getSet(true);
+            else
+                return getSet(false);
         }
     }
 }
