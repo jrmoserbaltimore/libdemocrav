@@ -69,6 +69,7 @@ namespace MoonsetTechnologies.Voting.Utility
 
             foreach (Candidate c in candidates)
             {
+                break;
                 foreach (var v in g.Losses(c))
                 {
                     Console.WriteLine("{0} defeated by {1}\t{2}:{3}", c.Name, v.Name, g.GetVoteCount(c, v).v1, g.GetVoteCount(c, v).v2);
