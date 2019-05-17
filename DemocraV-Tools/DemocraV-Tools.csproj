@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <RootNamespace>DemocraV_Tools</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Extensions\RankedChoiceVoting\RankedChoiceVoting.csproj" />
+    <ProjectReference Include="..\Extensions\Storage\DavidHillFormat\DavidHillFormat.csproj" />
+    <ProjectReference Include="..\Extensions\Storage\StorageBase\Storage.csproj" />
+    <ProjectReference Include="..\Extensions\Tiebreakers\FirstDifference\FirstDifference.csproj" />
+    <ProjectReference Include="..\LibDemocraV\LibDemocraV.csproj" />
+    <ProjectReference Include="..\SingleTransferableVote\SingleTransferableVote.csproj" />
+    <ProjectReference Include="..\Tabulators\InstantRunoffVotingTabulator\InstantRunoffVotingTabulator.csproj" />
+    <ProjectReference Include="..\Tabulators\MeekSTVTabulator\MeekSTVTabulator.csproj" />
+    <ProjectReference Include="..\Tabulators\TidemansAlternativeTabulator\TidemansAlternativeTabulator.csproj" />
+  </ItemGroup>
+
+</Project>

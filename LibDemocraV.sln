@@ -36,7 +36,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Storage", "Extensions\Stora
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReadableBallotFormat", "Extensions\Storage\ReadableBallotFormat\ReadableBallotFormat.csproj", "{EB814818-72C5-48A0-A20B-A2460CE432F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DavidHillFormat", "Extensions\Storage\DavidHillFormat\DavidHillFormat.csproj", "{DE593D41-0B82-4766-A2C9-747C57A9644D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DavidHillFormat", "Extensions\Storage\DavidHillFormat\DavidHillFormat.csproj", "{DE593D41-0B82-4766-A2C9-747C57A9644D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemocraV-Tools", "DemocraV-Tools\DemocraV-Tools.csproj", "{FE522692-E94E-455D-B190-2D3D6DD7FD6C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -88,6 +90,10 @@ Global
 		{DE593D41-0B82-4766-A2C9-747C57A9644D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE593D41-0B82-4766-A2C9-747C57A9644D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE593D41-0B82-4766-A2C9-747C57A9644D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE522692-E94E-455D-B190-2D3D6DD7FD6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE522692-E94E-455D-B190-2D3D6DD7FD6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE522692-E94E-455D-B190-2D3D6DD7FD6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE522692-E94E-455D-B190-2D3D6DD7FD6C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
