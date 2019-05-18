@@ -19,6 +19,7 @@ namespace MoonsetTechnologies.Voting.Utility
             IEnumerable<CountedBallot> ballots = s.LoadBallots(file);
 
             BallotSet bset = new BallotSet(ballots);
+            ballots = null;
 
             List<string> winners = null;
             int smithSetCount = 0;

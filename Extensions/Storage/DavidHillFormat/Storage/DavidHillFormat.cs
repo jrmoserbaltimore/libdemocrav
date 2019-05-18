@@ -102,14 +102,37 @@ namespace MoonsetTechnologies.Voting.Storage
 
             void createBallots()
             {
+                HashSet<Vote> dedupVotes = new HashSet<Vote>();
+                HashSet<CountedBallot> dedupBallots = new HashSet<CountedBallot>();
                 foreach (List<int> l in rawBallots.Keys)
                 {
-                    List<Vote> v = new List<Vote>();
+                    HashSet<Vote> v = new HashSet<Vote>();
                     foreach (int i in l)
                     {
-                        v.Add(new Vote(Candidates[i - 1], l.IndexOf(i) + 1));
+                        Vote u = new Vote(Candidates[i - 1], l.IndexOf(i) + 1);
+                        List<Vote> dedups = dedupVotes.Where(x => x.Candidate == u.Candidate && x.Value == u.Value).ToList();
+                        if (dedups.Count == 0)
+                            dedupVotes.Add(u);
+                        else if (dedups.Count > 1)
+                            throw new InvalidOperationException("Duplicate votes in deduplication array");
+                        else
+                            u = dedups.Single();
+                        v.Add(u);
                     }
-                    ballots.Add(new CountedBallot(new Ballot(v), rawBallots[l]));
+                    CountedBallot b = new CountedBallot(new Ballot(v), rawBallots[l]);
+                    List<CountedBallot> db = dedupBallots.Where(x => x.Votes.ToHashSet().SetEquals(b.Votes)).ToList();
+                    if (db.Count == 0)
+                        dedupBallots.Add(b);
+                    else if (db.Count > 1)
+                        throw new InvalidOperationException("Duplicate ballots in deduplication array");
+                    else
+                    {
+                        CountedBallot ob = db.Single();
+                        b = new CountedBallot(ob, ob.Count + b.Count);
+                        dedupBallots.Remove(ob);
+                        dedupBallots.Add(b);
+                    }
+                    ballots.Add(b);
                 }
             }
             (candidateCount, seats) = getFirstLine();
