@@ -1,4 +1,4 @@
-// These classes compute pairwise victories from complete ranked ballot sets.
+// This class computes pairwise victories from complete ranked ballot sets.
 // These pairwise victories allow us to compute the Smith and Schwartz sets,
 // and thus support Condorcet systems like Smith-constrained IRV and Tideman's
 // Alternative.
@@ -6,17 +6,7 @@ using MoonsetTechnologies.Voting.Ballots;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
-// FIXME:  The API for this is simply:
-//
-//     PairwiseGraph g = new PairwiseGraph(candidates, ballots);
-//     g.Wins(candidate);
-//     g.Ties(candidate);
-//     g.Losses(candidate);
-//     g.GetVoteCount(c1, c2);
-//
-// Aside from that, the internals are ham-fisted.
 namespace MoonsetTechnologies.Voting.Analytics
 {
     /// <summary>
@@ -128,53 +118,16 @@ namespace MoonsetTechnologies.Voting.Analytics
         }
 
         protected virtual Dictionary<Candidate, (decimal v1, decimal v2)> VoteCounts(Candidate candidate)
-        {
-            Dictionary<Candidate, (decimal, decimal)> output = new Dictionary<Candidate, (decimal, decimal)>();
-            foreach (Candidate c in Candidates)
-            {
-                if (c == candidate)
-                    continue;
-
-                output[c] = GetVoteCount(candidate, c);
-            }
-            return output;
-        }
+          => Candidates.Except(new[] { candidate }).ToDictionary(x => x, x => GetVoteCount(candidate, x));
 
         public IEnumerable<Candidate> Wins(Candidate candidate)
-        {
-            List<Candidate> output = new List<Candidate>();
-            Dictionary<Candidate, (decimal v1, decimal v2)> votes = VoteCounts(candidate);
-
-            foreach (Candidate c in votes.Keys)
-                if (votes[c].v1 > votes[c].v2)
-                    output.Add(c);
-
-            return output;
-        }
+          => VoteCounts(candidate).Where(x => x.Value.v1 > x.Value.v2).Select(x => x.Key);
 
         public IEnumerable<Candidate> Ties(Candidate candidate)
-        {
-            List<Candidate> output = new List<Candidate>();
-            Dictionary<Candidate, (decimal v1, decimal v2)> votes = VoteCounts(candidate);
-
-            foreach (Candidate c in votes.Keys)
-                if (votes[c].v1 == votes[c].v2)
-                    output.Add(c);
-
-            return output;
-        }
+          => VoteCounts(candidate).Where(x => x.Value.v1 == x.Value.v2).Select(x => x.Key);
 
         public IEnumerable<Candidate> Losses(Candidate candidate)
-        {
-            List<Candidate> output = new List<Candidate>();
-            Dictionary<Candidate, (decimal v1, decimal v2)> votes = VoteCounts(candidate);
-
-            foreach (Candidate c in votes.Keys)
-                if (votes[c].v1 < votes[c].v2)
-                    output.Add(c);
-
-            return output;
-        }
+          => VoteCounts(candidate).Where(x => x.Value.v1 < x.Value.v2).Select(x => x.Key);
 
         protected PairwiseGraph()
         {
@@ -183,7 +136,7 @@ namespace MoonsetTechnologies.Voting.Analytics
     }
     // TODO:  PairwiseGraph derivative class which divides the ballots into (n)
     // equal segments and parallel-executes (n) counts, then puts this all together.
-    
+    //
     // With 100,000,000 ballots—a fully-counted Presidential election—this comes
     // to about O((n^2)/2 + n/2) times a linear hundred million.  Assuming nine
     // candidates—the maximum for Unified Majority with 54 primary candidates—gives
