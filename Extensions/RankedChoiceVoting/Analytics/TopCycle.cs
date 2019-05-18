@@ -31,7 +31,7 @@ namespace MoonsetTechnologies.Voting.Analytics
         }
 
         public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> candidates, TopCycleSets set)
-            => ComputeSets(new PairwiseGraph(candidates, ballots), set);
+            => ComputeSets(new PairwiseGraph(ballots), set);
 
         public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> candidates)
             => GetTopCycle(candidates, defaultSet);
@@ -42,8 +42,6 @@ namespace MoonsetTechnologies.Voting.Analytics
         /// <param name="graph">The pairwise graph.</param>
         private IEnumerable<Candidate> ComputeSets(PairwiseGraph graph, TopCycleSets set)
         {
-            List<Candidate> smithSet = null;
-            List<Candidate> schwartzSet;
             Dictionary<Candidate, int> linkId;
             Dictionary<Candidate, int> nodeId;
             List<List<Candidate>> stronglyConnectedComponents;

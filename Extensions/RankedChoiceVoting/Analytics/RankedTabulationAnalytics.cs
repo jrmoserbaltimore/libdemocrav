@@ -24,7 +24,7 @@ namespace MoonsetTechnologies.Voting.Analytics
         public IEnumerable<Candidate> GetSchwartzSet(IEnumerable<Candidate> candidates)
             => GetTopCycle(candidates, TopCycle.TopCycleSets.schwartz);
 
-        public PairwiseGraph GetPairwiseGraph(IEnumerable<Candidate> candidates)
-            => new PairwiseGraph(pairwiseGraph, candidates);
+        public PairwiseGraph GetPairwiseGraph()
+            => new PairwiseGraph(pairwiseGraph);
     }
 }

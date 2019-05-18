@@ -65,7 +65,7 @@ namespace MoonsetTechnologies.Voting.Utility
                 Console.Write("\n");
             }
 
-            PairwiseGraph g = new PairwiseGraph(candidates, bset);
+            PairwiseGraph g = new PairwiseGraph(bset);
 
             foreach (Candidate c in candidates)
             {

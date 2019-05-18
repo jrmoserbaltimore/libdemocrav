@@ -82,7 +82,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
                     SetState(c, CandidateState.States.defeated);
 
             }
-            PairwiseGraph pairwiseGraph = new PairwiseGraph(startSet, ballots);
+            PairwiseGraph pairwiseGraph = new PairwiseGraph(ballots);
             return new RankedTabulationStateEventArgs
             {
                 CandidateStates = CandidateStatesCopy,
