@@ -16,7 +16,6 @@ namespace MoonsetTechnologies.Voting.Analytics
     /// </summary>
     public class TopCycle
     {
-        protected List<Ballot> ballots;
         public enum TopCycleSets
         {
             smith = 1, // Generalize Top-Choice Assumption, GETCHA
@@ -24,23 +23,31 @@ namespace MoonsetTechnologies.Voting.Analytics
         }
 
         private readonly TopCycleSets defaultSet;
-        public TopCycle(IEnumerable<Ballot> ballots, TopCycleSets set = TopCycleSets.smith)
+
+        PairwiseGraph graph;
+
+        public TopCycle(PairwiseGraph graph, TopCycleSets set = TopCycleSets.smith)
         {
-            this.ballots = ballots.ToList();
             defaultSet = set;
+            this.graph = graph;
         }
 
-        public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> candidates, TopCycleSets set)
-            => ComputeSets(new PairwiseGraph(ballots), set);
+        public TopCycle(BallotSet ballots, TopCycleSets set = TopCycleSets.smith)
+            : this(new PairwiseGraph(ballots))
+        {
+        }
 
-        public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> candidates)
-            => GetTopCycle(candidates, defaultSet);
+        public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> withdrawn, TopCycleSets set)
+            => ComputeSets(withdrawn, set);
+
+        public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> withdrawn)
+            => GetTopCycle(withdrawn, defaultSet);
 
         /// <summary>
         /// Compute Smith and Schwartz sets with Tarjan's Algorithm.
         /// </summary>
         /// <param name="graph">The pairwise graph.</param>
-        private IEnumerable<Candidate> ComputeSets(PairwiseGraph graph, TopCycleSets set)
+        private IEnumerable<Candidate> ComputeSets(IEnumerable<Candidate> withdrawn, TopCycleSets set)
         {
             Dictionary<Candidate, int> linkId;
             Dictionary<Candidate, int> nodeId;
@@ -50,6 +57,9 @@ namespace MoonsetTechnologies.Voting.Analytics
 
             void dfs(Candidate c, bool isSmith)
             {
+                // skip withdrawn candidates
+                if (withdrawn.Contains(c))
+                    return;
                 // Only search if not yet visited.
                 if (nodeId.ContainsKey(c))
                     return;
@@ -61,9 +71,10 @@ namespace MoonsetTechnologies.Voting.Analytics
                 i++;
 
                 // Visit each neighbor
-                HashSet<Candidate> neighbors = graph.Wins(c).ToHashSet();
+                HashSet<Candidate> neighbors = graph.Wins(c).Except(withdrawn).ToHashSet();
                 if (isSmith)
-                    neighbors.UnionWith(graph.Ties(c));
+                    neighbors.UnionWith(graph.Ties(c).Except(withdrawn));
+
                 foreach (Candidate d in neighbors)
                 {
                     // Visit first so it will be on the stack when we do the next check,
@@ -97,8 +108,8 @@ namespace MoonsetTechnologies.Voting.Analytics
                 s = new Stack<Candidate>();
                 stronglyConnectedComponents = new List<List<Candidate>>();
                 i = 0;
-                // Visit each node in the graph as a starting point.
-                foreach (Candidate c in graph.Candidates)
+                // Visit each node in the graph as a starting point, ignoring withdrawn candidates
+                foreach (Candidate c in graph.Candidates.Except(withdrawn))
                     dfs(c, isSmith);
 
                 // Find every SCC that cannot be reached by any other SCC.
@@ -109,13 +120,13 @@ namespace MoonsetTechnologies.Voting.Analytics
                 List<Candidate> output = new List<Candidate>();
 
                 // Special thanks to https://stackoverflow.com/a/55526085/5601193
-                foreach (Candidate k in linkId.Keys)
+                foreach (Candidate k in linkId.Keys.Except(withdrawn))
                 {
                     List<Candidate> scck = stronglyConnectedComponents.Where(x => x.Contains(k)).Single();
-                    foreach(Candidate l in linkId.Keys)
+                    foreach(Candidate l in linkId.Keys.Except(withdrawn))
                     {
                         List<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
-                        foreach (Candidate m in linkId.Keys)
+                        foreach (Candidate m in linkId.Keys.Except(withdrawn))
                         {
                             List<Candidate> sccm = stronglyConnectedComponents.Where(x => x.Contains(m)).Single();
                             // Assigns from itself, below, sometimes, so must exist

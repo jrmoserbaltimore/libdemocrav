@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
@@ -16,74 +17,83 @@ namespace MoonsetTechnologies.Voting.Utility
         {
             AbstractBallotStorage s = new DavidHillFormat();
             FileStream file;
-            List<CountedBallot> ballots = new List<CountedBallot>();
 
-            for (int i = 0; i < 1000; i++)
-            {
-                using (file = new FileStream(args[0], FileMode.Open))
-                    ballots.AddRange(s.LoadBallots(file));
-            }
-
-            BallotSet bset = new BallotSet(ballots);
-            ballots = null;
-
-            List<string> winners = null;
+            List<string> winners = new List<string>();
+            HashSet<Candidate> candidates = new HashSet<Candidate>();
+            TopCycle t;
+            BallotSet bset;
             int smithSetCount = 0;
 
-            TopCycle t = new TopCycle(bset);
-
-            HashSet<Candidate> candidates = new HashSet<Candidate>();
-
-            foreach (Ballot b in bset)
+            for (int j = 0; j < 1000; j++)
             {
-                foreach (Vote v in b.Votes)
-                    candidates.Add(v.Candidate);
-            }
+                winners.Clear();
+                candidates.Clear();
+                bset = null;
 
-            winners = new List<string>();
-            
-            foreach (Candidate c in t.GetTopCycle(candidates,TopCycle.TopCycleSets.smith))
-            {
-                winners.Add(c.Name);
-            }
+                for (int i = 0; i < 1000; i++)
+                {
+                    using (file = new FileStream(args[0], FileMode.Open))
+                    {
+                        List<BallotSet> bsets = new List<BallotSet>();
+                        bsets.Clear();
+                        bsets.Add(s.LoadBallots(file));
+                        if (!(bset is null))
+                            bsets.Add(bset);
+                        bset = s.ballotFactory.MergeBallotSets(bsets);
+                    }
+                }
 
-            Console.Write(@"""{0}"" ""smith set"" {1}", args[0], winners.Count());
+                PairwiseGraph g = new PairwiseGraph(bset);
 
-            foreach (string w in winners)
-                Console.Write(@" ""{0}""", w);
-            Console.Write("\n");
+                t = new TopCycle(g);
 
-            smithSetCount = winners.Count();
+                foreach (Ballot b in bset)
+                {
+                    foreach (Vote v in b.Votes)
+                        candidates.Add(v.Candidate);
+                }
 
-            winners.Clear();
+                foreach (Candidate c in t.GetTopCycle(new List<Candidate>(), TopCycle.TopCycleSets.smith))
+                {
+                    winners.Add(c.Name);
+                }
 
-            foreach (Candidate c in t.GetTopCycle(candidates, TopCycle.TopCycleSets.schwartz))
-            {
-                winners.Add(c.Name);
-            }
-
-            if (winners.Count() != smithSetCount)
-            {
-
-                Console.Write(@"""{0}"" ""schwartz set"" {1}", args[0], winners.Count());
+                Console.Write(@"""{0}"" ""smith set"" {1}", args[0], winners.Count());
 
                 foreach (string w in winners)
                     Console.Write(@" ""{0}""", w);
                 Console.Write("\n");
-            }
 
-            PairwiseGraph g = new PairwiseGraph(bset);
-            GC.Collect(2, GCCollectionMode.Forced, true, true);
-            foreach (Candidate c in candidates)
-            {
-                break;
-                foreach (var v in g.Losses(c))
+                smithSetCount = winners.Count();
+
+                winners.Clear();
+
+                foreach (Candidate c in t.GetTopCycle(new List<Candidate>(), TopCycle.TopCycleSets.schwartz))
                 {
-                    Console.WriteLine("{0} defeated by {1}\t{2}:{3}", c.Name, v.Name, g.GetVoteCount(c, v).v1, g.GetVoteCount(c, v).v2);
+                    winners.Add(c.Name);
                 }
-                foreach (var v in g.Ties(c))
+
+                if (winners.Count() != smithSetCount)
                 {
-                    Console.WriteLine("{0} ties with {1}\t{2}:{3}", c.Name, v.Name, g.GetVoteCount(c, v).v1, g.GetVoteCount(c, v).v2);
+
+                    Console.Write(@"""{0}"" ""schwartz set"" {1}", args[0], winners.Count());
+
+                    foreach (string w in winners)
+                        Console.Write(@" ""{0}""", w);
+                    Console.Write("\n");
+                }
+
+                foreach (Candidate c in candidates)
+                {
+                    break;
+                    foreach (var v in g.Losses(c))
+                    {
+                        Console.WriteLine("{0} defeated by {1}\t{2}:{3}", c.Name, v.Name, g.GetVoteCount(c, v).v1, g.GetVoteCount(c, v).v2);
+                    }
+                    foreach (var v in g.Ties(c))
+                    {
+                        Console.WriteLine("{0} ties with {1}\t{2}:{3}", c.Name, v.Name, g.GetVoteCount(c, v).v1, g.GetVoteCount(c, v).v2);
+                    }
                 }
             }
         }

@@ -9,7 +9,7 @@ namespace MoonsetTechnologies.Voting.Storage
 {
     public class DavidHillFormat : AbstractBallotStorage
     {
-        public override IEnumerable<CountedBallot> LoadBallots(Stream stream)
+        public override BallotSet LoadBallots(Stream stream)
         {
             StreamReader sr = new StreamReader(stream);
             // Raw list of ballots, plus a count of how many seen
@@ -117,7 +117,8 @@ namespace MoonsetTechnologies.Voting.Storage
 
             createBallots();
 
-            return ballots;
+            Candidates.Clear();
+            return ballotFactory.CreateBallotSet(ballots);
         }
 
         public override IEnumerable<Ballot> StoreBallots()

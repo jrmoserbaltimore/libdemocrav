@@ -14,7 +14,8 @@ namespace MoonsetTechnologies.Voting.Analytics
     /// </summary>
     public class PairwiseGraph
     {
-        protected Dictionary<Candidate, Dictionary<Candidate, decimal>> nodes = new Dictionary<Candidate, Dictionary<Candidate, decimal>>();
+        protected Dictionary<Candidate, Dictionary<Candidate, decimal>> nodes
+            = new Dictionary<Candidate, Dictionary<Candidate, decimal>>();
 
         /// <summary>
         /// All candidates in this graph.
@@ -25,10 +26,10 @@ namespace MoonsetTechnologies.Voting.Analytics
         /// Converts a set of candidates and ballots to a graph of wins and ties.
         /// </summary>
         /// <param name="ballots">Ranked ballots in the election.</param>
-        public PairwiseGraph(IEnumerable<Ballot> ballots)
+        public PairwiseGraph(BallotSet ballots)
         {
             // Initialize candidate graph
-            HashSet<Candidate> candidates = ballots.SelectMany(x => x.Votes.Select(y => y.Candidate)).ToHashSet();
+            HashSet<Candidate> candidates = (ballots as IEnumerable<CountedBallot>).SelectMany(x => x.Votes.Select(y => y.Candidate)).ToHashSet();
             foreach (Candidate c in candidates)
             {
                 nodes[c] = new Dictionary<Candidate, decimal>();
@@ -38,7 +39,7 @@ namespace MoonsetTechnologies.Voting.Analytics
 
             // Iterate each ballot and count who wins and who ties.
             // This can support tied ranks and each ballot is O(SUM(1..n)) and o(n).
-            foreach (Ballot b in ballots)
+            foreach (CountedBallot b in ballots)
             {
                 HashSet<Candidate> ranked = b.Votes.Select(x => x.Candidate).ToHashSet();
                 HashSet<Candidate> unranked = candidates.Except(ranked).ToHashSet();
@@ -52,13 +53,13 @@ namespace MoonsetTechnologies.Voting.Analytics
                     {
                         // Who is ranked first?  No action if a tie.
                         if (v.Beats(u))
-                            nodes[v.Candidate][u.Candidate]++;
+                            nodes[v.Candidate][u.Candidate] += b.Count;
                         else if (u.Beats(v))
-                            nodes[u.Candidate][v.Candidate]++;
+                            nodes[u.Candidate][v.Candidate] += b.Count;
                     }
                     // Defeat all unranked candidates
                     foreach (Candidate c in unranked)
-                        nodes[v.Candidate][c]++;
+                        nodes[v.Candidate][c] += b.Count;
                 }
             }
         }

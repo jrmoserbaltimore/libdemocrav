@@ -12,9 +12,8 @@ namespace MoonsetTechnologies.Voting.Utility
     {
         protected Dictionary<int, WeakReference<Vote>> Votes { get; set; } = new Dictionary<int, WeakReference<Vote>>();
         protected Dictionary<int, WeakReference<Ballot>> Ballots { get; set; } = new Dictionary<int, WeakReference<Ballot>>();
-        protected Dictionary<int, WeakReference<Person>> People { get; set; } = new Dictionary<int, WeakReference<Person>>();
 
-        protected Dictionary<string, int> Candidates { get; set; } = new Dictionary<string, int>();
+        private AbstractPeopleFactory peopleFactory = new ByNamePeopleFactory();
 
         /// <inheritdoc/>
         public override Ballot CreateBallot(IEnumerable<Vote> votes)
@@ -43,7 +42,39 @@ namespace MoonsetTechnologies.Voting.Utility
         /// <inheritdoc/>
         public override BallotSet CreateBallotSet(IEnumerable<Ballot> ballots)
         {
-            throw new NotImplementedException();
+            HashSet<Ballot> outBallots = new HashSet<Ballot>();
+            Dictionary<Ballot, int> ballotCounts = new Dictionary<Ballot, int>();
+
+            foreach (Ballot b in ballots)
+            {
+                Ballot oneBallot = CreateBallot(b.Votes);
+                int count = (b is CountedBallot) ? (b as CountedBallot).Count : 1;
+
+                if (!ballotCounts.ContainsKey(oneBallot))
+                    ballotCounts[oneBallot] = 0;
+                ballotCounts[oneBallot] += count;
+            }
+
+            foreach (Ballot b in ballotCounts.Keys)
+            {
+                Ballot newBallot;
+                if (ballotCounts[b] == 1)
+                    newBallot = b;
+                else
+                    newBallot = new CountedBallot(b, ballotCounts[b]);
+                Ballots[newBallot.GetHashCode()] = new WeakReference<Ballot>(newBallot);
+                outBallots.Add(newBallot);
+            }
+
+            return new BallotSet(outBallots);
+        }
+        /// <inheritdoc/>
+        public override BallotSet MergeBallotSets(IEnumerable<BallotSet> sets)
+        {
+            List<CountedBallot> ballots = new List<CountedBallot>();
+            foreach (BallotSet b in sets)
+                ballots.AddRange(b.Ballots);
+            return CreateBallotSet(ballots);
         }
 
         /// <inheritdoc/>
@@ -52,7 +83,7 @@ namespace MoonsetTechnologies.Voting.Utility
             Person c;
             Vote u, v = null;
 
-            c = GetCandidate(candidate);
+            c = peopleFactory.GetCandidate(candidate);
             u = new Vote(c as Candidate, value);
             // New vote if we don't have an equivalent one
             if (Votes.ContainsKey(u.GetHashCode()))
@@ -66,27 +97,6 @@ namespace MoonsetTechnologies.Voting.Utility
             Votes[v.GetHashCode()] = new WeakReference<Vote>(v);
 
             return v;
-        }
-
-        // FIXME:  Port this to a PeopleFactory, which may provide loading from
-        // database, data file, and so forth
-        public override Candidate GetCandidate(Candidate candidate)
-        {
-            Person c = null;
-            // Go through the trouble of deduplicating the candidate
-            if (!(People.ContainsKey(candidate.GetHashCode())
-                  && People[candidate.GetHashCode()].TryGetTarget(out c)))
-            {
-                if (!(Candidates.ContainsKey(candidate.Name)
-                    && People[Candidates[candidate.Name]].TryGetTarget(out c)))
-                {
-                    c = candidate;
-                }
-                Candidates[c.Name] = c.GetHashCode();
-
-                People[c.GetHashCode()] = new WeakReference<Person>(c);
-            }
-            return c as Candidate;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
         }
 
-        protected override void InitializeTabulation(IEnumerable<Ballot> ballots, IEnumerable<Candidate> withdrawn, int seats)
+        protected override void InitializeTabulation(BallotSet ballots, IEnumerable<Candidate> withdrawn, int seats)
         {
             RankedTabulationAnalytics a;
             a = new RankedTabulationAnalytics(ballots, seats);
@@ -30,7 +30,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
         // A simple count of who has the most votes.
         /// <inheritdoc/>
-        protected override void CountBallot(Ballot ballot)
+        protected override void CountBallot(CountedBallot ballot)
         {
             // Only counts ballots for hopeful and elected candidates
             Dictionary<Candidate, CandidateState> candidates
@@ -50,7 +50,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
                     vote = v;
             }
             if (!(vote is null))
-                candidateStates[vote.Candidate].VoteCount += 1.0m;
+                candidateStates[vote.Candidate].VoteCount += ballot.Count;
             else
             {
                 // FIXME:  Send an exhausted ballot event for counting purposes

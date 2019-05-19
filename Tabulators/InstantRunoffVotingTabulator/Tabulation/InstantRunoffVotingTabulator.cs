@@ -17,7 +17,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
         }
 
-        protected override void InitializeTabulation(IEnumerable<Ballot> ballots, IEnumerable<Candidate> withdrawn, int seats)
+        protected override void InitializeTabulation(BallotSet ballots, IEnumerable<Candidate> withdrawn, int seats)
         {
             base.InitializeTabulation(ballots, withdrawn, seats);
 

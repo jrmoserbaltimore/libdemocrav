@@ -31,13 +31,13 @@ namespace MoonsetTechnologies.Voting.Tabulation
             List<Candidate> output;
             List<Candidate> cCheck, rSet;
 
-            List<Candidate> inputSet = candidateStates.Where(x => x.Value.State == CandidateState.States.elected
-                  || x.Value.State == CandidateState.States.hopeful)
-                  .ToDictionary(x => x.Key, null).Keys.ToList();
+            List<Candidate> withdrawnSet = candidateStates
+                .Where(x => new[] { CandidateState.States.withdrawn, CandidateState.States.defeated }
+                           .Contains(x.Value.State)).Select(x => x.Key).ToList();
 
-            cCheck = (analytics as RankedTabulationAnalytics).GetTopCycle(inputSet, condorcetSet).ToList();
+            cCheck = (analytics as RankedTabulationAnalytics).GetTopCycle(withdrawnSet, condorcetSet).ToList();
             // Reduce these to the appropriate checks
-            rSet = (analytics as RankedTabulationAnalytics).GetTopCycle(inputSet, retentionSet).ToList();
+            rSet = (analytics as RankedTabulationAnalytics).GetTopCycle(withdrawnSet, retentionSet).ToList();
 
             // Condorcet winner!
             if (cCheck.Count == 1)
@@ -47,9 +47,9 @@ namespace MoonsetTechnologies.Voting.Tabulation
                     .Select(x => x.Key).ToList();
 
             }
-            else if (rSet.Count() < inputSet.Count())
+            else if (rSet.Count() < withdrawnSet.Count())
             {
-                output = new List<Candidate>(inputSet);
+                output = new List<Candidate>(withdrawnSet);
                 foreach (Candidate c in rSet)
                     output.Remove(c);
                 return output;

@@ -10,7 +10,7 @@ namespace MoonsetTechnologies.Voting.Storage
     public abstract class AbstractBallotStorage
     {
         public AbstractBallotFactory ballotFactory { get; set; } = new BallotFactory();
-        public abstract IEnumerable<CountedBallot> LoadBallots(Stream stream);
+        public abstract BallotSet LoadBallots(Stream stream);
         public abstract IEnumerable<Ballot> StoreBallots();
     }
 }
