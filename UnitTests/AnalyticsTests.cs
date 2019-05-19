@@ -25,7 +25,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         [Fact]
         public void PairwiseGraphBuildTest()
         {
-            PairwiseGraph graph = new PairwiseGraph(fixture.Candidates.Values, fixture.Ballots);
+            PairwiseGraph graph = new PairwiseGraph(fixture.Ballots);
             Assert.Equal((20, 28), graph.GetVoteCount(fixture.Candidates[0], fixture.Candidates[1]));
             Assert.NotNull(graph);
         }

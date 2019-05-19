@@ -48,5 +48,16 @@ namespace MoonsetTechnologies.Voting.Ballots
 
             return output;
         }
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            // Combine all the votes
+            int h = 0;
+            foreach (Vote v in Votes)
+                h = HashCode.Combine(h, v.GetHashCode());
+
+            return h;
+        }
     }
 }

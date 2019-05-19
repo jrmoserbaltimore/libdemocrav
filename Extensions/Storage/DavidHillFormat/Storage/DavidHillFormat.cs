@@ -102,37 +102,13 @@ namespace MoonsetTechnologies.Voting.Storage
 
             void createBallots()
             {
-                HashSet<Vote> dedupVotes = new HashSet<Vote>();
-                HashSet<CountedBallot> dedupBallots = new HashSet<CountedBallot>();
                 foreach (List<int> l in rawBallots.Keys)
                 {
                     HashSet<Vote> v = new HashSet<Vote>();
+                    // The index in l is based on the order in the file, hence the ranking
                     foreach (int i in l)
-                    {
-                        Vote u = new Vote(Candidates[i - 1], l.IndexOf(i) + 1);
-                        List<Vote> dedups = dedupVotes.Where(x => x.Candidate == u.Candidate && x.Value == u.Value).ToList();
-                        if (dedups.Count == 0)
-                            dedupVotes.Add(u);
-                        else if (dedups.Count > 1)
-                            throw new InvalidOperationException("Duplicate votes in deduplication array");
-                        else
-                            u = dedups.Single();
-                        v.Add(u);
-                    }
-                    CountedBallot b = new CountedBallot(new Ballot(v), rawBallots[l]);
-                    List<CountedBallot> db = dedupBallots.Where(x => x.Votes.ToHashSet().SetEquals(b.Votes)).ToList();
-                    if (db.Count == 0)
-                        dedupBallots.Add(b);
-                    else if (db.Count > 1)
-                        throw new InvalidOperationException("Duplicate ballots in deduplication array");
-                    else
-                    {
-                        CountedBallot ob = db.Single();
-                        b = new CountedBallot(ob, ob.Count + b.Count);
-                        dedupBallots.Remove(ob);
-                        dedupBallots.Add(b);
-                    }
-                    ballots.Add(b);
+                        v.Add(ballotFactory.CreateVote(Candidates[i - 1], l.IndexOf(i) + 1));
+                    ballots.Add(new CountedBallot(ballotFactory.CreateBallot(v), rawBallots[l]));
                 }
             }
             (candidateCount, seats) = getFirstLine();

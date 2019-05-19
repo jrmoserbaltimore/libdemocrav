@@ -15,8 +15,14 @@ namespace MoonsetTechnologies.Voting.Utility
         static void Main(string[] args)
         {
             AbstractBallotStorage s = new DavidHillFormat();
-            FileStream file = new FileStream(args[0], FileMode.Open);
-            IEnumerable<CountedBallot> ballots = s.LoadBallots(file);
+            FileStream file;
+            List<CountedBallot> ballots = new List<CountedBallot>();
+
+            for (int i = 0; i < 1000; i++)
+            {
+                using (file = new FileStream(args[0], FileMode.Open))
+                    ballots.AddRange(s.LoadBallots(file));
+            }
 
             BallotSet bset = new BallotSet(ballots);
             ballots = null;
@@ -67,7 +73,7 @@ namespace MoonsetTechnologies.Voting.Utility
             }
 
             PairwiseGraph g = new PairwiseGraph(bset);
-
+            GC.Collect(2, GCCollectionMode.Forced, true, true);
             foreach (Candidate c in candidates)
             {
                 break;
