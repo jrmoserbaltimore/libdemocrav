@@ -10,9 +10,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
     public abstract class AbstractSingleTransferableVoteTabulator : RunoffTabulator
     {
         public AbstractSingleTransferableVoteTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory,
-            int seats = 1)
-            : base(mediator, tiebreakerFactory, seats)
+            AbstractTiebreakerFactory tiebreakerFactory)
+            : base(mediator, tiebreakerFactory)
         {
         }
     }

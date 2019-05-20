@@ -13,5 +13,10 @@ namespace MoonsetTechnologies.Voting.Ballots
         {
             Count = count;
         }
+
+        // Combine the Count into the HashCode
+        /// <inheritdoc/>
+        public override int GetHashCode()
+          => HashCode.Combine(base.GetHashCode(), Count);
     }
 }

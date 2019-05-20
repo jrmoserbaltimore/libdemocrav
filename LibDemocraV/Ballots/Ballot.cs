@@ -1,6 +1,7 @@
 ﻿using MoonsetTechnologies.Voting.Utility;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace MoonsetTechnologies.Voting.Ballots
@@ -9,13 +10,13 @@ namespace MoonsetTechnologies.Voting.Ballots
     [BallotTypeId("eaf87c88-6352-42d0-a048-250c09da2d89")]
     public class Ballot
     {
-        protected List<Vote> votes = new List<Vote>();
+        protected HashSet<Vote> votes = new HashSet<Vote>();
         public IEnumerable<Vote> Votes => votes;
 
         public Ballot(IEnumerable<Vote> votes)
         {
             foreach (Vote v in votes)
-                this.votes.Add(new Vote(v.Candidate, v.Value));
+                this.votes.Add(v);
         }
 
         public Ballot(Ballot ballot, Vote vote)
@@ -28,7 +29,7 @@ namespace MoonsetTechnologies.Voting.Ballots
         public string Encode()
         {
             string output;
-            List<Vote> vs = new List<Vote>();
+            List<Vote> vs = Votes.ToList();
             vs.Sort();
 
             // Start with the first candidate
@@ -46,6 +47,17 @@ namespace MoonsetTechnologies.Voting.Ballots
             }
 
             return output;
+        }
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            // Combine all the votes
+            int h = 0;
+            foreach (Vote v in Votes)
+                h = HashCode.Combine(h, v.GetHashCode());
+
+            return h;
         }
     }
 }

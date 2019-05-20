@@ -105,7 +105,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 // Unbreakable tie.
                 if (batchLosers.Count > 1)
                 {
-                    throw new NotImplementedException();
+                    batchLosers = batchLosers.Take(1).ToDictionary(x => x.Key, x => x.Value);
+                    //throw new NotImplementedException();
                 }
             }
             return batchLosers.Keys;

@@ -8,23 +8,20 @@ namespace MoonsetTechnologies.Voting.Analytics
     public class RankedTabulationAnalytics : AbstractTabulationAnalytics
     {
         protected TopCycle topCycle;
-        protected PairwiseGraph pairwiseGraph;
-        // FIXME:  Add a PairwiseGraph
-        public RankedTabulationAnalytics(IEnumerable<Ballot> ballots, int seats = 1) : base(ballots, seats)
+        public PairwiseGraph pairwiseGraph { get; protected set; }
+
+        public RankedTabulationAnalytics(BallotSet ballots, int seats = 1) : base(ballots, seats)
         {
             topCycle = new TopCycle(ballots);
             pairwiseGraph = null;
         }
 
-        public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> candidates, TopCycle.TopCycleSets set)
-            => topCycle.GetTopCycle(candidates, set);
+        public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> withdrawn, TopCycle.TopCycleSets set)
+            => topCycle.GetTopCycle(withdrawn, set);
 
-        public IEnumerable<Candidate> GetSmithSet(IEnumerable<Candidate> candidates)
-            => GetTopCycle(candidates, TopCycle.TopCycleSets.smith);
-        public IEnumerable<Candidate> GetSchwartzSet(IEnumerable<Candidate> candidates)
-            => GetTopCycle(candidates, TopCycle.TopCycleSets.schwartz);
-
-        public PairwiseGraph GetPairwiseGraph(IEnumerable<Candidate> candidates)
-            => new PairwiseGraph(pairwiseGraph, candidates);
+        public IEnumerable<Candidate> GetSmithSet(IEnumerable<Candidate> withdrawn)
+            => GetTopCycle(withdrawn, TopCycle.TopCycleSets.smith);
+        public IEnumerable<Candidate> GetSchwartzSet(IEnumerable<Candidate> withdrawn)
+            => GetTopCycle(withdrawn, TopCycle.TopCycleSets.schwartz);
     }
 }

@@ -9,7 +9,7 @@ namespace MoonsetTechnologies.Voting.Storage
 {
     public class DavidHillFormat : AbstractBallotStorage
     {
-        public override IEnumerable<CountedBallot> LoadBallots(Stream stream)
+        public override BallotSet LoadBallots(Stream stream)
         {
             StreamReader sr = new StreamReader(stream);
             // Raw list of ballots, plus a count of how many seen
@@ -104,12 +104,11 @@ namespace MoonsetTechnologies.Voting.Storage
             {
                 foreach (List<int> l in rawBallots.Keys)
                 {
-                    List<Vote> v = new List<Vote>();
+                    HashSet<Vote> v = new HashSet<Vote>();
+                    // The index in l is based on the order in the file, hence the ranking
                     foreach (int i in l)
-                    {
-                        v.Add(new Vote(Candidates[i - 1], l.IndexOf(i) + 1));
-                    }
-                    ballots.Add(new CountedBallot(new Ballot(v), rawBallots[l]));
+                        v.Add(ballotFactory.CreateVote(Candidates[i - 1], l.IndexOf(i) + 1));
+                    ballots.Add(new CountedBallot(ballotFactory.CreateBallot(v), rawBallots[l]));
                 }
             }
             (candidateCount, seats) = getFirstLine();
@@ -118,7 +117,8 @@ namespace MoonsetTechnologies.Voting.Storage
 
             createBallots();
 
-            return ballots;
+            Candidates.Clear();
+            return ballotFactory.CreateBallotSet(ballots);
         }
 
         public override IEnumerable<Ballot> StoreBallots()

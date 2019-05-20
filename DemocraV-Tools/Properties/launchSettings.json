@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DemocraV-Tools": {
+      "commandName": "Project",
+      "commandLineArgs": "../../../../UnitTests/resources/electiondata/tidemandata/A14.HIL"
+    }
+  }
+}

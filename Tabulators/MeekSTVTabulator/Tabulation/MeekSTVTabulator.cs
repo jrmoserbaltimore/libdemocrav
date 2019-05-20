@@ -46,15 +46,14 @@ namespace MoonsetTechnologies.Voting.Tabulation
         }
 
         public MeekSTVTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory,
-            int seats = 1)
-            : base(mediator, tiebreakerFactory, seats)
+            AbstractTiebreakerFactory tiebreakerFactory)
+            : base(mediator, tiebreakerFactory)
         {
 
         }
 
         // Reference rule A:  Initialize candidate states
-        protected override void InitializeTabulation(IEnumerable<Ballot> ballots, IEnumerable<Candidate> withdrawn, int seats)
+        protected override void InitializeTabulation(BallotSet ballots, IEnumerable<Candidate> withdrawn, int seats)
         {
             RankedTabulationAnalytics a;
             a = new RankedTabulationAnalytics(ballots, seats);
@@ -78,7 +77,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             note = surplusStasis ? "Surplus Stasis, so eliminating candidates." : note;
 
             // B.1:  if we have fewer hopefuls than open seats, elect everyone
-            if (IsComplete())
+            if (IsFinalRound())
             {
                 int count = candidateStates
                     .Where(x => x.Value.State == CandidateState.States.elected)
@@ -104,7 +103,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
             if (winners.Count() == 0)
             {
-                if (IsComplete())
+                if (IsFinalRound())
                 {
                     eliminationCandidates = candidateStates
                         .Where(x => x.Value.State == CandidateState.States.hopeful)
@@ -121,11 +120,13 @@ namespace MoonsetTechnologies.Voting.Tabulation
                     SetState(c, CandidateState.States.defeated);
             }
 
-            return new RankedTabulationStateEventArgs
+            return new MeekSTVTabulationStateEventArgs
             {
                 CandidateStates = CandidateStatesCopy,
                 SchwartzSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet),
-                SmithSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet)
+                SmithSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet),
+                Quota = quota,
+                Surplus = surplus
             };
         }
 
@@ -143,7 +144,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         }
 
         /// <inheritdoc/>
-        protected override void CountBallot(Ballot ballot)
+        protected override void CountBallot(CountedBallot ballot)
         {
             decimal weight = 1.0m;
             List<Vote> votes = ballot.Votes.ToList();
@@ -165,8 +166,10 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 weight = RoundUp(weight);
 
                 // Add this to the candidate's vote and remove from ballot's
-                //weight
-                cs.VoteCount += value;
+                // weight.  CountedBallot shows multiple identical ballots, so
+                // we add that many ballots to the vote and decrease the weight
+                // of all identical ballots by the value kept.
+                cs.VoteCount += value * ballot.Count;
                 weight -= value;
 
                 // Do this until weight hits zero, or we run out of rankings.
@@ -188,13 +191,13 @@ namespace MoonsetTechnologies.Voting.Tabulation
             // The s>=surplus check is skipped the first iteration.
             // We implement this by having surplus greater than the
             // number of whole ballots.
-            surplus = Convert.ToDecimal(ballots.Count) + 1;
+            surplus = Convert.ToDecimal(ballots.TotalCount()) + 1;
             const decimal omega = 0.000001m;
             IEnumerable<Candidate> elected;
 
             // B.1 skip all this if we're finished.
-            //if (IsComplete())
-            //    return;
+            if (candidateStates.Count() > 0 && IsComplete())
+                return;
 
             // Reference rule B.2.a Distribute Votes
             void DistributeVotes()
@@ -208,7 +211,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 // voters would be allowed to indicate equal preference for
                 // some candidates instead of a strict ordering; we have not
                 // implemented this alternative.
-                foreach (Ballot b in ballots)
+                foreach (CountedBallot b in ballots)
                     CountBallot(b);
             }
 
@@ -240,7 +243,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 return s;
             }
 
-            // B.2.f Update keep factors.  Returns true if stable state detected.
+            // B.2.f Update keep factors for elected candidates.  Returns true if stable state detected.
             bool UpdateKeepFactors(decimal quota)
             {
                 // If no KeepFactors change or if any Keepfactor increases,
@@ -249,7 +252,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 bool increase = false;
                 foreach (MeekCandidateState c in candidateStates.Values)
                 {
-                    if (!(new[] { CandidateState.States.hopeful, CandidateState.States.elected }.Contains(c.State)))
+                    if (!(new[] { CandidateState.States.elected }.Contains(c.State)))
                         continue;
                     decimal kf = c.KeepFactor;
                     // XXX: does the reference rule intend we round up
@@ -295,7 +298,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 // We know:
                 //   - Elected < Seats
                 //   - Elected + Hopeful > Seats
-                // Therefor IsComplete() is false and will not change state.
                 // Re-entering this body is guaranteed to return to this state.
                 // Elimination is required.
                 if (kfStasis)

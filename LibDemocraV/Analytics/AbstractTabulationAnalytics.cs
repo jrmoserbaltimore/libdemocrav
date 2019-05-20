@@ -7,7 +7,7 @@ namespace MoonsetTechnologies.Voting.Analytics
 {
     public class AbstractTabulationAnalytics
     {
-        public AbstractTabulationAnalytics(IEnumerable<Ballot> ballots, int seats = 1)
+        public AbstractTabulationAnalytics(BallotSet ballots, int seats = 1)
         {
 
         }

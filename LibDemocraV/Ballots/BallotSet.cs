@@ -1,28 +1,36 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
 namespace MoonsetTechnologies.Voting.Ballots
 {
-    public class BallotSet : IEnumerable<Ballot>
+    public class BallotSet : IEnumerable<CountedBallot>
     {
-        IEnumerable<Ballot> ballots;
+        private List<Ballot> ballots = new List<Ballot>();
+        public IEnumerable<CountedBallot> Ballots => (this as IEnumerable<CountedBallot>).ToList();
+
+        /// <summary>
+        /// Total count of ballots.
+        /// </summary>
+        /// <returns>A total count of ballots.</returns>
+        public int TotalCount() => (this as IEnumerable<CountedBallot>).Sum(x => x.Count);
 
         public BallotSet(IEnumerable<Ballot> ballots)
         {
-            this.ballots = ballots;
+            this.ballots.AddRange(ballots);
         }
 
-        public IEnumerator<Ballot> GetEnumerator()
+        IEnumerator<CountedBallot> IEnumerable<CountedBallot>.GetEnumerator()
         {
             foreach (Ballot b in ballots)
             {
                 CountedBallot cb = b as CountedBallot;
                 if (cb is null)
-                    yield return b;
-                else for (int i = 0; i < cb.Count; i++)
-                        yield return cb;
+                {
+                    yield return new CountedBallot(b, 1);
+                }
+                else yield return cb;
             }
         }
 

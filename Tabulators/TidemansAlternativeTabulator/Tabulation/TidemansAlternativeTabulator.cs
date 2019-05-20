@@ -9,21 +9,21 @@ using MoonsetTechnologies.Voting.Utility.Attributes;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    [Condorcet]
+    [SmithEfficient]
+    [TabulationAlgorithm("Tideman's Alternative")]
     public class TidemansAlternativeTabulator : RunoffTabulator
     {
         TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;
         TopCycle.TopCycleSets retainSet = TopCycle.TopCycleSets.smith;
 
         public TidemansAlternativeTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory,
-            int seats = 1)
-            : base(mediator, tiebreakerFactory, seats)
+            AbstractTiebreakerFactory tiebreakerFactory)
+            : base(mediator, tiebreakerFactory)
         {
 
         }
 
-        protected override void InitializeTabulation(IEnumerable<Ballot> ballots, IEnumerable<Candidate> withdrawn, int seats)
+        protected override void InitializeTabulation(BallotSet ballots, IEnumerable<Candidate> withdrawn, int seats)
         {
             base.InitializeTabulation(ballots, withdrawn, seats);
 

@@ -11,14 +11,13 @@ namespace MoonsetTechnologies.Voting.Tabulation
     public class InstantRunoffVotingTabulator : RunoffTabulator
     {
         public InstantRunoffVotingTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory,
-            int seats = 1)
-            : base(mediator, tiebreakerFactory, seats)
+            AbstractTiebreakerFactory tiebreakerFactory)
+            : base(mediator, tiebreakerFactory)
         {
 
         }
 
-        protected override void InitializeTabulation(IEnumerable<Ballot> ballots, IEnumerable<Candidate> withdrawn, int seats)
+        protected override void InitializeTabulation(BallotSet ballots, IEnumerable<Candidate> withdrawn, int seats)
         {
             base.InitializeTabulation(ballots, withdrawn, seats);
 
