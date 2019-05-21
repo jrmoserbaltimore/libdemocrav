@@ -4,21 +4,26 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
-    public class ByNamePeopleFactory : DeduplicatingPeopleFactory
+    public class ByNamePeopleFactory : AbstractPeopleFactory
     {
-        protected Dictionary<string, int> Names { get; } = new Dictionary<string, int>();
-        /// <inheritdoc/>
-        protected override Person FetchPerson(Person person)
+        public ByNamePeopleFactory()
         {
-            Person p = person;
+        }
+
+        protected Dictionary<string, WeakReference<Person>> Names { get; } = new Dictionary<string, WeakReference<Person>>();
+
+        /// <inheritdoc/>
+        protected override Person FetchPerson(Person reference)
+        {
+            Person p = reference;
 
             // Fetch the person based on name
-            if (!(Names.ContainsKey(person.Name)
-                && People[Names[person.Name]].TryGetTarget(out p)))
+            if (!(Names.ContainsKey(reference.Name)
+                && Names[reference.Name].TryGetTarget(out p)))
             {
-                p = person;
+                p = reference;
+                Names[p.Name] = new WeakReference<Person>(p);
             }
-            Names[p.Name] = p.GetHashCode();
 
             return p;
         }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Ballots
 {
-    public class CountedBallot : Ballot
+    public class CountedBallot : Ballot, IEquatable<CountedBallot>
     {
         public int Count { get; protected set; }
         public CountedBallot(Ballot ballot, int count)
@@ -18,5 +18,21 @@ namespace MoonsetTechnologies.Voting.Ballots
         /// <inheritdoc/>
         public override int GetHashCode()
           => HashCode.Combine(base.GetHashCode(), Count);
+
+        public bool Equals(CountedBallot other)
+        {
+            if (other.Count != Count)
+                return false;
+            return base.Equals(other);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is CountedBallot)
+                return Equals(obj as CountedBallot);
+            else if (obj is Ballot)
+                return false;
+            return base.Equals(obj);
+        }
     }
 }

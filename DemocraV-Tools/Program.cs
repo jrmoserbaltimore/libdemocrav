@@ -21,28 +21,29 @@ namespace MoonsetTechnologies.Voting.Utility
             List<string> winners = new List<string>();
             HashSet<Candidate> candidates = new HashSet<Candidate>();
             TopCycle t;
-            BallotSet bset;
+            BallotSet bset = null;
             int smithSetCount = 0;
 
             for (int j = 0; j < 1000; j++)
             {
                 winners.Clear();
                 candidates.Clear();
-                bset = null;
+                //bset = null;
+                List<BallotSet> bsets = new List<BallotSet>();
+                bsets.Clear();
+                if (!(bset is null))
+                    bsets.Add(bset);
 
                 for (int i = 0; i < 1000; i++)
                 {
                     using (file = new FileStream(args[0], FileMode.Open))
                     {
-                        List<BallotSet> bsets = new List<BallotSet>();
-                        bsets.Clear();
                         bsets.Add(s.LoadBallots(file));
-                        if (!(bset is null))
-                            bsets.Add(bset);
-                        bset = s.ballotFactory.MergeBallotSets(bsets);
                     }
+                    //GC.Collect(2, GCCollectionMode.Forced, true, true);
                 }
 
+                bset = s.ballotFactory.MergeBallotSets(bsets);
                 PairwiseGraph g = new PairwiseGraph(bset);
 
                 t = new TopCycle(g);

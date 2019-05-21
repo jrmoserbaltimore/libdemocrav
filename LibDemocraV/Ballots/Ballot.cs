@@ -8,7 +8,7 @@ namespace MoonsetTechnologies.Voting.Ballots
 {
     // A ranked ballot
     [BallotTypeId("eaf87c88-6352-42d0-a048-250c09da2d89")]
-    public class Ballot
+    public class Ballot : IEquatable<Ballot>
     {
         protected HashSet<Vote> votes = new HashSet<Vote>();
         public IEnumerable<Vote> Votes => votes;
@@ -58,6 +58,22 @@ namespace MoonsetTechnologies.Voting.Ballots
                 h = HashCode.Combine(h, v.GetHashCode());
 
             return h;
+        }
+
+        public bool Equals(Ballot other)
+        {
+            if (ReferenceEquals(this, other))
+                return true;
+            if (votes.Except(other.votes).Count() != 0)
+                return false;
+            return true;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Ballot)
+                return Equals(obj as Ballot);
+            return base.Equals(obj);
         }
     }
 }

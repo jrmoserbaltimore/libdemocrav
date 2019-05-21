@@ -7,7 +7,7 @@ namespace MoonsetTechnologies.Voting.Utility
 {
     public class TabulationMediator : TabulationMonitor
     {
-        public AbstractBallotFactory BallotFactory { get; set; }
+        public BallotFactory BallotFactory { get; set; }
         /// <summary>
         /// Inform listeners of a completed tabulation round.
         /// </summary>

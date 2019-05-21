@@ -1,52 +1,58 @@
-﻿using System;
+﻿using MoonsetTechnologies.Voting.Ballots;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using MoonsetTechnologies.Voting.Ballots;
+using System.Text;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
-    /// <summary>
-    /// A factory to create ballots, votes, and people.  Deduplicates immutable objects.
-    /// </summary>
-    public class BallotFactory : AbstractBallotFactory
+    public class BallotFactory
     {
-        protected Dictionary<int, WeakReference<Vote>> Votes { get; set; } = new Dictionary<int, WeakReference<Vote>>();
-        protected Dictionary<int, WeakReference<Ballot>> Ballots { get; set; } = new Dictionary<int, WeakReference<Ballot>>();
-
+        private DeduplicatorHashSet<Vote> Votes { get; set; }
+        private DeduplicatorHashSet<Ballot> Ballots { get; set; }
         private AbstractPeopleFactory peopleFactory = new ByNamePeopleFactory();
 
-        /// <inheritdoc/>
-        public override Ballot CreateBallot(IEnumerable<Vote> votes)
+        public BallotFactory(TabulationMediator mediator)
+        {
+            Ballots = new DeduplicatorHashSet<Ballot>();
+            Votes = new DeduplicatorHashSet<Vote>();
+        }
+
+        /// <summary>
+        /// Creates a Ballot containing the given votes.
+        /// </summary>
+        /// <param name="votes">The votes to record on the ballot.</param>
+        /// <returns>A deduplicated Ballot with all Votes deduplicated.</returns>
+        public Ballot CreateBallot(IEnumerable<Vote> votes)
         {
             HashSet<Vote> vout = new HashSet<Vote>();
             Ballot b, bin;
 
-            bin = new Ballot(votes);
-
-            if (Ballots.ContainsKey(bin.GetHashCode()))
-            {
-                if (Ballots[bin.GetHashCode()].TryGetTarget(out b))
-                    return b;
-            }
-
             // Deduplicate the votes
             foreach (Vote v in votes)
                 vout.Add(CreateVote(v.Candidate, v.Value));
-
-            b = new Ballot(vout);
-            Ballots[b.GetHashCode()] = new WeakReference<Ballot>(b);
-            
+            bin = new Ballot(vout);
+            Ballots.TryGetValue(bin, out b);
+            b = Ballots[bin];
             return b;
         }
-
-        /// <inheritdoc/>
-        public override BallotSet CreateBallotSet(IEnumerable<Ballot> ballots)
+        /// <summary>
+        /// Condenses an enumerable of Ballots into a BallotSet. Combines duplicate
+        /// Ballots and CountedBallots into single CountedBallots.
+        /// </summary>
+        /// <param name="ballots">The Ballots to return as a set.</param>
+        /// <returns>A BallotSet with any duplicate Ballots combined into CountedBallots.</returns>
+        public BallotSet CreateBallotSet(IEnumerable<Ballot> ballots)
         {
             HashSet<Ballot> outBallots = new HashSet<Ballot>();
             Dictionary<Ballot, int> ballotCounts = new Dictionary<Ballot, int>();
 
+            // We need to create and count each single, identical ballot,
+            // and count the number of such ballots in any CountedBallot we
+            // encounter.  To do this, we create uncounted, single ballots
+            // and specifically avoid looking up CountedBallot.
             foreach (Ballot b in ballots)
             {
+               
                 Ballot oneBallot = CreateBallot(b.Votes);
                 int count = (b is CountedBallot) ? (b as CountedBallot).Count : 1;
 
@@ -55,6 +61,7 @@ namespace MoonsetTechnologies.Voting.Utility
                 ballotCounts[oneBallot] += count;
             }
 
+            // Generate CountedBallots from the counts made
             foreach (Ballot b in ballotCounts.Keys)
             {
                 Ballot newBallot;
@@ -62,41 +69,39 @@ namespace MoonsetTechnologies.Voting.Utility
                     newBallot = b;
                 else
                     newBallot = new CountedBallot(b, ballotCounts[b]);
-                Ballots[newBallot.GetHashCode()] = new WeakReference<Ballot>(newBallot);
+                // Look itself up to store or deduplicate
+                newBallot = Ballots[newBallot];
                 outBallots.Add(newBallot);
             }
 
             return new BallotSet(outBallots);
         }
-        /// <inheritdoc/>
-        public override BallotSet MergeBallotSets(IEnumerable<BallotSet> sets)
+        /// <summary>
+        /// Produces a single BallotSet from a set of BallotSet objects.
+        /// </summary>
+        /// <param name="sets">An enumerable set of BallotSet objects.</param>
+        /// <returns>A BallotSet created from the total of all Ballots.</returns>
+        public BallotSet MergeBallotSets(IEnumerable<BallotSet> sets)
         {
             List<CountedBallot> ballots = new List<CountedBallot>();
             foreach (BallotSet b in sets)
                 ballots.AddRange(b.Ballots);
             return CreateBallotSet(ballots);
         }
-
-        /// <inheritdoc/>
-        public override Vote CreateVote(Candidate candidate, decimal value)
+        /// <summary>
+        /// Creates a vote object.
+        /// </summary>
+        /// <param name="candidate">The candidate for whom the vote is cast.</param>
+        /// <param name="value">The value of the vote.</param>
+        /// <returns></returns>
+        public Vote CreateVote(Candidate candidate, decimal value)
         {
             Person c;
-            Vote u, v = null;
+            Vote v = null;
 
             c = peopleFactory.GetCandidate(candidate);
-            u = new Vote(c as Candidate, value);
-            // New vote if we don't have an equivalent one
-            if (Votes.ContainsKey(u.GetHashCode()))
-            {
-                if (Votes[u.GetHashCode()].TryGetTarget(out v))
-                    return v;
-            }
-
-            // Create a vote with the deduplicated candidate and track it
             v = new Vote(c as Candidate, value);
-            Votes[v.GetHashCode()] = new WeakReference<Vote>(v);
-
-            return v;
+            return Votes[v];
         }
     }
 }
