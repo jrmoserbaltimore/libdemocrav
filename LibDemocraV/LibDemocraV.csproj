@@ -14,10 +14,4 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Storage\**" />
-    <EmbeddedResource Remove="Storage\**" />
-    <None Remove="Storage\**" />
-  </ItemGroup>
-
 </Project>
