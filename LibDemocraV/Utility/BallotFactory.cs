@@ -1,7 +1,9 @@
 ﻿using MoonsetTechnologies.Voting.Ballots;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
@@ -52,13 +54,26 @@ namespace MoonsetTechnologies.Voting.Utility
             // and specifically avoid looking up CountedBallot.
             foreach (Ballot b in ballots)
             {
-               
                 Ballot oneBallot = CreateBallot(b.Votes);
                 int count = (b is CountedBallot) ? (b as CountedBallot).Count : 1;
 
                 if (!ballotCounts.ContainsKey(oneBallot))
                     ballotCounts[oneBallot] = 0;
                 ballotCounts[oneBallot] += count;
+            }
+
+            async Task<Dictionary<Ballot, int>> CountSubsets(int start, int end)
+            {
+                Dictionary<Ballot, int> bC = new Dictionary<Ballot, int>();
+
+                return bC;
+            }
+            List<Ballot> bList = ballots.ToList();
+            Task<Dictionary<Ballot, int>>[] tasks = new Task<Dictionary<Ballot, int>>[Environment.ProcessorCount];
+
+            for (int i = 0; i < Environment.ProcessorCount; i++)
+            {
+             //   tasks[i] = await CountSubsets(bList.Count() * i / 8, bList.Count() * (i + 1) / 8 - 1);
             }
 
             // Generate CountedBallots from the counts made
