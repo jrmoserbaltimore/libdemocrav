@@ -4,26 +4,22 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
+    // For testing ballot formats
     public class ByNamePeopleFactory : AbstractPeopleFactory
     {
         public ByNamePeopleFactory()
         {
         }
 
-        protected Dictionary<string, WeakReference<Person>> Names { get; } = new Dictionary<string, WeakReference<Person>>();
+        protected Dictionary<string, Person> Names { get; } = new Dictionary<string, Person>();
 
         /// <inheritdoc/>
         protected override Person FetchPerson(Person reference)
         {
             Person p = reference;
 
-            // Fetch the person based on name
-            if (!(Names.ContainsKey(reference.Name)
-                && Names[reference.Name].TryGetTarget(out p)))
-            {
-                p = reference;
-                Names[p.Name] = new WeakReference<Person>(p);
-            }
+            if (!Names.TryGetValue(p.Name, out p))
+                p = Names[reference.Name] = reference;
 
             return p;
         }
