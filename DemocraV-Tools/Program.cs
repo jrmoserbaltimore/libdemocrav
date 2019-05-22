@@ -31,15 +31,18 @@ namespace MoonsetTechnologies.Voting.Utility
                 //bset = null;
                 List<BallotSet> bsets = new List<BallotSet>();
                 bsets.Clear();
-                if (!(bset is null))
-                    bsets.Add(bset);
 
-                for (int i = 0; i < 1000; i++)
+                if (bset is null)
                 {
                     using (file = new FileStream(args[0], FileMode.Open))
                     {
-                        bsets.Add(s.LoadBallots(file));
+                        bset = s.LoadBallots(file);
                     }
+                }
+
+                for (int i = 0; i < 1000; i++)
+                {
+                    bsets.Add(bset);
                     //GC.Collect(2, GCCollectionMode.Forced, true, true);
                 }
 

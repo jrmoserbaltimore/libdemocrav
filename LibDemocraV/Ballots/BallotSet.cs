@@ -14,7 +14,7 @@ namespace MoonsetTechnologies.Voting.Ballots
         /// Total count of ballots.
         /// </summary>
         /// <returns>A total count of ballots.</returns>
-        public int TotalCount() => (this as IEnumerable<CountedBallot>).Sum(x => x.Count);
+        public long TotalCount() => (this as IEnumerable<CountedBallot>).Sum(x => x.Count);
 
         public BallotSet(IEnumerable<Ballot> ballots)
         {

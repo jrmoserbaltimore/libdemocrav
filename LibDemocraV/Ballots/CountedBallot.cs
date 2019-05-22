@@ -7,8 +7,8 @@ namespace MoonsetTechnologies.Voting.Ballots
 {
     public class CountedBallot : Ballot, IEquatable<CountedBallot>
     {
-        public int Count { get; protected set; }
-        public CountedBallot(Ballot ballot, int count)
+        public long Count { get; protected set; }
+        public CountedBallot(Ballot ballot, long count)
             : base(ballot.Votes)
         {
             Count = count;

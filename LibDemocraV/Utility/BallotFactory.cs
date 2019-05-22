@@ -46,35 +46,70 @@ namespace MoonsetTechnologies.Voting.Utility
         public BallotSet CreateBallotSet(IEnumerable<Ballot> ballots)
         {
             HashSet<Ballot> outBallots = new HashSet<Ballot>();
-            Dictionary<Ballot, int> ballotCounts = new Dictionary<Ballot, int>();
+            Dictionary<Ballot, long> ballotCounts = new Dictionary<Ballot, long>();
+
+            int threadCount = Environment.ProcessorCount;
 
             // We need to create and count each single, identical ballot,
             // and count the number of such ballots in any CountedBallot we
             // encounter.  To do this, we create uncounted, single ballots
             // and specifically avoid looking up CountedBallot.
-            foreach (Ballot b in ballots)
+            async Task CountBallots()
             {
-                Ballot oneBallot = CreateBallot(b.Votes);
-                int count = (b is CountedBallot) ? (b as CountedBallot).Count : 1;
+                List<Ballot> bList = ballots.ToList();
+                Dictionary<Ballot, long>[] tasks = new Dictionary<Ballot, long>[threadCount];
 
-                if (!ballotCounts.ContainsKey(oneBallot))
-                    ballotCounts[oneBallot] = 0;
-                ballotCounts[oneBallot] += count;
+                async Task<Dictionary<Ballot, long>> CountSubsets(int start, int end)
+                {
+                    Dictionary<Ballot, long> bC = new Dictionary<Ballot, long>();
+                   
+                    for (int i = start; i <= end; i++)
+                    {
+                        Ballot oneBallot = CreateBallot(bList[i].Votes);
+                        long count = (bList[i] is CountedBallot) ? (bList[i] as CountedBallot).Count : 1;
+
+                        if (!bC.ContainsKey(oneBallot))
+                            bC[oneBallot] = 0;
+                        bC[oneBallot] += count;
+                    }
+
+                    return bC;
+                }
+
+                // First divide all the processes up for background run
+                for (int i = 0; i < threadCount; i++)
+                {
+                    tasks[i] = await CountSubsets(bList.Count() * i / threadCount, (bList.Count() * (i + 1) / threadCount) - 1);
+                }
+
+                // Now merge them
+                for (int i = 0; i < threadCount; i++)
+                {
+                    foreach (Ballot b in tasks[i].Keys)
+                    {
+                        // Count this in the full ballot counts
+                        if (!ballotCounts.ContainsKey(b))
+                            ballotCounts[b] = 0;
+                        ballotCounts[b] += tasks[i][b];
+
+                        // Check for identical ballots found in each further thread
+                        for (int j = i+1; j < threadCount; j++)
+                        {
+                            if (tasks[j].ContainsKey(b))
+                            {
+                                ballotCounts[b] += tasks[j][b];
+                                // It's been counted, so remove it
+                                tasks[j].Remove(b);
+                            }
+                        }
+                    }
+                    // We've counted all these, so clear them.
+                    tasks[i].Clear();
+                }
             }
 
-            async Task<Dictionary<Ballot, int>> CountSubsets(int start, int end)
-            {
-                Dictionary<Ballot, int> bC = new Dictionary<Ballot, int>();
-
-                return bC;
-            }
-            List<Ballot> bList = ballots.ToList();
-            Task<Dictionary<Ballot, int>>[] tasks = new Task<Dictionary<Ballot, int>>[Environment.ProcessorCount];
-
-            for (int i = 0; i < Environment.ProcessorCount; i++)
-            {
-             //   tasks[i] = await CountSubsets(bList.Count() * i / 8, bList.Count() * (i + 1) / 8 - 1);
-            }
+            // Count in a threaded model
+            CountBallots().Wait();
 
             // Generate CountedBallots from the counts made
             foreach (Ballot b in ballotCounts.Keys)
