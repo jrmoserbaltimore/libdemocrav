@@ -4,6 +4,11 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
+    /// <summary>
+    /// Stores WeakReferences to objects and attempts to deduplicate those
+    /// objects when Object.Equals() and Object.GetHashCode() both match.
+    /// </summary>
+    /// <typeparam name="T">The type to deduplicate</typeparam>
     public class DeduplicatorHashSet<T>
         where T : class
     {
