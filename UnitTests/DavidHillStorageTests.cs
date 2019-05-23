@@ -6,6 +6,7 @@ using MoonsetTechnologies.Voting.Utility;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Text;
 using Xunit;
@@ -29,13 +30,17 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         public void A1Test()
         {
             AbstractBallotStorage s = new DavidHillFormat();
-            FileStream file = new FileStream("./resources/electiondata/BurlingtonVT2009.HIL", FileMode.Open);
-            IEnumerable<CountedBallot> ballots = s.LoadBallots(file);
+            BallotSet ballots;
+            using (MemoryMappedFile file =
+                MemoryMappedFile.CreateFromFile(
+                new FileStream("./resources/electiondata/historic_elections/BurlingtonVT2009.HIL", FileMode.Open, FileAccess.Read, FileShare.Read),
+                null, 0, MemoryMappedFileAccess.CopyOnWrite, HandleInheritability.None, false))
+            {
+                using (MemoryMappedViewStream vs = file.CreateViewStream(0,0,MemoryMappedFileAccess.Read))
+                    ballots = s.LoadBallots(vs);
+            }                
 
             Assert.NotNull(ballots);
-
-
-            BallotSet bset = new BallotSet(ballots);
 
             List<string> winners = null;
             AbstractTabulatorFactory f;
@@ -69,7 +74,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             t.Monitor.TabulationComplete += Monitor_TabulationComplete;
             t.Monitor.RoundComplete += Monitor_RoundComplete;
 
-            t.Tabulate(bset,null,1);
+            t.Tabulate(ballots, null, 1);
 
             t.Monitor.TabulationComplete -= Monitor_TabulationComplete;
             t.Monitor.RoundComplete -= Monitor_RoundComplete;

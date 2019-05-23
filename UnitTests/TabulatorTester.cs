@@ -7,10 +7,10 @@ using MoonsetTechnologies.Voting.Utility.Attributes;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using Xunit;
 using Xunit.Abstractions;
@@ -37,7 +37,6 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             AbstractTabulator t;
 
             AbstractBallotStorage s = new DavidHillFormat();
-            FileStream file;
 
             void Monitor_TabulationComplete(object sender, TabulationStateEventArgs e)
             {
@@ -55,13 +54,15 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                 fixture.PrintTabulationState(e);
             }
 
-            BallotSet bset;
-            using (file = new FileStream(filename, FileMode.Open))
+            BallotSet ballots;
+            using (MemoryMappedFile file = MemoryMappedFile.CreateFromFile(
+                new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read),
+                null, 0, MemoryMappedFileAccess.CopyOnWrite, HandleInheritability.None, false))
             {
-                IEnumerable<CountedBallot> ballots = s.LoadBallots(file);
-                Assert.NotNull(ballots);
-                bset = new BallotSet(ballots);
+                using (MemoryMappedViewStream vs = file.CreateViewStream(0, 0, MemoryMappedFileAccess.Read))
+                    ballots = s.LoadBallots(vs);
             }
+            Assert.NotNull(ballots);
 
             // Use Last Difference
             tabulatorFactory.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
@@ -74,7 +75,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             t.Monitor.TabulationComplete += Monitor_TabulationComplete;
             t.Monitor.RoundComplete += Monitor_RoundComplete;
 
-            t.Tabulate(bset, seats: seats);
+            t.Tabulate(ballots, seats: seats);
 
             t.Monitor.TabulationComplete -= Monitor_TabulationComplete;
             t.Monitor.RoundComplete -= Monitor_RoundComplete;
@@ -108,7 +109,6 @@ namespace MoonsetTechnologies.Voting.Development.Tests
 
         public static IEnumerable<object[]> GetFlatTests(string filename, string algorithm)
         {
-            FileStream file;
             StreamReader sr;
             List<object[]> allData = new List<object[]>();
             string dname = Path.GetDirectoryName(Path.GetFullPath(filename));
@@ -134,30 +134,35 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                 return (parts[0], parts[1], Convert.ToInt32(parts[2]), w);
             }
 
-            using (file = new FileStream(filename, FileMode.Open))
+            using (MemoryMappedFile file = MemoryMappedFile.CreateFromFile(
+                new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read),
+                null, 0, MemoryMappedFileAccess.CopyOnWrite, HandleInheritability.None, false))
             {
-                using (sr = new StreamReader(file))
+                using (MemoryMappedViewStream vs = file.CreateViewStream(0, 0, MemoryMappedFileAccess.Read))
                 {
-                    while (!sr.EndOfStream)
+                    using (sr = new StreamReader(vs))
                     {
-                        (string fn, string algo, int seats, List<string> winners)
-                            = readTestLine();
-                        // Get absolute path of file
-                        fn = Path.GetFullPath(dname + Path.DirectorySeparatorChar + fn);
+                        while (!sr.EndOfStream)
+                        {
+                            (string fn, string algo, int seats, List<string> winners)
+                                = readTestLine();
+                            // Get absolute path of file
+                            fn = Path.GetFullPath(dname + Path.DirectorySeparatorChar + fn);
 
-                        // When a Condorcet method encounters a one-seat
-                        if (((algorithm == "condorcet-smith" && algo == "smith set")
-                            || (algorithm == "condorcet-schwartz"
-                                && new[] { "smith set", "schwartz set" }.Contains(algo)))
-                            && seats == 1)
-                        {
-                            // just don't hit the continue block
-                        }
-                        else if (algo != algorithm)
-                        {
-                            continue;
-                        }
+                            // When a Condorcet method encounters a one-seat
+                            if (((algorithm == "condorcet-smith" && algo == "smith set")
+                                || (algorithm == "condorcet-schwartz"
+                                    && new[] { "smith set", "schwartz set" }.Contains(algo)))
+                                && seats == 1)
+                            {
+                                // just don't hit the continue block
+                            }
+                            else if (algo != algorithm)
+                            {
+                                continue;
+                            }
                             allData.Add(new object[] { fn, seats, winners });
+                        }
                     }
                 }
             }
