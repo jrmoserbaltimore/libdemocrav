@@ -38,7 +38,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReadableBallotFormat", "Ext
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DavidHillFormat", "Extensions\Storage\DavidHillFormat\DavidHillFormat.csproj", "{DE593D41-0B82-4766-A2C9-747C57A9644D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemocraV-Tools", "DemocraV-Tools\DemocraV-Tools.csproj", "{FE522692-E94E-455D-B190-2D3D6DD7FD6C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemocraV-Tools", "DemocraV-Tools\DemocraV-Tools.csproj", "{FE522692-E94E-455D-B190-2D3D6DD7FD6C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LundellTiebreaker", "Extensions\Tiebreakers\LundellTiebreaker\LundellTiebreaker.csproj", "{2C0EA834-278A-4DAE-A4B3-3B0DE0BE3204}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -94,6 +96,10 @@ Global
 		{FE522692-E94E-455D-B190-2D3D6DD7FD6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FE522692-E94E-455D-B190-2D3D6DD7FD6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FE522692-E94E-455D-B190-2D3D6DD7FD6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C0EA834-278A-4DAE-A4B3-3B0DE0BE3204}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C0EA834-278A-4DAE-A4B3-3B0DE0BE3204}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C0EA834-278A-4DAE-A4B3-3B0DE0BE3204}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C0EA834-278A-4DAE-A4B3-3B0DE0BE3204}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -110,6 +116,7 @@ Global
 		{9CDBAD5F-205A-49EB-9362-A9FA14558385} = {0E71A0CF-C255-4402-90A7-9B8E4F7E01FC}
 		{EB814818-72C5-48A0-A20B-A2460CE432F6} = {0E71A0CF-C255-4402-90A7-9B8E4F7E01FC}
 		{DE593D41-0B82-4766-A2C9-747C57A9644D} = {0E71A0CF-C255-4402-90A7-9B8E4F7E01FC}
+		{2C0EA834-278A-4DAE-A4B3-3B0DE0BE3204} = {40C998C1-413A-480D-A02E-F7136F0A4F89}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4E99287A-4CE9-4647-96B8-ABF0B8B504EA}

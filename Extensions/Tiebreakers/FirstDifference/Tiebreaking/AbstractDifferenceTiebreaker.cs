@@ -5,6 +5,7 @@ using MoonsetTechnologies.Voting.Analytics;
 using System.Linq;
 using MoonsetTechnologies.Voting.Tabulation;
 using MoonsetTechnologies.Voting.Utility;
+using MoonsetTechnologies.Voting.Ballots;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
@@ -39,10 +40,11 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
         }
 
         /// <inheritdoc/>
-        public override IEnumerable<Candidate> GetTieWinners(IEnumerable<Candidate> candidates)
+        protected override Candidate BreakTie(IEnumerable<Candidate> candidates,
+            BallotSet ballots, Dictionary<Ballot, decimal> ballotWeights, bool findWinner)
         {
             List<Candidate> winners = candidates.ToList();
-            // Check each [c][d] pair—in both orders—and eliminate the loser
+            // Check each [c][d] pair—in both orders
             foreach (Candidate c in candidates)
             {
                 foreach (Candidate d in candidates)
@@ -53,7 +55,9 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
                     {
                         if (winPairs[c].ContainsKey(d))
                         {
-                            if (winPairs[c][d])
+                            // If find a winner and looking for winner, eliminate loser
+                            // If find a loser and looking for a loser, eliminate winner
+                            if (winPairs[c][d] == findWinner)
                                 winners.Remove(d);
                         }
                         else
@@ -62,7 +66,7 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
                     }
                 }
             }
-            return winners;
+            return winners.Single();
         }
 
        

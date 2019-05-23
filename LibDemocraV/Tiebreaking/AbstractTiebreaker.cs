@@ -1,4 +1,5 @@
-﻿using MoonsetTechnologies.Voting.Tabulation;
+﻿using MoonsetTechnologies.Voting.Ballots;
+using MoonsetTechnologies.Voting.Tabulation;
 using MoonsetTechnologies.Voting.Utility;
 using System;
 using System.Collections.Generic;
@@ -25,13 +26,43 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
         /// True if batch elimination will not affect tiebreakers occurring after batch elimination.
         /// </summary>
         public abstract bool FullyInformed { get; }
+
         /// <summary>
-        /// Get all candidates who win the tie by this method.
+        /// Identify the top candidate in a tie.
         /// </summary>
         /// <param name="candidates">The tied candidates.</param>
-        /// <returns></returns>
-        public abstract IEnumerable<Candidate> GetTieWinners(IEnumerable<Candidate> candidates);
+        /// <param name="ballots">Ballots relevant to these candidates.</param>
+        /// <param name="ballotWeights">Weights of each ballot, or null if ballots are unweighted.</param>
+        /// <returns>The ultimate winner of the tie.</returns>
+        public Candidate GetTieWinner(IEnumerable<Candidate> candidates,
+            BallotSet ballots,
+            Dictionary<Ballot, decimal> ballotWeights = null)
+          => BreakTie(candidates, ballots, ballotWeights, true);
 
+        /// <summary>
+        /// Identify the bottom candidate in a tie.
+        /// </summary>
+        /// <param name="candidates">The tied candidates.</param>
+        /// <param name="ballots">Ballots relevant to these candidates.</param>
+        /// <param name="ballotWeights">Weights of each ballot, or null if ballots are unweighted.</param>
+        /// <returns>The ultimate loser of the tie.</returns>
+        public Candidate GetTieLoser(IEnumerable<Candidate> candidates,
+            BallotSet ballots,
+            Dictionary<Ballot, decimal> ballotWeights = null)
+          => BreakTie(candidates, ballots, ballotWeights, false);
+
+        /// <summary>
+        /// Breaks a tie.
+        /// </summary>
+        /// <param name="candidates">The tied candidates.</param>
+        /// <param name="ballots">Ballots relevant to these candidates.</param>
+        /// <param name="ballotWeights">Weights of each ballot, or null if ballots are unweighted.</param>
+        /// <param name="findWinner">True if picking a winner, false if searching for exclusion.</param>
+        /// <returns>Winner or loser.</returns>
+        protected abstract Candidate BreakTie(IEnumerable<Candidate> candidates,
+            BallotSet ballots,
+            Dictionary<Ballot, decimal> ballotWeights,
+            bool findWinner);
         /// <summary>
         /// Called when the current vote counts are submitted for updating the tiebreaker.
         /// </summary>
