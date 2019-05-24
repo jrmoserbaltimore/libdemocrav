@@ -8,6 +8,14 @@ namespace MoonsetTechnologies.Voting.Utility
     public class TabulationMediator : TabulationMonitor
     {
         public BallotFactory BallotFactory { get; set; }
+
+        /// <summary>
+        /// Inform listeners of a tabulation beginning.
+        /// </summary>
+        /// <param name="tabulationDetails">Details of the tabulation.</param>
+        public new void BeginTabulation(TabulationDetailsEventArgs tabulationDetails)
+          => base.BeginTabulation(tabulationDetails);
+
         /// <summary>
         /// Inform listeners of a completed tabulation round.
         /// </summary>
@@ -16,17 +24,6 @@ namespace MoonsetTechnologies.Voting.Utility
         public new void CompleteRound(Dictionary<Candidate, CandidateState> candidateStates,
             string note = null)
           => base.CompleteRound(candidateStates, note);
-
-        /// <summary>
-        /// Call for an update to the tiebreaker.
-        /// </summary>
-        /// <param name="candidateStates">The current candidate states at the time of update.</param>
-        /// <param name="note">A note to attach to the message.</param>
-        public new void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates,
-            string note = null)
-        {
-            base.UpdateTiebreaker(candidateStates, note);
-        }
 
         /// <summary>
         /// Inform listeners of a tiebreaker state change.
@@ -47,6 +44,7 @@ namespace MoonsetTechnologies.Voting.Utility
         public new void CompleteTabulation(Dictionary<Candidate, CandidateState> candidateStates,
             string note = null)
           => base.CompleteTabulation(candidateStates, note);
+
         /// <summary>
         /// Inform listeners of a completed tabulation round.
         /// </summary>

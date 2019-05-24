@@ -74,7 +74,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 SetFinalWinners();
             else
             {
-                mediator.UpdateTiebreaker(CandidateStatesCopy);
                 eliminationCandidates = batchEliminator.GetEliminationCandidates(CandidateStatesCopy);
                 if (!(eliminationCandidates?.Count() > 0))
                     throw new InvalidOperationException("Called TabulateRound() after completion.");

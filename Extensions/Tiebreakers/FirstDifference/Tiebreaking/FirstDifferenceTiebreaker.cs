@@ -12,7 +12,11 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
     [TiebreakerTypeId("16a6295a-e18e-4d4c-8ccc-cab059ffff5d")]
     public class FirstDifferenceTiebreaker : AbstractDifferenceTiebreaker
     {
-        public FirstDifferenceTiebreaker() : base()
+        public FirstDifferenceTiebreaker(AbstractTiebreaker tiebreaker = null)
+            : base(tiebreaker)
+        {
+        }
+        public FirstDifferenceTiebreaker() : this(null)
         {
         }
 

@@ -40,7 +40,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
                     "Elimination of sole remaining candidate is impossible.");
             do
             {
-                // XXX:  is this deterministic to get the key for the maximum value?
                 Candidate max = batchLosers.OrderBy(x => x.Value).Last().Key;
 
                 // Move this new candidate from cv to cd
@@ -78,35 +77,14 @@ namespace MoonsetTechnologies.Voting.Tabulation
             // True tie check
             else if (batchLosers.Count == 1)
             {
-                // Load all the ties into batchLosers
-                while (batchLosers.Max(x => x.Value) == retain.Min(x => x.Value))
-                {
-                    Candidate min = retain.OrderBy(x => x.Value).First().Key;
-                    batchLosers[min] = retain[min];
-                    retain.Remove(min);
-                }
+                batchLosers = retain.Where(x => x.Value == batchLosers.First().Value).Union(batchLosers).ToDictionary(x => x.Key, x => x.Value);
+                retain = retain.Except(batchLosers).ToDictionary(x => x.Key, x => x.Value);
 
-                // Yes, it's a tie.
+                // Yes, it's a hard tie
                 if (batchLosers.Count > 1)
                 {
-                    List<Candidate> tiewinners = tiebreaker.GetTieWinners(batchLosers.Keys).ToList();
-
-                    // Delete from the losers all but the tiewinners
-                    foreach (Candidate c in batchLosers.Keys)
-                    {
-                        if (tiewinners.Contains(c))
-                        {
-                            retain[c] = batchLosers[c];
-                            batchLosers.Remove(c);
-                        }
-                    }
-                }
-
-                // Unbreakable tie.
-                if (batchLosers.Count > 1)
-                {
-                    batchLosers = batchLosers.Take(1).ToDictionary(x => x.Key, x => x.Value);
-                    //throw new NotImplementedException();
+                    Candidate tieLoser = tiebreaker.GetTieLoser(batchLosers.Keys, null);
+                    batchLosers = batchLosers.Where(x => x.Key == tieLoser).ToDictionary(x => x.Key, x => x.Value);
                 }
             }
             return batchLosers.Keys;

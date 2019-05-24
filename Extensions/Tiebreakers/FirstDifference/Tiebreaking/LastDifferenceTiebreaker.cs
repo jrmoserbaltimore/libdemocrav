@@ -4,13 +4,25 @@ using MoonsetTechnologies.Voting.Utility;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Composition;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
-    [TiebreakerTypeId("e7b8e618-1fee-4552-8b5b-b0616a90f03c")]
+    [Export(typeof(AbstractTiebreaker))]
+    [ExportMetadata("Algorithm","last-difference")]
+    [ExportMetadata("Factory", typeof(TiebreakerFactory<LastDifferenceTiebreaker>))]
+    [ExportMetadata("Title","Last Difference")]
+    [ExportMetadata("Description", "Last Difference selects a winner between any "
+        + "two tied candidates based on which candidate had more votes at the end of "
+        + "the last round in which the candidates were not tied.")]
     public class LastDifferenceTiebreaker : AbstractDifferenceTiebreaker
     {
-        public LastDifferenceTiebreaker() : base()
+        public LastDifferenceTiebreaker(AbstractTiebreaker tiebreaker = null)
+            : base(tiebreaker)
+        {
+        }
+
+        public LastDifferenceTiebreaker() : this(null)
         {
         }
 

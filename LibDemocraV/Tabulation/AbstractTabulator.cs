@@ -37,6 +37,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             int seats = 1)
         {
             TabulationStateEventArgs state;
+            TabulationDetailsEventArgs tabulationDetails;
             InitializeTabulation(ballots, withdrawn, seats);
             if (seats < 1)
                 throw new ArgumentOutOfRangeException("seats", "seats must be at least one.");
@@ -50,6 +51,16 @@ namespace MoonsetTechnologies.Voting.Tabulation
             candidateStates.Clear();
             if (!(withdrawn is null))
                 InitializeCandidateStates(withdrawn);
+
+            tabulationDetails = new TabulationDetailsEventArgs
+            {
+                Ballots = ballots,
+                CandidateStates = CandidateStatesCopy,
+                Note = null,
+                Seats = seats
+            };
+
+            mediator.BeginTabulation(tabulationDetails);
 
             do
             {

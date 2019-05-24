@@ -64,7 +64,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// <inheritdoc/>
         protected override TabulationStateEventArgs TabulateRound()
         {
-            mediator.UpdateTiebreaker(CandidateStatesCopy);
             IEnumerable<Candidate> startSet =
                 candidateStates
                 .Where(x => new[] { CandidateState.States.hopeful, CandidateState.States.elected }
@@ -101,6 +100,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             foreach (Candidate c in winners)
                 SetState(c, CandidateState.States.elected);
 
+            // A round ends after an election or an elimination, which updates the tiebreaker
             if (winners.Count() == 0)
             {
                 if (IsFinalRound())

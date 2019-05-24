@@ -14,6 +14,10 @@ namespace MoonsetTechnologies.Voting.Utility
         /// <summary>
         /// Provides a full tabulation, including final vote counts, after each round of tabulation.
         /// </summary>
+        public event EventHandler<TabulationDetailsEventArgs> TabulationBegin;
+        /// <summary>
+        /// Provides a full tabulation, including final vote counts, after each round of tabulation.
+        /// </summary>
         public event EventHandler<TabulationStateEventArgs> RoundComplete;
         /// <summary>
         /// Provides a full tabulation, including final vote counts, at the end of tabulation.
@@ -27,10 +31,6 @@ namespace MoonsetTechnologies.Voting.Utility
         /// Provides updates to the tiebreaker's state after tiebreaking state has changed
         /// </summary>
         public event EventHandler<TiebreakerStateEventArgs> TiebreakerStateChange;
-        /// <summary>
-        /// Provides a full tabulation, including vote counts, when a tabulator calls to update the tiebreaker.
-        /// </summary>
-        public event EventHandler<TabulationStateEventArgs> TiebreakerUpdate;
         /// <summary>
         /// Provides winners and losers of a tiebreaking computation, with tie winners having State = elected and losers State = defeated.
         /// </summary>
@@ -64,14 +64,11 @@ namespace MoonsetTechnologies.Voting.Utility
             handler?.Invoke(this, tabulationState);
         }
 
-        /// <summary>
-        /// Call for an update to the tiebreaker.
-        /// </summary>
-        /// <param name="candidateStates">The current candidate states at the time of update.</param>
-        /// <param name="note">A note to attach to the message.</param>
-        protected void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates,
-            string note = null)
-          => SendEvent(TiebreakerUpdate, candidateStates, note);
+        private void SendEvent(EventHandler<TabulationDetailsEventArgs> handler,
+            TabulationDetailsEventArgs tabulationState)
+        {
+            handler?.Invoke(this, tabulationState);
+        }
 
         /// <summary>
         /// Inform listeners of a tiebreaker state change.
@@ -88,6 +85,13 @@ namespace MoonsetTechnologies.Voting.Utility
                 Note = note
             });
         }
+
+        /// <summary>
+        /// Inform listeners of a tabulation beginning.
+        /// </summary>
+        /// <param name="tabulationDetails">Details of the tabulation.</param>
+        protected void BeginTabulation(TabulationDetailsEventArgs tabulationDetails)
+          => SendEvent(TabulationBegin, tabulationDetails);
 
         /// <summary>
         /// Inform listeners of a completed count.

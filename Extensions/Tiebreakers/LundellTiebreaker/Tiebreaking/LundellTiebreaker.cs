@@ -14,8 +14,10 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
 {
     public class LundellTiebreaker : AbstractTiebreaker
     {
-        public LundellTiebreaker() : base()
+        public LundellTiebreaker(AbstractTiebreaker tiebreaker = null)
+            : base(tiebreaker)
         {
+
         }
 
         // Always fully-informed:  it uses ballots and weights
@@ -24,7 +26,6 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
 
         /// <inheritdoc/>
         protected override Candidate BreakTie(IEnumerable<Candidate> candidates,
-            BallotSet ballots,
             Dictionary<Ballot, decimal> ballotWeights,
             bool findWinner)
         {
@@ -40,7 +41,7 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
                         VoteCount = 0
                     });
 
-                foreach (CountedBallot b in ballots)
+                foreach (CountedBallot b in Ballots)
                 {
                     List<Vote> votes = b.Votes.Where(x => cS.Keys.Contains(x.Candidate)).ToList();
                     if (votes.Count == 0)
@@ -66,7 +67,7 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
                     // We want to remove the losers if finding the winner,
                     // and this recurses by finding the biggest loser to remove
                     if (selectees.Count < eliminees.Count)
-                        Cd = BreakTie(selectees, ballots, ballotWeights, !findWinner);
+                        Cd = BreakTie(selectees, ballotWeights, !findWinner);
                     else
                     {
                         // FIXME:  use fallback tiebreaker

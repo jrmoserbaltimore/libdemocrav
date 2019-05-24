@@ -17,7 +17,8 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
 
         protected bool allTiesBreakable = false;
 
-        public AbstractDifferenceTiebreaker() : base()
+        public AbstractDifferenceTiebreaker(AbstractTiebreaker tiebreaker = null)
+            : base(tiebreaker)
         {
         }
 
@@ -41,7 +42,7 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
 
         /// <inheritdoc/>
         protected override Candidate BreakTie(IEnumerable<Candidate> candidates,
-            BallotSet ballots, Dictionary<Ballot, decimal> ballotWeights, bool findWinner)
+            Dictionary<Ballot, decimal> ballotWeights, bool findWinner)
         {
             List<Candidate> winners = candidates.ToList();
             // Check each [c][d] pair—in both orders

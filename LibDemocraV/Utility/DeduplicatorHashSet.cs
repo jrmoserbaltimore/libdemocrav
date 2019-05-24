@@ -13,7 +13,7 @@ namespace MoonsetTechnologies.Voting.Utility
         where T : class
     {
         public delegate T ObjectCreator(T reference);
-        private ObjectCreator objectCreator = null;
+        private readonly ObjectCreator objectCreator = null;
 
         private readonly Dictionary<int, List<WeakReference<T>>> hashTable
             = new Dictionary<int, List<WeakReference<T>>>();
@@ -24,10 +24,7 @@ namespace MoonsetTechnologies.Voting.Utility
         {
             get
             {
-                List<WeakReference<T>> bucket;
-                T output;
-
-                if (!TryGetValue(index, out output))
+                if (!TryGetValue(index, out T output))
                 {
                     // Look up the object through a creator if supplied
                     if (objectCreator is null)
@@ -38,12 +35,14 @@ namespace MoonsetTechnologies.Voting.Utility
                     if (!TryGetValue(output, out T testout))
                     {
                         // Get or create the bucket
-                        if (!hashTable.TryGetValue(output.GetHashCode(), out bucket))
+                        if (!hashTable.TryGetValue(output.GetHashCode(), out List<WeakReference<T>> bucket))
                             bucket = hashTable[output.GetHashCode()] = new List<WeakReference<T>>();
                         // add it to the bucket and return it as the object.
                         bucket.Add(new WeakReference<T>(output));
                         ExcessCountdown--;
                     }
+                    else
+                        output = testout;
                 }
                 return output;
             }
@@ -51,7 +50,6 @@ namespace MoonsetTechnologies.Voting.Utility
 
         public bool TryGetValue(T key, out T value)
         {
-            List<WeakReference<T>> bucket;
             List<WeakReference<T>> toRemove = new List<WeakReference<T>>();
 
             if (ExcessCountdown <= 0)
@@ -63,7 +61,7 @@ namespace MoonsetTechnologies.Voting.Utility
 
             value = null;
             // Get or create the bucket
-            if (!hashTable.TryGetValue(key.GetHashCode(), out bucket))
+            if (!hashTable.TryGetValue(key.GetHashCode(), out List<WeakReference<T>> bucket))
                 return false;
 
             foreach (WeakReference<T> item in bucket)
