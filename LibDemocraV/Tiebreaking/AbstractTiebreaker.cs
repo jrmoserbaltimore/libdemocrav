@@ -13,6 +13,9 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
         private TabulationMediator mediator;
         protected BallotSet Ballots { get; set; }
         protected int Seats { get; set; }
+        /// <summary>
+        /// Fallback tiebreaker
+        /// </summary>
         protected AbstractTiebreaker Tiebreaker { get; set; }
         /// <summary>
         /// The TabulationMediator used to coordinate with the tabulator and any TabulationMonitor clients.
@@ -72,12 +75,6 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
         /// </summary>
         /// <param name="candidateStates">Candidate states for the tiebreaker</param>
         protected abstract void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates);
-
-        /// <summary>
-        /// Provides all tiebreaker wins between all pairs of candidates.
-        /// </summary>
-        /// <returns>All tiebreker wins between all pairs of candidates.</returns>
-        protected abstract Dictionary<Candidate, Dictionary<Candidate, bool>> GetWinPairs();
 
         // Event handler for tiebreaker update event
         private void HandleRoundComplete(object sender, TabulationStateEventArgs e)

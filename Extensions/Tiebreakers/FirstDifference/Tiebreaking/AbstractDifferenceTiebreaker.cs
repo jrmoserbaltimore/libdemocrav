@@ -34,13 +34,6 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
         }
 
         /// <inheritdoc/>
-        protected override Dictionary<Candidate, Dictionary<Candidate, bool>> GetWinPairs()
-        {
-            // Make a copy
-            return winPairs.ToDictionary(x => x.Key, x => x.Value.ToDictionary(y => y.Key, y => y.Value));
-        }
-
-        /// <inheritdoc/>
         protected override Candidate BreakTie(IEnumerable<Candidate> candidates,
             Dictionary<Ballot, decimal> ballotWeights, bool findWinner)
         {
@@ -69,7 +62,5 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
             }
             return winners.Single();
         }
-
-       
     }
 }

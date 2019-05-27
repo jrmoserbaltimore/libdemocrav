@@ -5,15 +5,20 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
-    public class TiebreakerFactory<T> : AbstractTiebreakerFactory
+    public abstract class TiebreakerFactory<T> : AbstractTiebreakerFactory
     where T : AbstractTiebreaker, new()
     {
+
+        protected virtual AbstractTiebreaker InstantiateTiebreaker(AbstractTiebreaker fallbackTiebreaker)
+          => Activator.CreateInstance(typeof(T), new object[] { fallbackTiebreaker }) as T;
+
         public override AbstractTiebreaker CreateTiebreaker(TabulationMediator mediator)
         {
-            return new T
-            {
-                Mediator = mediator
-            };
+            AbstractTiebreaker fallbackTiebreaker = TiebreakerFactory?.CreateTiebreaker(mediator);
+            AbstractTiebreaker tiebreaker = InstantiateTiebreaker(fallbackTiebreaker);
+
+            tiebreaker.Mediator = mediator;
+            return tiebreaker;
         }
     }
 }

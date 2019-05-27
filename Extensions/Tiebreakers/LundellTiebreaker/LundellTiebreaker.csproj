@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\RankedChoiceVoting\RankedChoiceVoting.csproj" />
+    <ProjectReference Include="..\FirstDifference\FirstDifference.csproj" />
   </ItemGroup>
 
 </Project>

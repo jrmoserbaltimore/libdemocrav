@@ -14,6 +14,12 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
 {
     public class LundellTiebreaker : AbstractTiebreaker
     {
+        public LundellTiebreaker()
+            : this(null)
+        {
+
+        }
+
         public LundellTiebreaker(AbstractTiebreaker tiebreaker = null)
             : base(tiebreaker)
         {
@@ -105,14 +111,9 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
             return eliminees.Single();
         }
 
-        protected override Dictionary<Candidate, Dictionary<Candidate, bool>> GetWinPairs()
-        {
-            throw new NotImplementedException();
-        }
-
         protected override void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
         {
-            throw new NotImplementedException();
+            return;
         }
     }
 }
