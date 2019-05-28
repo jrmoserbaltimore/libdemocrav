@@ -80,7 +80,10 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
             candidateStates.Clear();
             if (!(withdrawn is null))
-                InitializeCandidateStates(withdrawn);
+                InitializeCandidateStates(withdrawn, CandidateState.States.withdrawn);
+
+            // Initialize hopefuls
+            InitializeCandidateStates(ballots.SelectMany(x => x.Votes.Select(y => y.Candidate)).Distinct().Except(candidateStates.Keys));
 
             tabulationDetails = new TabulationDetailsEventArgs
             {
