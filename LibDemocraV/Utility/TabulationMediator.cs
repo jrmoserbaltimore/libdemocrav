@@ -5,8 +5,15 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
+    /// <summary>
+    /// Mediates tabulation state messages between tabulators, tiebreakers,
+    /// and related objects.
+    /// </summary>
     public class TabulationMediator : TabulationMonitor
     {
+        /// <summary>
+        /// Creates Vote, Ballot, Candidate, and BallotSet objects shared by the tabulation objects.
+        /// </summary>
         public BallotFactory BallotFactory { get; set; }
 
         /// <summary>

@@ -7,13 +7,19 @@ using System.Threading.Tasks;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
+    /// <summary>
+    /// A deduplicating ballot factory.
+    /// </summary>
     public class BallotFactory
     {
         private DeduplicatorHashSet<Vote> Votes { get; set; }
         private DeduplicatorHashSet<Ballot> Ballots { get; set; }
         private AbstractPeopleFactory peopleFactory = new ByNamePeopleFactory();
 
-        public BallotFactory(TabulationMediator mediator)
+        /// <summary>
+        /// Creates a new BallotFactory.
+        /// </summary>
+        public BallotFactory()
         {
             Ballots = new DeduplicatorHashSet<Ballot>();
             Votes = new DeduplicatorHashSet<Vote>();

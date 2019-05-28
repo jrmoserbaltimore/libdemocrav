@@ -8,10 +8,20 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
+    /// <summary>
+    /// A Tiebreaker class for tabulation when two candidates are tied.
+    /// </summary>
     public abstract class AbstractTiebreaker
     {
         private TabulationMediator mediator;
+        /// <summary>
+        /// The ballots for the election.
+        /// </summary>
         protected BallotSet Ballots { get; set; }
+
+        /// <summary>
+        /// Number of seats in the election.
+        /// </summary>
         protected int Seats { get; set; }
         /// <summary>
         /// Fallback tiebreaker
@@ -92,11 +102,18 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
             // FIXME:  Send an event reporting the state of the tiebreaker
         }
 
-        public AbstractTiebreaker(AbstractTiebreaker tiebreaker = null)
+        /// <summary>
+        /// Creates a Tiebreaker with a fallback tiebreaker.
+        /// </summary>
+        /// <param name="tiebreaker">A fallback tiebreaker, or null.</param>
+        public AbstractTiebreaker(AbstractTiebreaker tiebreaker)
         {
             Tiebreaker = tiebreaker;
         }
 
+        /// <summary>
+        /// Creates a tiebreker with no fallback tiebreaker
+        /// </summary>
         public AbstractTiebreaker() : this(null)
         {
 

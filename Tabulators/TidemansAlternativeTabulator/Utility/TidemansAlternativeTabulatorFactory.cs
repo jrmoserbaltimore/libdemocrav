@@ -21,53 +21,31 @@ namespace MoonsetTechnologies.Voting.Utility
     //   Tideman's Alternative:  (schwartz, smith)
     //   Tideman's Alternative Schwartz:  (schwartz, schwartz)
     //   Tideman's Alternative Smith:  (smith, smith)
-    public class TidemansAlternativeTabulatorFactory : AbstractTabulatorFactory
+    public class TidemansAlternativeTabulatorFactory : AbstractTabulatorFactory<TidemansAlternativeTabulator>
     {
-        TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;
-        TopCycle.TopCycleSets retainSet = TopCycle.TopCycleSets.smith;
+        protected TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;
+        protected TopCycle.TopCycleSets retainSet = TopCycle.TopCycleSets.smith;
 
         public TidemansAlternativeTabulatorFactory()
             : base()
         {
-            //SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
-        }
-
-        public TidemansAlternativeTabulatorFactory WithCondorcetSet(TopCycle.TopCycleSets set)
-        {
-            TidemansAlternativeTabulatorFactory f = new TidemansAlternativeTabulatorFactory
-            {
-                condorcetSet = set,
-                retainSet = retainSet
-            };
-            return f;
-        }
-
-        public TidemansAlternativeTabulatorFactory WithRetainSet(TopCycle.TopCycleSets set)
-        {
-            TidemansAlternativeTabulatorFactory f = new TidemansAlternativeTabulatorFactory
-            {
-                condorcetSet = condorcetSet,
-                retainSet = set
-            };
-            return f;
-        }
-
-        public override AbstractTabulator CreateTabulator()
-        {
-            TabulationMediator mediator = new TabulationMediator();
-
-            TidemansAlternativeTabulator t = new TidemansAlternativeTabulator(mediator, tiebreakerFactory);
-            return t;
-        }
-
-        public override Ballot CreateBallot(IEnumerable<Vote> votes)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Vote CreateVote(Candidate candidate, decimal value)
-        {
-            throw new NotImplementedException();
         }
     }
+
+    public class TidemansAlternativeSmithTabulatorFactory : TidemansAlternativeTabulatorFactory
+    {
+        public TidemansAlternativeSmithTabulatorFactory() : base()
+        {
+            condorcetSet = retainSet = TopCycle.TopCycleSets.smith;
+        }
+    }
+
+    public class TidemansAlternativeSchwartzTabulatorFactory : TidemansAlternativeTabulatorFactory
+    {
+        public TidemansAlternativeSchwartzTabulatorFactory() : base()
+        {
+            condorcetSet = retainSet = TopCycle.TopCycleSets.schwartz;
+        }
+    }
+
 }

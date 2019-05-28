@@ -15,7 +15,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         {
             tabulatorFactory = new TidemansAlternativeTabulatorFactory();
             // Use Last Difference by default
-            tabulatorFactory.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
+            tabulatorFactory.SetTiebreaker(new LastDifferenceTiebreakerFactory());
         }
 
         [Theory]

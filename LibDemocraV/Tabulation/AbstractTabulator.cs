@@ -8,22 +8,52 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
+    /// <summary>
+    /// A tabulator to compute the result of an election from ballots.
+    /// </summary>
     public abstract class AbstractTabulator
     {
         protected int seats;
+        /// <summary>
+        /// The ballots to tabulate.
+        /// </summary>
         protected BallotSet ballots;
+        /// <summary>
+        /// The BatchEliminator to use when the tabulator needs to eliminate candidates.
+        /// </summary>
         protected AbstractBatchEliminator batchEliminator;
+        /// <summary>
+        /// The tiebreaker to use in the event of a tie.
+        /// </summary>
         protected AbstractTiebreakerFactory tiebreakerFactory;
         protected AbstractTabulationAnalytics analytics;
 
+        /// <summary>
+        /// Internal state for all candidates.
+        /// </summary>
         protected readonly Dictionary<Candidate, CandidateState> candidateStates
             = new Dictionary<Candidate, CandidateState>();
 
+        /// <summary>
+        /// The mediator for communication of tabulation events.
+        /// </summary>
         protected TabulationMediator mediator;
+        /// <summary>
+        /// Monitoring interface for reporting tabulation process and results.
+        /// </summary>
         public TabulationMonitor Monitor => mediator as TabulationMonitor;
+        /// <summary>
+        /// A safe copy of candidateStates.
+        /// </summary>
         protected Dictionary<Candidate, CandidateState> CandidateStatesCopy =>
             candidateStates.ToDictionary(x => x.Key, x => x.Value.Clone() as CandidateState);
 
+        /// <summary>
+        /// Initialize the tabulation state from a set of bandidates, withdrawn candidates, and a number of seats.
+        /// </summary>
+        /// <param name="ballots">The ballots to tabulate.</param>
+        /// <param name="withdrawn">Candidates excluded from tabulation.</param>
+        /// <param name="seats">The number of seats to elect.</param>
         protected abstract void InitializeTabulation(BallotSet ballots, IEnumerable<Candidate> withdrawn, int seats);
 
         /// <summary>
@@ -197,6 +227,11 @@ namespace MoonsetTechnologies.Voting.Tabulation
             candidateStates[candidate].State = state;
         }
 
+        /// <summary>
+        /// Create a Tabulator with the given mediator and tiebreaker factory.
+        /// </summary>
+        /// <param name="mediator">The mediator to use.</param>
+        /// <param name="tiebreakerFactory">The factory to use to create tiebreakers.</param>
         protected AbstractTabulator(TabulationMediator mediator,
             AbstractTiebreakerFactory tiebreakerFactory)
         {

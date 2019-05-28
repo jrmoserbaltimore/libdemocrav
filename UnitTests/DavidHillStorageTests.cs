@@ -65,7 +65,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             f = new TidemansAlternativeTabulatorFactory();
 
             // Use Last Difference
-            f.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
+            f.SetTiebreaker(new LastDifferenceTiebreakerFactory());
 
             t = f.CreateTabulator();
 

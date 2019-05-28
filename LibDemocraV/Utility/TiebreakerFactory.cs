@@ -14,7 +14,7 @@ namespace MoonsetTechnologies.Voting.Utility
 
         public override AbstractTiebreaker CreateTiebreaker(TabulationMediator mediator)
         {
-            AbstractTiebreaker fallbackTiebreaker = TiebreakerFactory?.CreateTiebreaker(mediator);
+            AbstractTiebreaker fallbackTiebreaker = FallbackTiebreakerFactory?.CreateTiebreaker(mediator);
             AbstractTiebreaker tiebreaker = InstantiateTiebreaker(fallbackTiebreaker);
 
             tiebreaker.Mediator = mediator;

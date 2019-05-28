@@ -7,11 +7,12 @@ namespace MoonsetTechnologies.Voting.Utility
 {
     public class RandomTiebreakerFactory : TiebreakerFactory<RandomTiebreaker>
     {
-        public RandomTiebreakerFactoryy() : base()
+        /// <inheritdoc/>
+        public RandomTiebreakerFactory() : base()
         {
         }
 
         protected override void CreateDefaultConfiguration()
-          => TiebreakerFactory = null;
+          => FallbackTiebreakerFactory = null;
     }
 }

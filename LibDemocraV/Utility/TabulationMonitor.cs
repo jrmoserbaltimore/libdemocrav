@@ -5,6 +5,9 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
+    /// <summary>
+    /// Allows client code to receive information about the tabulation process and outcome.
+    /// </summary>
     public class TabulationMonitor
     {
         /// <summary>
@@ -14,11 +17,11 @@ namespace MoonsetTechnologies.Voting.Utility
         /// <summary>
         /// Provides a full tabulation, including final vote counts, after each round of tabulation.
         /// </summary>
-        public event EventHandler<TabulationDetailsEventArgs> TabulationBegin;
+        public event EventHandler<TabulationStateEventArgs> RoundComplete;
         /// <summary>
         /// Provides a full tabulation, including final vote counts, after each round of tabulation.
         /// </summary>
-        public event EventHandler<TabulationStateEventArgs> RoundComplete;
+        public event EventHandler<TabulationDetailsEventArgs> TabulationBegin;
         /// <summary>
         /// Provides a full tabulation, including final vote counts, at the end of tabulation.
         /// </summary>

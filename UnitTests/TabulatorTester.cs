@@ -65,7 +65,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             Assert.NotNull(ballots);
 
             // Use Last Difference
-            tabulatorFactory.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
+            tabulatorFactory.SetTiebreaker(new LastDifferenceTiebreakerFactory());
 
             t = tabulatorFactory.CreateTabulator();
 
