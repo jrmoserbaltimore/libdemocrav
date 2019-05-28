@@ -38,6 +38,17 @@ namespace MoonsetTechnologies.Voting.Development.Tests
 
             AbstractBallotStorage s = new DavidHillFormat();
 
+            void Monitor_TabulationBegin(object sender, TabulationDetailsEventArgs e)
+            {
+                output.WriteLine("Tabulation initial state data:");
+
+                TabulationStateEventArgs e1 = new TabulationStateEventArgs
+                {
+                    CandidateStates = e.CandidateStates,
+                };
+                fixture.PrintTabulationState(e1);
+            }
+
             void Monitor_TabulationComplete(object sender, TabulationStateEventArgs e)
             {
                 w = e.CandidateStates
@@ -74,11 +85,13 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             output.WriteLine("Testing file {0}", filename);
             t.Monitor.TabulationComplete += Monitor_TabulationComplete;
             t.Monitor.RoundComplete += Monitor_RoundComplete;
+            t.Monitor.TabulationBegin += Monitor_TabulationBegin;
 
             t.Tabulate(ballots, seats: seats);
 
             t.Monitor.TabulationComplete -= Monitor_TabulationComplete;
             t.Monitor.RoundComplete -= Monitor_RoundComplete;
+            t.Monitor.TabulationBegin -= Monitor_TabulationBegin;
 
             Assert.NotNull(w);
             HashSet<string> wdiff = w.ToHashSet();

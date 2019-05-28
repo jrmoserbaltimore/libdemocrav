@@ -113,7 +113,12 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                 if (!(re.PairwiseGraph is null))
                 {
                     output.WriteLine("  Pairwise Contests:");
-                    List<Candidate> c = re.PairwiseGraph.Candidates.ToList();
+                    List<Candidate> c = re.PairwiseGraph.Candidates
+                     .Except(
+                        e.CandidateStates.Where(
+                            x => new[] { CandidateState.States.defeated, CandidateState.States.withdrawn }.Contains(x.Value.State)
+                        ).Select(x => x.Key)).ToList();
+
                     for (int i = 0; i < c.Count; i++)
                     {
                         for (int j = i + 1; j < c.Count; j++)
