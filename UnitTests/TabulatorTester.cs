@@ -1,4 +1,5 @@
-﻿using MoonsetTechnologies.Voting.Ballots;
+﻿using MoonsetTechnologies.Voting.Analytics;
+using MoonsetTechnologies.Voting.Ballots;
 using MoonsetTechnologies.Voting.Storage;
 using MoonsetTechnologies.Voting.Tabulation;
 using MoonsetTechnologies.Voting.Tiebreaking;
@@ -42,9 +43,19 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             {
                 output.WriteLine("Tabulation initial state data:");
 
-                TabulationStateEventArgs e1 = new TabulationStateEventArgs
+                PairwiseGraph g = new PairwiseGraph(e.Ballots);
+                TopCycle tC = new TopCycle(g);
+                List<Candidate> withdrawn = e.CandidateStates.Where(
+                        x => new[] {
+                            CandidateState.States.withdrawn,
+                            CandidateState.States.defeated }.Contains(x.Value.State)
+                        ).Select(x => x.Key).ToList();
+                TabulationStateEventArgs e1 = new RankedTabulationStateEventArgs
                 {
                     CandidateStates = e.CandidateStates,
+                    PairwiseGraph = g,
+                    SmithSet = tC.GetTopCycle(withdrawn, TopCycle.TopCycleSets.smith),
+                    SchwartzSet = tC.GetTopCycle(withdrawn, TopCycle.TopCycleSets.schwartz)
                 };
                 fixture.PrintTabulationState(e1);
             }
