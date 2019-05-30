@@ -1,5 +1,6 @@
 using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Ballots;
+using MoonsetTechnologies.Voting.Tiebreaking;
 using MoonsetTechnologies.Voting.Utility;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// The tiebreaker to use in the event of a tie.
         /// </summary>
         protected AbstractTiebreakerFactory tiebreakerFactory;
+        protected AbstractTiebreaker tiebreaker;
         protected AbstractTabulationAnalytics analytics;
 
         /// <summary>
@@ -54,7 +56,19 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// <param name="ballots">The ballots to tabulate.</param>
         /// <param name="withdrawn">Candidates excluded from tabulation.</param>
         /// <param name="seats">The number of seats to elect.</param>
-        protected abstract void InitializeTabulation(BallotSet ballots, IEnumerable<Candidate> withdrawn, int seats);
+        protected virtual void InitializeTabulation(BallotSet ballots, IEnumerable<Candidate> withdrawn, int seats)
+        {
+            this.seats = seats;
+            this.ballots = ballots;
+
+            candidateStates.Clear();
+            if (!(withdrawn is null))
+                InitializeCandidateStates(withdrawn, CandidateState.States.withdrawn);
+
+            // Initialize hopefuls
+            InitializeCandidateStates(ballots.SelectMany(x => x.Votes.Select(y => y.Candidate)).Distinct().Except(candidateStates.Keys));
+            tiebreaker = tiebreakerFactory.CreateTiebreaker(mediator);
+        }
 
         /// <summary>
         /// Performs a complete tabulation of given ballots.
@@ -68,22 +82,13 @@ namespace MoonsetTechnologies.Voting.Tabulation
         {
             TabulationStateEventArgs state;
             TabulationDetailsEventArgs tabulationDetails;
-            InitializeTabulation(ballots, withdrawn, seats);
             if (seats < 1)
                 throw new ArgumentOutOfRangeException("seats", "seats must be at least one.");
             // Count() throws ArgumentNullException when ballots is null
             if (ballots.TotalCount() < 1)
                 throw new ArgumentOutOfRangeException("ballots", "Require at least one ballot");
 
-            this.seats = seats;
-            this.ballots = ballots;
-
-            candidateStates.Clear();
-            if (!(withdrawn is null))
-                InitializeCandidateStates(withdrawn, CandidateState.States.withdrawn);
-
-            // Initialize hopefuls
-            InitializeCandidateStates(ballots.SelectMany(x => x.Votes.Select(y => y.Candidate)).Distinct().Except(candidateStates.Keys));
+            InitializeTabulation(ballots, withdrawn, seats);
 
             tabulationDetails = new TabulationDetailsEventArgs
             {
@@ -228,6 +233,28 @@ namespace MoonsetTechnologies.Voting.Tabulation
             if (!candidateStates.ContainsKey(candidate))
                 candidateStates[candidate] = new CandidateState();
             candidateStates[candidate].State = state;
+        }
+        /// <summary>
+        /// Get elimination candidates, including checking for and breaking ties.
+        /// </summary>
+        /// <param name="batchElimination">false to disable batch elimination.</param>
+        /// <param name="surplus"></param>
+        /// <returns>An enumerable of elimination candidates.</returns>
+        protected IEnumerable<Candidate> GetEliminationCandidates(bool batchElimination = true, decimal surplus = 0.0m)
+        {
+            HashSet<Candidate> eliminationCandidates = batchEliminator.GetBatchElimination(CandidateStatesCopy, surplus).ToHashSet();
+            // Tie
+            if (eliminationCandidates is null)
+            {
+                eliminationCandidates = batchEliminator.GetSingleElimination(CandidateStatesCopy, surplus).ToHashSet();
+                if (!(eliminationCandidates.Count() > 1))
+                    throw new InvalidOperationException("Tie detected on batch elimination, but no tie on single elimination candidate check!");
+                Candidate loser = tiebreaker.GetTieLoser(eliminationCandidates);
+                eliminationCandidates.Clear();
+                eliminationCandidates.Add(loser);
+            }
+
+            return eliminationCandidates;
         }
 
         /// <summary>

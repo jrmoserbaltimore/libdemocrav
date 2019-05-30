@@ -19,13 +19,12 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
         }
 
+        /// <inheritdoc/>
         protected override void InitializeTabulation(BallotSet ballots, IEnumerable<Candidate> withdrawn, int seats)
         {
-            RankedTabulationAnalytics a;
-            a = new RankedTabulationAnalytics(ballots, seats);
-            analytics = a;
-            batchEliminator = new RunoffBatchEliminator(tiebreakerFactory.CreateTiebreaker(mediator), a, seats);
-            this.seats = seats;
+            base.InitializeTabulation(ballots, withdrawn, seats);
+            analytics = new RankedTabulationAnalytics(ballots, seats);
+            batchEliminator = new RunoffBatchEliminator(analytics as RankedTabulationAnalytics, seats);
         }
 
         // A simple count of who has the most votes.
@@ -74,12 +73,11 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 SetFinalWinners();
             else
             {
-                eliminationCandidates = batchEliminator.GetEliminationCandidates(CandidateStatesCopy);
+                eliminationCandidates = GetEliminationCandidates();
                 if (!(eliminationCandidates?.Count() > 0))
                     throw new InvalidOperationException("Called TabulateRound() after completion.");
                 foreach (Candidate c in eliminationCandidates)
                     SetState(c, CandidateState.States.defeated);
-
             }
             PairwiseGraph pairwiseGraph = new PairwiseGraph(ballots);
             return new RankedTabulationStateEventArgs

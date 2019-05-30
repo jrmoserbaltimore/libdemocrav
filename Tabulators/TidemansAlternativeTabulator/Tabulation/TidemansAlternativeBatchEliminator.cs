@@ -12,20 +12,18 @@ namespace MoonsetTechnologies.Voting.Tabulation
         protected readonly TopCycle.TopCycleSets condorcetSet;
         protected readonly TopCycle.TopCycleSets retentionSet;
 
-        public TidemansAlternativeBatchEliminator(AbstractTiebreaker tiebreaker,
-            RankedTabulationAnalytics analytics,
+        public TidemansAlternativeBatchEliminator(RankedTabulationAnalytics analytics,
             int seats = 1,
             TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz,
             TopCycle.TopCycleSets retentionSet = TopCycle.TopCycleSets.smith)
-            : base(tiebreaker, analytics, seats)
+            : base(analytics, seats)
         {
             this.condorcetSet = condorcetSet;
             this.retentionSet = retentionSet;
-
         }
 
         /// <inheritdoc/>
-        public override IEnumerable<Candidate> GetEliminationCandidates
+        public override IEnumerable<Candidate> GetBatchElimination
             (Dictionary<Candidate, CandidateState> candidateStates, decimal surplus = 0.0m)
         {
             List<Candidate> output;
@@ -57,7 +55,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             else
             {
                 // Top cycle is all candidates, so use a runoff batch eliminator
-                return base.GetEliminationCandidates(candidateStates);
+                return base.GetBatchElimination(candidateStates);
             }
         }
     }

@@ -30,8 +30,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             RankedTabulationAnalytics analytics;
             analytics = new RankedTabulationAnalytics(ballots, seats);
 
-            batchEliminator = new TidemansAlternativeBatchEliminator(
-                tiebreakerFactory.CreateTiebreaker(mediator), analytics, seats,
+            batchEliminator = new TidemansAlternativeBatchEliminator(analytics, seats,
                 condorcetSet, retainSet);
         }
     }

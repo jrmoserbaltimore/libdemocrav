@@ -8,14 +8,11 @@ namespace MoonsetTechnologies.Voting.Tabulation
 {
     public abstract class AbstractBatchEliminator
     {
-        protected readonly AbstractTiebreaker tiebreaker;
         protected readonly AbstractTabulationAnalytics analytics;
         protected readonly int seats;
 
-        public AbstractBatchEliminator(AbstractTiebreaker tiebreaker,
-            AbstractTabulationAnalytics analytics, int seats = 1)
+        public AbstractBatchEliminator(AbstractTabulationAnalytics analytics, int seats = 1)
         {
-            this.tiebreaker = tiebreaker;
             this.analytics = analytics;
             this.seats = seats;
         }
@@ -25,8 +22,17 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// </summary>
         /// <param name="candidateStates">CandidateState at the current tabulation and vote count.</param>
         /// <param name="surplus">Surplus votes for systems that use this.</param>
+        /// <returns>An IEnumerable of Candidates to eliminate, or null if a tie.</returns>
+        public abstract IEnumerable<Candidate> GetBatchElimination(Dictionary<Candidate, CandidateState> candidateStates,
+            decimal surplus = 0.0m);
+
+        /// <summary>
+        /// Get a single elimination candidate, or all tied for elimination.
+        /// </summary>
+        /// <param name="candidateStates">CandidateState at the current tabulation and vote count.</param>
+        /// <param name="surplus">Surplus votes for systems that use this.</param>
         /// <returns>An IEnumerable of Candidates to eliminate.</returns>
-        public abstract IEnumerable<Candidate> GetEliminationCandidates(Dictionary<Candidate, CandidateState> candidateStates,
+        public abstract IEnumerable<Candidate> GetSingleElimination(Dictionary<Candidate, CandidateState> candidateStates,
             decimal surplus = 0.0m);
     }
 }

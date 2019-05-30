@@ -55,10 +55,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         // Reference rule A:  Initialize candidate states
         protected override void InitializeTabulation(BallotSet ballots, IEnumerable<Candidate> withdrawn, int seats)
         {
-            RankedTabulationAnalytics a;
-            a = new RankedTabulationAnalytics(ballots, seats);
-            analytics = a;
-            batchEliminator = new RunoffBatchEliminator(tiebreakerFactory.CreateTiebreaker(mediator), a, seats);
+            base.InitializeTabulation(ballots, withdrawn, seats);
         }
 
         /// <inheritdoc/>
@@ -112,10 +109,10 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 }
                 else
                 {
-                    eliminationCandidates = batchEliminator.GetEliminationCandidates(CandidateStatesCopy);
-                    if (!(eliminationCandidates?.Count() > 0))
-                        throw new InvalidOperationException("Called TabulateRound() but no winners or losers.");
+                    eliminationCandidates = GetEliminationCandidates(true, surplus);
                 }
+                if (!(eliminationCandidates?.Count() > 0))
+                    throw new InvalidOperationException("Called TabulateRound() but no winners or losers.");
                 foreach (Candidate c in eliminationCandidates)
                     SetState(c, CandidateState.States.defeated);
             }

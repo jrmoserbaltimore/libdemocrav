@@ -17,16 +17,14 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
         }
 
+        /// <inheritdoc/>
         protected override void InitializeTabulation(BallotSet ballots, IEnumerable<Candidate> withdrawn, int seats)
         {
             base.InitializeTabulation(ballots, withdrawn, seats);
 
             RankedTabulationAnalytics analytics;
             analytics = new RankedTabulationAnalytics(ballots, seats);
-
-
-            batchEliminator = new RunoffBatchEliminator(
-                tiebreakerFactory.CreateTiebreaker(mediator), analytics, seats);
+            batchEliminator = new RunoffBatchEliminator(analytics, seats);
         }
     }
 }

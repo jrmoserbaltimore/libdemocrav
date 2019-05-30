@@ -7,87 +7,81 @@ using MoonsetTechnologies.Voting.Analytics;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public class RunoffBatchEliminator : AbstractRankedBatchEliminator
+    public class RunoffBatchEliminator : AbstractBatchEliminator
     {
-
-        protected bool enableBatchElimination = true;
-
-        public RunoffBatchEliminator(AbstractTiebreaker tiebreakers,
-            RankedTabulationAnalytics analytics,
+        public RunoffBatchEliminator(RankedTabulationAnalytics analytics,
             int seats = 1)
-            : base(tiebreakers, analytics, seats)
+            : base(analytics, seats)
         {
 
         }
 
-        /// <inheritdoc/>
-        public override IEnumerable<Candidate> GetEliminationCandidates
-            (Dictionary<Candidate, CandidateState> candidateStates, decimal surplus = 0.0m)
+        protected IEnumerable<Candidate> GetEliminationCandidates(Dictionary<Candidate, CandidateState> candidateStates, decimal surplus, bool batchElimination = true)
         {
             Dictionary<Candidate, decimal> hopefuls = candidateStates
                 .Where(x => x.Value.State == CandidateState.States.hopeful)
                 .ToDictionary(x => x.Key, x => x.Value.VoteCount);
-            int elected = candidateStates.Where(x => x.Value.State == CandidateState.States.elected).Count();
-            Dictionary<Candidate, decimal> retain = new Dictionary<Candidate, decimal>();
-            Dictionary<Candidate, decimal> batchLosers = new Dictionary<Candidate, decimal>(hopefuls);
+            int bypass = seats - candidateStates.Where(x => x.Value.State == CandidateState.States.elected).Count();
 
-            // If we elect candidates in B.2.c, the rule checks for a finished
-            // election before running defeats.  It is logically-impossible to
-            // attempt to defeat the last hopeful when correctly implementing
-            // the rule.
-            if (hopefuls.Count == 1)
-                throw new ArgumentOutOfRangeException("hopefuls",
-                    "Elimination of sole remaining candidate is impossible.");
-            do
+            HashSet<Candidate> retained = new HashSet<Candidate>();
+            HashSet<Candidate> eliminated = new HashSet<Candidate>();
+
+            // We're out of seats, so eliminate everybody
+            // FIXME:  Do we just want to throw an exception here?
+            if (bypass == 0)
+                return hopefuls.Keys;
+
+            while (bypass > 0)
             {
-                Candidate max = batchLosers.OrderBy(x => x.Value).Last().Key;
-
-                // Move this new candidate from cv to cd
-                retain[max] = batchLosers[max];
-                batchLosers.Remove(max);
-                // Loop on two conditions:
-                //
-                //   - We've eliminated so many hopefuls as to not fill seats
-                //   - batchLosers combined have more votes than the least-voted
-                //     non-loser candidate
-                //
-                // In any case, stop looping if we have only one loser.
-            } while (batchLosers.Count > 1
-                && (elected + retain.Count() > seats
-                || batchLosers.Sum(x => x.Value) + surplus >= retain.Min(x => x.Value)));
-
-            bool enableBatchElimination = tiebreaker.FullyInformed && this.enableBatchElimination;
-
-            // Batch elimination disabled, so eliminate all in the batch except the
-            // candidate with the fewest votes, or the set of tied candidates with
-            // the fewest.
-            //
-            // Ties within the batch can be eliminated without a tiebreaker, so we
-            // eliminate the ties if they're tied for last place in a batch even if
-            // we're trying to eliminate one at a time.
-            if (!enableBatchElimination && batchLosers.Count > 1)
-            {
-                Candidate min = batchLosers.OrderBy(x => x.Value).First().Key;
-                foreach (Candidate c in batchLosers.Keys)
-                {
-                    if (batchLosers[c] > batchLosers[min])
-                        batchLosers.Remove(c);
-                }
+                retained.Add(hopefuls.Where(x => !retained.Contains(x.Key)).Aggregate((x, y) => x.Value > y.Value ? x : y).Key);
+                bypass--;
             }
-            // True tie check
-            else if (batchLosers.Count == 1)
-            {
-                batchLosers = retain.Where(x => x.Value == batchLosers.First().Value).Union(batchLosers).ToDictionary(x => x.Key, x => x.Value);
-                retain = retain.Except(batchLosers).ToDictionary(x => x.Key, x => x.Value);
 
-                // Yes, it's a hard tie
-                if (batchLosers.Count > 1)
-                {
-                    Candidate tieLoser = tiebreaker.GetTieLoser(batchLosers.Keys, null);
-                    batchLosers = batchLosers.Where(x => x.Key == tieLoser).ToDictionary(x => x.Key, x => x.Value);
-                }
+            // Select lowest
+            if (!batchElimination)
+            {
+                Candidate min = hopefuls.Where(x => !retained.Contains(x.Key)).Aggregate((x, y) => x.Value < y.Value ? x : y).Key;
             }
-            return batchLosers.Keys;
+            else while (eliminated.Count == 0)
+            {
+                // select batch.  Check sum against minimum retained candidate.
+                decimal max = hopefuls.Where(x => retained.Contains(x.Key)).Aggregate((x, y) => x.Value < y.Value ? x : y).Value;
+                // If we sum them all and the vote total is bigger than the lowest-voted retained candidate,
+                // move all highest-voted candidates not retained to the retained set.
+                if (hopefuls.Where(x => !retained.Contains(x.Key)).Sum(x => x.Value) + surplus >= max)
+                {
+                    max = hopefuls.Where(x => !retained.Contains(x.Key)).Aggregate((x, y) => x.Value > y.Value ? x : y).Value;
+                    retained.UnionWith(hopefuls.Where(x => x.Value == max).Select(x => x.Key));
+                }
+                else
+                    eliminated.UnionWith(hopefuls.Where(x => !retained.Contains(x.Key)).Select(x => x.Key).ToList());
+                // we just eliminated the last candidate(s), so break
+                if (hopefuls.Keys.Count == retained.Count)
+                    break;
+            }
+
+            // No results, so make a call for a single eliminee
+            if (eliminated.Count == 0)
+            {
+                // This should not happen when requesting a single
+                if (!batchElimination)
+                    throw new InvalidOperationException("Somehow pulled zero minimum candidates in elimination!");
+
+                eliminated = GetSingleElimination(candidateStates, surplus).ToHashSet();
+                // Return null to indicate a tie for a batch request.
+                if (eliminated.Count > 1)
+                    return null;
+            }
+
+            return eliminated;
         }
+
+        /// <inheritdoc/>
+        public override IEnumerable<Candidate> GetSingleElimination(Dictionary<Candidate, CandidateState> candidateStates, decimal surplus = 0.0m)
+            => GetEliminationCandidates(candidateStates, surplus, false);
+
+        /// <inheritdoc/>
+        public override IEnumerable<Candidate> GetBatchElimination(Dictionary<Candidate, CandidateState> candidateStates, decimal surplus = 0.0m)
+            => GetEliminationCandidates(candidateStates, surplus, true);
     }
 }
