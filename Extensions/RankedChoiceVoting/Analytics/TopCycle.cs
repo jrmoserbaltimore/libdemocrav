@@ -23,8 +23,7 @@ namespace MoonsetTechnologies.Voting.Analytics
         }
 
         private readonly TopCycleSets defaultSet;
-
-        PairwiseGraph graph;
+        private readonly PairwiseGraph graph;
 
         public TopCycle(PairwiseGraph graph, TopCycleSets set = TopCycleSets.smith)
         {
@@ -51,7 +50,7 @@ namespace MoonsetTechnologies.Voting.Analytics
         {
             Dictionary<Candidate, int> linkId;
             Dictionary<Candidate, int> nodeId;
-            List<List<Candidate>> stronglyConnectedComponents;
+            HashSet<HashSet<Candidate>> stronglyConnectedComponents;
             Stack<Candidate> s;
             int i = 0;
 
@@ -92,7 +91,7 @@ namespace MoonsetTechnologies.Voting.Analytics
                 if (linkId[c] == nodeId[c])
                 {
                     // move this SCC from the stack to our list of SCCs
-                    List<Candidate> scc = new List<Candidate>();                    
+                    HashSet<Candidate> scc = new HashSet<Candidate>();                    
                     do
                     {
                         scc.Add(s.Pop());
@@ -101,12 +100,12 @@ namespace MoonsetTechnologies.Voting.Analytics
                 }
             }
 
-            List<Candidate> getSet(bool isSmith)
+            HashSet<Candidate> getSet(bool isSmith)
             {
                 linkId = new Dictionary<Candidate, int>();
                 nodeId = new Dictionary<Candidate, int>();
                 s = new Stack<Candidate>();
-                stronglyConnectedComponents = new List<List<Candidate>>();
+                stronglyConnectedComponents = new HashSet<HashSet<Candidate>>();
                 i = 0;
                 // Visit each node in the graph as a starting point, ignoring withdrawn candidates
                 foreach (Candidate c in graph.Candidates.Except(withdrawn))
@@ -115,20 +114,20 @@ namespace MoonsetTechnologies.Voting.Analytics
                 // Find every SCC that cannot be reached by any other SCC.
                 // In the Smith Set, this is one SCC; in the Schwartz Set,
                 // we may have several.
-                Dictionary<(List<Candidate>, List<Candidate>), bool> reachable = new Dictionary<(List<Candidate>, List<Candidate>), bool>();
-                List<List<Candidate>> dominating = new List<List<Candidate>>();
-                List<Candidate> output = new List<Candidate>();
+                Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> reachable = new Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>();
+                HashSet<HashSet<Candidate>> dominating = new HashSet<HashSet<Candidate>>();
+                HashSet<Candidate> output = new HashSet<Candidate>();
 
                 // Special thanks to https://stackoverflow.com/a/55526085/5601193
                 foreach (Candidate k in linkId.Keys.Except(withdrawn))
                 {
-                    List<Candidate> scck = stronglyConnectedComponents.Where(x => x.Contains(k)).Single();
+                    HashSet<Candidate> scck = stronglyConnectedComponents.Where(x => x.Contains(k)).Single();
                     foreach(Candidate l in linkId.Keys.Except(withdrawn))
                     {
-                        List<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
+                        HashSet<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
                         foreach (Candidate m in linkId.Keys.Except(withdrawn))
                         {
-                            List<Candidate> sccm = stronglyConnectedComponents.Where(x => x.Contains(m)).Single();
+                            HashSet<Candidate> sccm = stronglyConnectedComponents.Where(x => x.Contains(m)).Single();
                             // Assigns from itself, below, sometimes, so must exist
                             if (!reachable.ContainsKey((sccl, sccm)))
                                 reachable[(sccl, sccm)] = false;
@@ -149,10 +148,10 @@ namespace MoonsetTechnologies.Voting.Analytics
                 }
 
                 // Time to find all dominating SCCs
-                dominating.AddRange(stronglyConnectedComponents);
-                foreach (List<Candidate> j in stronglyConnectedComponents)
+                dominating.UnionWith(stronglyConnectedComponents);
+                foreach (HashSet<Candidate> j in stronglyConnectedComponents)
                 {
-                    foreach (List<Candidate> k in stronglyConnectedComponents)
+                    foreach (HashSet<Candidate> k in stronglyConnectedComponents)
                     {
                         // Reaching itself doesn't count
                         if (j == k)
@@ -164,8 +163,8 @@ namespace MoonsetTechnologies.Voting.Analytics
                 }
 
                 // Select all the candidates from the SCCs
-                foreach (List<Candidate> scc in dominating)
-                        output.AddRange(scc);
+                foreach (HashSet<Candidate> scc in dominating)
+                        output.UnionWith(scc);
                 return output;
             }
 
