@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
-    public abstract class TiebreakerFactory<T> : AbstractTiebreakerFactory
+    public class TiebreakerFactory<T> : AbstractTiebreakerFactory
     where T : AbstractTiebreaker, new()
     {
 
@@ -20,5 +20,6 @@ namespace MoonsetTechnologies.Voting.Utility
             tiebreaker.Mediator = mediator;
             return tiebreaker;
         }
+        protected override void CreateDefaultConfiguration() => FallbackTiebreakerFactory = null;
     }
 }

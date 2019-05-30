@@ -6,6 +6,7 @@ using MoonsetTechnologies.Voting.Ballots;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MoonsetTechnologies.Voting.Analytics
 {
@@ -37,31 +38,61 @@ namespace MoonsetTechnologies.Voting.Analytics
                     nodes[c][d] = 0.0m;
             }
 
-            // Iterate each ballot and count who wins and who ties.
-            // This can support tied ranks and each ballot is O(SUM(1..n)) and o(n).
-            foreach (CountedBallot b in ballots)
+            async Task BuildGraph()
             {
-                HashSet<Candidate> ranked = b.Votes.Select(x => x.Candidate).ToHashSet();
-                HashSet<Candidate> unranked = candidates.Except(ranked).ToHashSet();
+                List<CountedBallot> bList = ballots.ToList();
 
-                // Iterate to compare each pair.
-                Stack<Vote> votes = new Stack<Vote>(b.Votes);
-                while (votes.Count > 0)
+                int threadCount = Environment.ProcessorCount;
+                PairwiseGraph[] tasks = new PairwiseGraph[threadCount];
+
+                async Task<PairwiseGraph> CountSubsets(int start, int end)
                 {
-                    Vote v = votes.Pop();
-                    foreach (Vote u in votes)
+                    PairwiseGraph g = new PairwiseGraph();
+
+                    foreach (Candidate c in candidates)
                     {
-                        // Who is ranked first?  No action if a tie.
-                        if (v.Beats(u))
-                            nodes[v.Candidate][u.Candidate] += b.Count;
-                        else if (u.Beats(v))
-                            nodes[u.Candidate][v.Candidate] += b.Count;
+                        g.nodes[c] = new Dictionary<Candidate, decimal>();
+                        foreach (Candidate d in candidates.Except(new[] { c }))
+                            g.nodes[c][d] = 0.0m;
                     }
-                    // Defeat all unranked candidates
-                    foreach (Candidate c in unranked)
-                        nodes[v.Candidate][c] += b.Count;
+
+                    // Iterate each ballot and count who wins and who ties.
+                    // This can support tied ranks and each ballot is O(SUM(1..n)) and o(n).
+                    //foreach (CountedBallot b in ballots)
+                    for (int i = start; i <= end; i++)
+                    {
+                        CountedBallot b = bList[i];
+                        HashSet<Candidate> ranked = b.Votes.Select(x => x.Candidate).ToHashSet();
+                        HashSet<Candidate> unranked = candidates.Except(ranked).ToHashSet();
+
+                        // Iterate to compare each pair.
+                        Stack<Vote> votes = new Stack<Vote>(b.Votes);
+                        while (votes.Count > 0)
+                        {
+                            Vote v = votes.Pop();
+                            foreach (Vote u in votes)
+                            {
+                                // Who is ranked first?  No action if a tie.
+                                if (v.Beats(u))
+                                    g.nodes[v.Candidate][u.Candidate] += b.Count;
+                                else if (u.Beats(v))
+                                    g.nodes[u.Candidate][v.Candidate] += b.Count;
+                            }
+                            // Defeat all unranked candidates
+                            foreach (Candidate c in unranked)
+                                g.nodes[v.Candidate][c] += b.Count;
+                        }
+                    }
+                    return g;
                 }
+
+                // First divide all the processes up for background run
+                for (int i = 0; i < threadCount; i++)
+                    tasks[i] = await CountSubsets(bList.Count() * i / threadCount, (bList.Count() * (i + 1) / threadCount) - 1);
+                foreach (PairwiseGraph g in tasks)
+                    AddGraph(g);
             }
+            BuildGraph().Wait();
         }
 
         /// <summary>
@@ -80,28 +111,29 @@ namespace MoonsetTechnologies.Voting.Analytics
             AddGraph(graph);
         }
 
-        private void AddGraph(PairwiseGraph g)
+        private void AddGraph(PairwiseGraph graph)
         {
-            foreach (Candidate c in g.Candidates)
+            foreach (Candidate c in graph.Candidates)
             {
                 // Merge the graph nodes for this candidate
-                foreach (Candidate d in g.Candidates)
+                foreach (Candidate d in graph.Candidates)
                 {
-                    if (!nodes.Keys.Contains(c))
+                    if (!nodes.ContainsKey(c))
                     {
                         nodes[c] = new Dictionary<Candidate, decimal>
                         {
                             [d] = 0.0m
                         };
                     }
-                    nodes[c][d] += g.nodes[c][d];
+                    if (graph.nodes[c].ContainsKey(d))
+                        nodes[c][d] += graph.nodes[c][d];
                 }
             }
 
             // This merger may disturb the graph, so fill in any gaps
             foreach (Candidate c in Candidates)
             {
-                if (!nodes.Keys.Contains(c))
+                if (!nodes.ContainsKey(c))
                     nodes[c] = new Dictionary<Candidate, decimal>();
                 foreach (Candidate d in Candidates)
                 {
@@ -132,7 +164,7 @@ namespace MoonsetTechnologies.Voting.Analytics
 
         protected PairwiseGraph()
         {
-            throw new InvalidOperationException();
+            
         }
     }
     // TODO:  PairwiseGraph derivative class which divides the ballots into (n)

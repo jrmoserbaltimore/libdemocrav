@@ -12,6 +12,6 @@ namespace MoonsetTechnologies.Voting.Utility
         }
 
         protected override void CreateDefaultConfiguration()
-          => FallbackTiebreakerFactory = new RandomTiebreakerFactory();
+          => FallbackTiebreakerFactory = new TiebreakerFactory<RandomTiebreaker>();
     }
 }

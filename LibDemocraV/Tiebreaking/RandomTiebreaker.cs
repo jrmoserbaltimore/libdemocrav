@@ -1,12 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Composition;
 using System.Linq;
 using System.Text;
 using MoonsetTechnologies.Voting.Ballots;
 using MoonsetTechnologies.Voting.Tabulation;
+using MoonsetTechnologies.Voting.Utility;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
+    /// <inheritdoc/>
+    [Export(typeof(AbstractTiebreaker))]
+    [ExportMetadata("Algorithm", "random")]
+    [ExportMetadata("Factory", typeof(TiebreakerFactory<RandomTiebreaker>))]
+    [ExportMetadata("Title", "WELL-512a Random Tiebreaker")]
+    [ExportMetadata("Description", "Uses the WELL-512 Random number generator "
+    + "to select a random candidate.")]
     public class RandomTiebreaker : AbstractTiebreaker
     {
         private class WellRandom512a : Random
@@ -99,23 +108,28 @@ namespace MoonsetTechnologies.Voting.Tiebreaking
             }
         }
 
-        Random rng = new WellRandom512a();
+        readonly Random rng = new WellRandom512a();
+
+        /// <inheritdoc/>
         public RandomTiebreaker(AbstractTiebreaker tiebreaker = null) : base(tiebreaker)
         {
 
         }
 
+        /// <inheritdoc/>
         public RandomTiebreaker()
             : this(null)
         {
         }
 
+        /// <inheritdoc/>
         public override bool FullyInformed => true;
 
-
+        /// <inheritdoc/>
         protected override Candidate BreakTie(IEnumerable<Candidate> candidates, Dictionary<Ballot, decimal> ballotWeights, bool findWinner)
           => candidates.ToList()[rng.Next(candidates.Count() - 1)];
 
+        /// <inheritdoc/>
         protected override void UpdateTiebreaker(Dictionary<Candidate, CandidateState> candidateStates)
         {
             return;

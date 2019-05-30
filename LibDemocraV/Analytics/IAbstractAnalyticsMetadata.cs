@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MoonsetTechnologies.Voting.Tiebreaking
+namespace MoonsetTechnologies.Voting.Analytics
 {
-    public interface IAbstractTiebreakerMetadata
+    public interface IAbstractAnalyticsMetadata
     {
         String Algorithm { get; }
         Type Factory { get; }

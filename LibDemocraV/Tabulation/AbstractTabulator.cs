@@ -27,6 +27,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// The tiebreaker to use in the event of a tie.
         /// </summary>
         protected AbstractTiebreakerFactory tiebreakerFactory;
+
         protected AbstractTiebreaker tiebreaker;
         protected AbstractTabulationAnalytics analytics;
 

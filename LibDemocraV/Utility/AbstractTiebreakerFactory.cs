@@ -10,7 +10,7 @@ namespace MoonsetTechnologies.Voting.Utility
         /// <summary>
         /// Fallack tiebreaker when the tie isn't broken.
         /// </summary>
-        protected AbstractTiebreakerFactory FallbackTiebreakerFactory { get; set; }
+        public AbstractTiebreakerFactory FallbackTiebreakerFactory { protected get; set; }
         public AbstractTiebreakerFactory()
         {
             CreateDefaultConfiguration();
