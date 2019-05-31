@@ -38,14 +38,14 @@ namespace MoonsetTechnologies.Voting.Analytics
                     nodes[c][d] = 0.0m;
             }
 
-            async Task BuildGraph()
+            void BuildGraph()
             {
                 List<CountedBallot> bList = ballots.ToList();
 
                 int threadCount = Environment.ProcessorCount;
-                PairwiseGraph[] tasks = new PairwiseGraph[threadCount];
+                PairwiseGraph[] subsets = new PairwiseGraph[threadCount];
 
-                async Task<PairwiseGraph> CountSubsets(int start, int end)
+                PairwiseGraph CountSubsets(int start, int end)
                 {
                     PairwiseGraph g = new PairwiseGraph();
 
@@ -87,13 +87,13 @@ namespace MoonsetTechnologies.Voting.Analytics
                 }
 
                 // First divide all the processes up for background run
-                for (int i = 0; i < threadCount; i++)
-                    tasks[i] = await CountSubsets(bList.Count() * i / threadCount, (bList.Count() * (i + 1) / threadCount) - 1);
+                Parallel.For (0, threadCount, (i, state) =>
+                    subsets[i] = CountSubsets(bList.Count() * i / threadCount, (bList.Count() * (i + 1) / threadCount) - 1));
                 // Add them all together
-                foreach (PairwiseGraph g in tasks)
+                foreach (PairwiseGraph g in subsets)
                     AddGraph(g);
             }
-            BuildGraph().Wait();
+            BuildGraph();
         }
 
         /// <summary>

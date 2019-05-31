@@ -123,12 +123,10 @@ namespace MoonsetTechnologies.Voting.Analytics
 
                 // Special thanks to https://stackoverflow.com/a/55526085/5601193
                 // This is the slowest thing in here, but there's no faster algorithm known.
-
-                async Task ParallelFloydWarshall()
+                void ParallelFloydWarshall()
                 {
-                    HashSet<Task> tasks = new HashSet<Task>();
 
-                    async Task DirectCheck(Candidate l)
+                    void DirectCheck(Candidate l)
                     {
                         HashSet<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
                         foreach (Candidate m in linkId.Keys.Except(withdrawn))
@@ -153,7 +151,7 @@ namespace MoonsetTechnologies.Voting.Analytics
                         }
                     }
 
-                    async Task IndirectCheck(HashSet<Candidate> scck, Candidate l)
+                    void IndirectCheck(HashSet<Candidate> scck, Candidate l)
                     {
                             HashSet<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
                             foreach (Candidate m in linkId.Keys.Except(withdrawn))
@@ -167,31 +165,22 @@ namespace MoonsetTechnologies.Voting.Analytics
                     }
                     // Get all the direct relationships.  Those are expensive to compute,
                     // so this first-pass makes the whole computation faster.
-                    foreach (Candidate l in linkId.Keys.Except(withdrawn))
-                        tasks.Add(DirectCheck(l));
-                    // Wait for all of these to finish
-                    foreach (Task t in tasks)
-                        t.Wait();
-
-                    tasks.Clear();
+                    Parallel.ForEach(linkId.Keys.Except(withdrawn), l => DirectCheck(l));
 
                     // https://gkaracha.github.io/papers/floyd-warshall.pdf
                     // The l,m loops are independent and parallelizable
                     foreach (Candidate k in linkId.Keys.Except(withdrawn))
                     {
                         HashSet<Candidate> scck = stronglyConnectedComponents.Where(x => x.Contains(k)).Single();
-                        foreach (Candidate l in linkId.Keys.Except(withdrawn))
-                        {
-                            tasks.Add(IndirectCheck(scck, l));
-                        }
-                        foreach (Task t in tasks)
-                            t.Wait();
-                        tasks.Clear();
+                        Parallel.ForEach(linkId.Keys.Except(withdrawn), l =>
+                       {
+                           IndirectCheck(scck, l);
+                       });
                     }
                 }
 
                 // Do a parallel zero pass
-                ParallelFloydWarshall().Wait();
+                ParallelFloydWarshall();
 
                 // Time to find all dominating SCCs
                 dominating.UnionWith(stronglyConnectedComponents);
