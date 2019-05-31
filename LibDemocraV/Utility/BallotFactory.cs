@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace MoonsetTechnologies.Voting.Utility
 {
     /// <summary>
-    /// A deduplicating ballot factory.
+    /// A deduplicating ballot factory.  Members are thread-safe.
     /// </summary>
     public class BallotFactory
     {
@@ -65,6 +65,8 @@ namespace MoonsetTechnologies.Voting.Utility
                 List<Ballot> bList = ballots.ToList();
                 Dictionary<Ballot, long>[] subsets = new Dictionary<Ballot, long>[threadCount];
 
+                // Thread safety:  only writes to function-local objects;
+                // reads from an index in bList.
                 Dictionary<Ballot, long> CountSubsets(int start, int end)
                 {
                     Dictionary<Ballot, long> bC = new Dictionary<Ballot, long>();
@@ -83,6 +85,8 @@ namespace MoonsetTechnologies.Voting.Utility
                 }
 
                 // First divide all the processes up for background run
+                // Thread safety:  subsets is an array not accessed outside this loop;
+                // each parallel thread accesses a specific unique index in the array.
                 Parallel.For(0, threadCount, i =>
                 {
                     subsets[i] = CountSubsets(bList.Count() * i / threadCount, (bList.Count() * (i + 1) / threadCount) - 1);

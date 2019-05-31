@@ -46,8 +46,10 @@ namespace MoonsetTechnologies.Voting.Analytics
 
         /// <summary>
         /// Compute Smith and Schwartz sets with Tarjan's Algorithm.
+        /// Thread safe.
         /// </summary>
-        /// <param name="graph">The pairwise graph.</param>
+        /// <param name="withdrawn">Candidates to ignore during computation.</param>
+        /// <param name="set">The set to compute.</param>
         private IEnumerable<Candidate> ComputeSets(IEnumerable<Candidate> withdrawn, TopCycleSets set)
         {
             Dictionary<Candidate, int> linkId;
@@ -127,6 +129,11 @@ namespace MoonsetTechnologies.Voting.Analytics
                 // This is the slowest thing in here, but there's no faster algorithm known.
                 void ParallelFloydWarshall()
                 {
+                    // Thread safety:
+                    //   reads:
+                    //     one index in subsets[], linkId, withdrawn, stronglyConnectedComponents
+                    //   calls:
+                    //     graph.Candidates, graph.Losses, graph.Wins
                     Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> DirectCheck(Candidate l)
                     {
                         Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> rset
@@ -157,6 +164,9 @@ namespace MoonsetTechnologies.Voting.Analytics
                         return rset;
                     }
 
+                    // Thread safety:
+                    //   reads:
+                    //     one index in subsets[], linkId, withdrawn, stronglyConnectedComponents
                     Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> IndirectCheck(HashSet<Candidate> scck, Candidate l)
                     {
                         Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> rset

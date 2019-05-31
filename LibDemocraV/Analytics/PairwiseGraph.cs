@@ -13,6 +13,29 @@ namespace MoonsetTechnologies.Voting.Analytics
     /// <summary>
     /// Converts a set of candidates and a set of ballots into a graph of wins and ties.
     /// </summary>
+    /// <remarks>
+    /// All public members are thread-safe.  The Constructor performs all writes to internal
+    /// state, after which the object is immutable and public members only read the internal
+    /// instance-wide state.
+    /// 
+    /// The constructor divides the BallotSet into (n) segments based on
+    /// Environment.ProcessorCount and computes counts for smaller graphs, then sums
+    /// these.  Identical ballots are numbered in single CountedBallot objects, so are
+    /// counted only once and the votes multiplied by the count.
+    /// 
+    /// 100,000,000 unique ballots comes to about O((n^2)/2 + n/2) times a linear hundred
+    /// million.  Nine candidates—the maximum for Unified Majority with 54 primary
+    /// candidates—gives around 4.5 seconds per 1GHz per clock cycle required to compute
+    /// such a graph.  Approximating 250 cycles per loop iteration gives ten minutes of
+    /// computation time at 2GHz.
+    ///
+    /// With 4 cores, the above computation falls to 2 minutes 20 seconds.  A six-core
+    /// AMD Ryzen with SMT could do it in 47 seconds; while a Ryzen Threadripper 2990WX
+    /// at 4.2GHz with 64 threads requires 4.18 seconds.
+    ///
+    /// In practice, the number of unique ballots is typically around two orders of
+    /// magnitude smaller than the total number of ballots.
+    /// </remarks>
     public class PairwiseGraph
     {
         protected Dictionary<Candidate, Dictionary<Candidate, decimal>> nodes
@@ -112,6 +135,8 @@ namespace MoonsetTechnologies.Voting.Analytics
             AddGraph(graph);
         }
 
+        // Not thread safe:  writes to nodes.
+        // Only called during constructor.
         private void AddGraph(PairwiseGraph graph)
         {
             foreach (Candidate c in graph.Candidates)
@@ -144,6 +169,12 @@ namespace MoonsetTechnologies.Voting.Analytics
             }
         }
 
+        /// <summary>
+        /// Returns a single pairwise race result between two candidates.
+        /// </summary>
+        /// <param name="c1">The first candidate.</param>
+        /// <param name="c2">The second candidate.</param>
+        /// <returns>A tupple containing vote counts for c1 and c2.</returns>
         public virtual (decimal v1, decimal v2) GetVoteCount(Candidate c1, Candidate c2)
         {
             if (!(Candidates.Contains(c1) && Candidates.Contains(c2)))
@@ -168,24 +199,5 @@ namespace MoonsetTechnologies.Voting.Analytics
             
         }
     }
-    // TODO:  PairwiseGraph derivative class which divides the ballots into (n)
-    // equal segments and parallel-executes (n) counts, then puts this all together.
-    //
-    // With 100,000,000 ballots—a fully-counted Presidential election—this comes
-    // to about O((n^2)/2 + n/2) times a linear hundred million.  Assuming nine
-    // candidates—the maximum for Unified Majority with 54 primary candidates—gives
-    // around 4.5 seconds per 1GHz per clock cycle required to compute this entire
-    // loop.  Approximating 250 cycles per loop iteration gives ten minutes of
-    // computation time at 2GHz.
-    //
-    // To reduce this computation time, we can split the ballots into smaller sets
-    // and count them separately on separate cores.
-    // 
-    // With 4 cores, the above computation falls to 2 minutes 20 seconds.  With a
-    // six -core AMD Ryzen with SMT, this falls to 47 seconds.  With a Ryzen
-    // Threadripper 2990WX at 4.2GHz with 64 threads, we get 4.18 seconds.
-    //
-    // Computing an election may take up to n-2 iterations for n candidates, so
-    // an $800 CPU instead of a $100 CPU is a worthwhile investment for a central
-    // tabulator.
+
 }

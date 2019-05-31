@@ -22,8 +22,8 @@ namespace MoonsetTechnologies.Voting.Development.Tests
         }
 
         [Theory]
-        [MemberData(nameof(GetFlatTests), parameters: new object[] { @"resources\testcases\TidemanTests.simpletabulatortest", "instant runoff voting" })]
         [MemberData(nameof(GetFlatTests), parameters: new object[] { @"resources\testcases\HistoricElections.simpletabulatortest", "instant runoff voting" })]
+        [MemberData(nameof(GetFlatTests), parameters: new object[] { @"resources\testcases\TidemanTests.simpletabulatortest", "instant runoff voting" })]
         public void InstantRunoffVotingTabulatorTest(string filename, int seats, IEnumerable<string> winners)
             => TabulatorTest(filename, seats, winners);
     }

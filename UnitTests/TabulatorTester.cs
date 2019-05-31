@@ -105,9 +105,11 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             t.Monitor.TabulationBegin -= Monitor_TabulationBegin;
 
             Assert.NotNull(w);
-            HashSet<string> wdiff = w.ToHashSet();
-            wdiff.ExceptWith(winners);
-            Assert.Empty(wdiff);
+            HashSet<string> unexpectedWinners = w.Except(winners).ToHashSet();
+            HashSet<string> unexpectedLosers = winners.Except(w).ToHashSet();
+
+            Assert.Empty(unexpectedWinners);
+            Assert.Empty(unexpectedLosers);
         }
 
         class BasicTabulatorTestData : IXunitSerializable
@@ -143,7 +145,9 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                 s = sr.ReadLine();
                 List<string> w = new List<string>();
 
-                List<string> parts = Regex.Matches(s, @"[\""].+?[\""]|[^ ]+")
+                // FIXME:  Without the \0 it adds a 3,000-byte \0\0\0... element to the
+                // last entry in the file.  I have no idea why.
+                List<string> parts = Regex.Matches(s, @"[\""].+?[\""]|[^ \0]+")
                     .Cast<Match>()
                     .Select(m => m.Value.Replace("\"", string.Empty))
                     .ToList();
@@ -151,9 +155,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                     throw new FormatException("Entry in .simpletabulatortest has fewer than 4 fields.");
 
                 for (int i = 3; i < parts.Count; i++)
-                {
                     w.Add(parts[i]);
-                }
                 
                 return (parts[0], parts[1], Convert.ToInt32(parts[2]), w);
             }
