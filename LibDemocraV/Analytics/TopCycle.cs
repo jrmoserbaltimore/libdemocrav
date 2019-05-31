@@ -4,6 +4,8 @@ using System.Text;
 using System.Linq;
 using MoonsetTechnologies.Voting.Tabulation;
 using MoonsetTechnologies.Voting.Ballots;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace MoonsetTechnologies.Voting.Analytics
 {
@@ -114,11 +116,46 @@ namespace MoonsetTechnologies.Voting.Analytics
                 // Find every SCC that cannot be reached by any other SCC.
                 // In the Smith Set, this is one SCC; in the Schwartz Set,
                 // we may have several.
-                Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> reachable = new Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>();
+                ConcurrentDictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> reachable
+                    = new ConcurrentDictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>();
                 HashSet<HashSet<Candidate>> dominating = new HashSet<HashSet<Candidate>>();
                 HashSet<Candidate> output = new HashSet<Candidate>();
 
                 // Special thanks to https://stackoverflow.com/a/55526085/5601193
+                // This is the slowest thing in here, but there's no faster algorithm known.
+
+                async Task FloydWarshallPassZero()
+                {
+                    List<Task> tasks = new List<Task>();
+
+                    async Task DirectCheck(Candidate l)
+                    {
+                        HashSet<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
+                        foreach (Candidate m in linkId.Keys.Except(withdrawn))
+                        {
+                            HashSet<Candidate> sccm = stronglyConnectedComponents.Where(x => x.Contains(m)).Single();
+
+                            // The SCC containing (l) can reach the SCC containing (m) if
+                            //  - (l) is already known to reach (m)
+                            if (reachable.GetOrAdd((sccl, sccm), false))
+                                continue;
+                            
+                            // - (l) defeats (m)
+                            // - (l) ties with (m) and it's the Smith Set
+                            reachable[(sccl, sccm)] = graph.Wins(l).Contains(m) ||
+                                (isSmith && graph.Ties(l).Contains(m));
+                        }
+                    }
+
+                    foreach (Candidate l in linkId.Keys.Except(withdrawn))
+                        tasks.Add(DirectCheck(l));
+                    foreach (Task l in tasks)
+                        l.Wait();
+                }
+
+                // Do a parallel zero pass
+                FloydWarshallPassZero().Wait();
+
                 foreach (Candidate k in linkId.Keys.Except(withdrawn))
                 {
                     HashSet<Candidate> scck = stronglyConnectedComponents.Where(x => x.Contains(k)).Single();
@@ -132,16 +169,14 @@ namespace MoonsetTechnologies.Voting.Analytics
                             if (!reachable.ContainsKey((sccl, sccm)))
                                 reachable[(sccl, sccm)] = false;
                             // The SCC containing (l) can reach the SCC containing (m) if
-                            //  - (l) is already known to reach (m) (checked above, not here)
+                            //  - (l) is already known to reach (m)
                             if (reachable[(sccl, sccm)])
                                 continue;
                             //  - (l) can reach (k) and (k) can reach (m)
-                            //  - (l) defeats (m)
-                            //  - (l) ties with (m) and it's the Smith Set
                             reachable[(sccl, sccm)] =
-                                (reachable[(sccl, scck)] && reachable[(scck, sccm)]) ||
-                                graph.Wins(l).Contains(m) ||
-                                (isSmith && graph.Ties(l).Contains(m));
+                                (reachable[(sccl, scck)] && reachable[(scck, sccm)]);
+                            //  - (l) defeats (m) (checked in the parallel pass)
+                            //  - (l) ties with (m) and it's the Smith Set (checked in the parallel pass)
                         }
                     }
                 }
