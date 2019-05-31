@@ -89,6 +89,7 @@ namespace MoonsetTechnologies.Voting.Analytics
                 // First divide all the processes up for background run
                 for (int i = 0; i < threadCount; i++)
                     tasks[i] = await CountSubsets(bList.Count() * i / threadCount, (bList.Count() * (i + 1) / threadCount) - 1);
+                // Add them all together
                 foreach (PairwiseGraph g in tasks)
                     AddGraph(g);
             }
@@ -153,14 +154,14 @@ namespace MoonsetTechnologies.Voting.Analytics
         protected virtual Dictionary<Candidate, (decimal v1, decimal v2)> VoteCounts(Candidate candidate)
           => Candidates.Except(new[] { candidate }).ToDictionary(x => x, x => GetVoteCount(candidate, x));
 
-        public IEnumerable<Candidate> Wins(Candidate candidate)
-          => VoteCounts(candidate).Where(x => x.Value.v1 > x.Value.v2).Select(x => x.Key);
+        public HashSet<Candidate> Wins(Candidate candidate)
+          => VoteCounts(candidate).Where(x => x.Value.v1 > x.Value.v2).Select(x => x.Key).ToHashSet();
 
-        public IEnumerable<Candidate> Ties(Candidate candidate)
-          => VoteCounts(candidate).Where(x => x.Value.v1 == x.Value.v2).Select(x => x.Key);
+        public HashSet<Candidate> Ties(Candidate candidate)
+          => VoteCounts(candidate).Where(x => x.Value.v1 == x.Value.v2).Select(x => x.Key).ToHashSet();
 
-        public IEnumerable<Candidate> Losses(Candidate candidate)
-          => VoteCounts(candidate).Where(x => x.Value.v1 < x.Value.v2).Select(x => x.Key);
+        public HashSet<Candidate> Losses(Candidate candidate)
+          => VoteCounts(candidate).Where(x => x.Value.v1 < x.Value.v2).Select(x => x.Key).ToHashSet();
 
         protected PairwiseGraph()
         {

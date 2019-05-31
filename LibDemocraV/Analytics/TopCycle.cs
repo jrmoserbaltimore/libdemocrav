@@ -131,18 +131,17 @@ namespace MoonsetTechnologies.Voting.Analytics
                             // Assigns from itself, below, sometimes, so must exist
                             if (!reachable.ContainsKey((sccl, sccm)))
                                 reachable[(sccl, sccm)] = false;
+                            // The SCC containing (l) can reach the SCC containing (m) if
+                            //  - (l) is already known to reach (m) (checked above, not here)
                             if (reachable[(sccl, sccm)])
                                 continue;
-                            // The SCC containing (l) can reach the SCC containing (m) if
+                            //  - (l) can reach (k) and (k) can reach (m)
                             //  - (l) defeats (m)
                             //  - (l) ties with (m) and it's the Smith Set
-                            //  - (l) is already known to reach (m)
-                            //  - (l) can reach (k) and (k) can reach (m)
                             reachable[(sccl, sccm)] =
+                                (reachable[(sccl, scck)] && reachable[(scck, sccm)]) ||
                                 graph.Wins(l).Contains(m) ||
-                                (isSmith && graph.Ties(l).Contains(m)) ||
-                                reachable[(sccl, sccm)] ||
-                                (reachable[(sccl, scck)] && reachable[(scck, sccm)]);
+                                (isSmith && graph.Ties(l).Contains(m));
                         }
                     }
                 }
