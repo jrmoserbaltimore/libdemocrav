@@ -121,8 +121,8 @@ namespace MoonsetTechnologies.Voting.Analytics
                 HashSet<HashSet<Candidate>> dominating = new HashSet<HashSet<Candidate>>();
                 HashSet<Candidate> output = new HashSet<Candidate>();
 
-                ConcurrentBag<Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>> subsets
-                    = new ConcurrentBag<Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>>();
+                Dictionary<Candidate, Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>> subsets
+                    = new Dictionary<Candidate, Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>>();
                 // Special thanks to https://stackoverflow.com/a/55526085/5601193
                 // This is the slowest thing in here, but there's no faster algorithm known.
                 void ParallelFloydWarshall()
@@ -130,7 +130,7 @@ namespace MoonsetTechnologies.Voting.Analytics
                     Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> DirectCheck(Candidate l)
                     {
                         Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> rset
-                            = new Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>();
+                            = subsets[l];
                         HashSet<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
                         foreach (Candidate m in linkId.Keys.Except(withdrawn))
                         {
@@ -160,7 +160,7 @@ namespace MoonsetTechnologies.Voting.Analytics
                     Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> IndirectCheck(HashSet<Candidate> scck, Candidate l)
                     {
                         Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> rset
-                            = new Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>();
+                            = subsets[l];
                         HashSet<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
                         foreach (Candidate m in linkId.Keys.Except(withdrawn))
                         {
@@ -182,7 +182,7 @@ namespace MoonsetTechnologies.Voting.Analytics
 
                     void mergeSubsets()
                     {
-                        foreach (var d in subsets)
+                        foreach (var d in subsets.Values)
                         {
                             foreach (var e in d.Keys)
                             {
@@ -194,15 +194,17 @@ namespace MoonsetTechnologies.Voting.Analytics
                         }
                     }
 
+                    // Set up the dictionary
+                    foreach (Candidate l in linkId.Keys.Except(withdrawn))
+                        subsets[l] = new Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>();
                     // Get all the direct relationships.  Those are expensive to compute,
                     // so this first-pass makes the whole computation faster.
                     Parallel.ForEach(linkId.Keys.Except(withdrawn), l =>
                     {
-                        subsets.Add(DirectCheck(l));
+                        DirectCheck(l);
                     });
 
                     mergeSubsets();
-                    subsets.Clear();
 
                     // https://gkaracha.github.io/papers/floyd-warshall.pdf
                     // The l,m loops are independent and parallelizable
@@ -211,7 +213,8 @@ namespace MoonsetTechnologies.Voting.Analytics
                         HashSet<Candidate> scck = stronglyConnectedComponents.Where(x => x.Contains(k)).Single();
                         Parallel.ForEach(linkId.Keys.Except(withdrawn), l =>
                        {
-                           subsets.Add(IndirectCheck(scck, l));
+                           subsets[l].Clear();
+                           IndirectCheck(scck, l);
                        });
                     }
 
