@@ -23,12 +23,11 @@ namespace MoonsetTechnologies.Voting.Utility
             TopCycle t;
             BallotSet bset = null;
             int smithSetCount = 0;
-
             for (int j = 0; j < 1000; j++)
             {
                 winners.Clear();
                 candidates.Clear();
-                //bset = null;
+                bset = null;
                 List<BallotSet> bsets = new List<BallotSet>();
                 bsets.Clear();
 

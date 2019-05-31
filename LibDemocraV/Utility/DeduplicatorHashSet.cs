@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
@@ -14,9 +17,10 @@ namespace MoonsetTechnologies.Voting.Utility
     {
         public delegate T ObjectCreator(T reference);
         private readonly ObjectCreator objectCreator = null;
+        private readonly object trimLock = new object();
 
-        private readonly Dictionary<int, List<WeakReference<T>>> hashTable
-            = new Dictionary<int, List<WeakReference<T>>>();
+        private readonly ConcurrentDictionary<int, ConcurrentBag<WeakReference<T>>> hashTable
+            = new ConcurrentDictionary<int, ConcurrentBag<WeakReference<T>>>();
 
         int ExcessCountdown = 0;
 
@@ -29,17 +33,17 @@ namespace MoonsetTechnologies.Voting.Utility
                     // Look up the object through a creator if supplied
                     if (objectCreator is null)
                         output = index;
-                    else
+                    else // FIXME:  Thread safety?
                         output = objectCreator(index);
                     // If we still can't find it, store what we found into the table
                     if (!TryGetValue(output, out T testout))
                     {
+                        ConcurrentBag<WeakReference<T>> bucket;
                         // Get or create the bucket
-                        if (!hashTable.TryGetValue(output.GetHashCode(), out List<WeakReference<T>> bucket))
-                            bucket = hashTable[output.GetHashCode()] = new List<WeakReference<T>>();
+                        bucket = hashTable.GetOrAdd(output.GetHashCode(), new ConcurrentBag<WeakReference<T>>());
                         // add it to the bucket and return it as the object.
                         bucket.Add(new WeakReference<T>(output));
-                        ExcessCountdown--;
+                        Interlocked.Decrement(ref ExcessCountdown);
                     }
                     else
                         output = testout;
@@ -51,17 +55,20 @@ namespace MoonsetTechnologies.Voting.Utility
         public bool TryGetValue(T key, out T value)
         {
             List<WeakReference<T>> toRemove = new List<WeakReference<T>>();
-
-            if (ExcessCountdown <= 0)
+            
+            lock (trimLock)
             {
-                TrimExcess();
-                if (ExcessCountdown < 10000)
-                    ExcessCountdown = 10000;
+                if (ExcessCountdown <= 0)
+                {
+                    TrimExcess();
+                    if (ExcessCountdown < 10000)
+                        ExcessCountdown = 10000;
+                }
             }
 
             value = null;
             // Get or create the bucket
-            if (!hashTable.TryGetValue(key.GetHashCode(), out List<WeakReference<T>> bucket))
+            if (!hashTable.TryGetValue(key.GetHashCode(), out ConcurrentBag<WeakReference<T>> bucket))
                 return false;
 
             foreach (WeakReference<T> item in bucket)
@@ -83,8 +90,7 @@ namespace MoonsetTechnologies.Voting.Utility
             }
 
             // Remove the identified items
-            foreach (WeakReference<T> item in toRemove)
-                bucket.Remove(item);
+            hashTable.TryUpdate(key.GetHashCode(), new ConcurrentBag<WeakReference<T>>(bucket.Except(toRemove)), bucket);
             // didn't find it in the bucket, so fail
             return false;
         }
@@ -104,21 +110,19 @@ namespace MoonsetTechnologies.Voting.Utility
 
             foreach (int i in hashTable.Keys)
             {
-                List<WeakReference<T>> bucket = hashTable[i];
+                ConcurrentBag<WeakReference<T>> bucket = hashTable[i];
                 foreach (WeakReference<T> item in bucket)
                 {
                     if (!item.TryGetTarget(out T output))
                         toRemove.Add(item);
                 }
                 // Remove the identified items
-                foreach (WeakReference<T> item in toRemove)
-                {
-                    bucket.Remove(item);
-                    ExcessCountdown++;
-                }
-                // Empty bucket?  Delete the list object.
-                if (bucket.Count == 0)
-                    hashTable.Remove(i);
+                if (toRemove.Count == bucket.Count)
+                    hashTable.TryRemove(i, out bucket);
+                else
+                    hashTable.TryUpdate(i, new ConcurrentBag<WeakReference<T>>(bucket.Except(toRemove)), bucket);
+                Interlocked.Add(ref ExcessCountdown, toRemove.Count());
+                
                 toRemove.Clear();
             }
         }
