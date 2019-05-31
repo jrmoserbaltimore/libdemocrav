@@ -126,7 +126,7 @@ namespace MoonsetTechnologies.Voting.Analytics
 
                 async Task ParallelFloydWarshall()
                 {
-                    List<Task> tasks = new List<Task>();
+                    HashSet<Task> tasks = new HashSet<Task>();
 
                     async Task DirectCheck(Candidate l)
                     {
@@ -142,16 +142,19 @@ namespace MoonsetTechnologies.Voting.Analytics
 
                             // - (l) defeats (m)
                             // - (l) ties with (m) and it's the Smith Set
-                            reachable.TryUpdate((sccl, sccm),
-                                graph.Wins(l).Contains(m) || (isSmith && graph.Ties(l).Contains(m)),
-                                false);
+                            HashSet<Candidate> testset;
+
+                            if (isSmith)
+                                testset = graph.Candidates.Except(graph.Losses(l)).ToHashSet();
+                            else
+                                testset = graph.Wins(l);
+
+                            reachable.TryUpdate((sccl, sccm), testset.Contains(m), false);
                         }
                     }
 
-                    void IndirectCheck(HashSet<Candidate> scck)
+                    async Task IndirectCheck(HashSet<Candidate> scck, Candidate l)
                     {
-                        foreach (Candidate l in linkId.Keys.Except(withdrawn))
-                        {
                             HashSet<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
                             foreach (Candidate m in linkId.Keys.Except(withdrawn))
                             {
@@ -161,20 +164,29 @@ namespace MoonsetTechnologies.Voting.Analytics
                                     (reachable[(sccl, scck)] && reachable[(scck, sccm)]),
                                     false);
                             }
-                        }
                     }
-                    // Get all the direct relationships
+                    // Get all the direct relationships.  Those are expensive to compute,
+                    // so this first-pass makes the whole computation faster.
                     foreach (Candidate l in linkId.Keys.Except(withdrawn))
                         tasks.Add(DirectCheck(l));
                     // Wait for all of these to finish
-                    foreach (Task l in tasks)
-                        l.Wait();
+                    foreach (Task t in tasks)
+                        t.Wait();
 
-                    // This is not safe to run in parallel:  each iteration increases information
+                    tasks.Clear();
+
+                    // https://gkaracha.github.io/papers/floyd-warshall.pdf
+                    // The l,m loops are independent and parallelizable
                     foreach (Candidate k in linkId.Keys.Except(withdrawn))
                     {
                         HashSet<Candidate> scck = stronglyConnectedComponents.Where(x => x.Contains(k)).Single();
-                        IndirectCheck(scck);
+                        foreach (Candidate l in linkId.Keys.Except(withdrawn))
+                        {
+                            tasks.Add(IndirectCheck(scck, l));
+                        }
+                        foreach (Task t in tasks)
+                            t.Wait();
+                        tasks.Clear();
                     }
                 }
 
