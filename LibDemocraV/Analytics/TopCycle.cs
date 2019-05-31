@@ -124,7 +124,7 @@ namespace MoonsetTechnologies.Voting.Analytics
                 // Special thanks to https://stackoverflow.com/a/55526085/5601193
                 // This is the slowest thing in here, but there's no faster algorithm known.
 
-                async Task FloydWarshallPassZero()
+                async Task ParallelFloydWarshall()
                 {
                     List<Task> tasks = new List<Task>();
 
@@ -139,47 +139,47 @@ namespace MoonsetTechnologies.Voting.Analytics
                             //  - (l) is already known to reach (m)
                             if (reachable.GetOrAdd((sccl, sccm), false))
                                 continue;
-                            
+
                             // - (l) defeats (m)
                             // - (l) ties with (m) and it's the Smith Set
-                            reachable[(sccl, sccm)] = graph.Wins(l).Contains(m) ||
-                                (isSmith && graph.Ties(l).Contains(m));
+                            reachable.TryUpdate((sccl, sccm),
+                                graph.Wins(l).Contains(m) || (isSmith && graph.Ties(l).Contains(m)),
+                                false);
                         }
                     }
 
+                    void IndirectCheck(HashSet<Candidate> scck)
+                    {
+                        foreach (Candidate l in linkId.Keys.Except(withdrawn))
+                        {
+                            HashSet<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
+                            foreach (Candidate m in linkId.Keys.Except(withdrawn))
+                            {
+                                HashSet<Candidate> sccm = stronglyConnectedComponents.Where(x => x.Contains(m)).Single();
+                                //  - (l) can reach (k) and (k) can reach (m)
+                                reachable.TryUpdate((sccl, sccm),
+                                    (reachable[(sccl, scck)] && reachable[(scck, sccm)]),
+                                    false);
+                            }
+                        }
+                    }
+                    // Get all the direct relationships
                     foreach (Candidate l in linkId.Keys.Except(withdrawn))
                         tasks.Add(DirectCheck(l));
+                    // Wait for all of these to finish
                     foreach (Task l in tasks)
                         l.Wait();
+
+                    // This is not safe to run in parallel:  each iteration increases information
+                    foreach (Candidate k in linkId.Keys.Except(withdrawn))
+                    {
+                        HashSet<Candidate> scck = stronglyConnectedComponents.Where(x => x.Contains(k)).Single();
+                        IndirectCheck(scck);
+                    }
                 }
 
                 // Do a parallel zero pass
-                FloydWarshallPassZero().Wait();
-
-                foreach (Candidate k in linkId.Keys.Except(withdrawn))
-                {
-                    HashSet<Candidate> scck = stronglyConnectedComponents.Where(x => x.Contains(k)).Single();
-                    foreach(Candidate l in linkId.Keys.Except(withdrawn))
-                    {
-                        HashSet<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
-                        foreach (Candidate m in linkId.Keys.Except(withdrawn))
-                        {
-                            HashSet<Candidate> sccm = stronglyConnectedComponents.Where(x => x.Contains(m)).Single();
-                            // Assigns from itself, below, sometimes, so must exist
-                            if (!reachable.ContainsKey((sccl, sccm)))
-                                reachable[(sccl, sccm)] = false;
-                            // The SCC containing (l) can reach the SCC containing (m) if
-                            //  - (l) is already known to reach (m)
-                            if (reachable[(sccl, sccm)])
-                                continue;
-                            //  - (l) can reach (k) and (k) can reach (m)
-                            reachable[(sccl, sccm)] =
-                                (reachable[(sccl, scck)] && reachable[(scck, sccm)]);
-                            //  - (l) defeats (m) (checked in the parallel pass)
-                            //  - (l) ties with (m) and it's the Smith Set (checked in the parallel pass)
-                        }
-                    }
-                }
+                ParallelFloydWarshall().Wait();
 
                 // Time to find all dominating SCCs
                 dominating.UnionWith(stronglyConnectedComponents);
