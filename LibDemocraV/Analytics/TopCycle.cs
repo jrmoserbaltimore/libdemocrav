@@ -116,18 +116,21 @@ namespace MoonsetTechnologies.Voting.Analytics
                 // Find every SCC that cannot be reached by any other SCC.
                 // In the Smith Set, this is one SCC; in the Schwartz Set,
                 // we may have several.
-                ConcurrentDictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> reachable
-                    = new ConcurrentDictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>();
+                Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> reachable
+                    = new Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>();
                 HashSet<HashSet<Candidate>> dominating = new HashSet<HashSet<Candidate>>();
                 HashSet<Candidate> output = new HashSet<Candidate>();
 
+                ConcurrentBag<Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>> subsets
+                    = new ConcurrentBag<Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>>();
                 // Special thanks to https://stackoverflow.com/a/55526085/5601193
                 // This is the slowest thing in here, but there's no faster algorithm known.
                 void ParallelFloydWarshall()
                 {
-
-                    void DirectCheck(Candidate l)
+                    Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> DirectCheck(Candidate l)
                     {
+                        Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> rset
+                            = new Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>();
                         HashSet<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
                         foreach (Candidate m in linkId.Keys.Except(withdrawn))
                         {
@@ -135,7 +138,9 @@ namespace MoonsetTechnologies.Voting.Analytics
 
                             // The SCC containing (l) can reach the SCC containing (m) if
                             //  - (l) is already known to reach (m)
-                            if (reachable.GetOrAdd((sccl, sccm), false))
+                            if (!rset.ContainsKey((sccl, sccm)))
+                                rset[(sccl, sccm)] = false;
+                            else if (rset[(sccl, sccm)])
                                 continue;
 
                             // - (l) defeats (m)
@@ -147,25 +152,57 @@ namespace MoonsetTechnologies.Voting.Analytics
                             else
                                 testset = graph.Wins(l);
 
-                            reachable.TryUpdate((sccl, sccm), testset.Contains(m), false);
+                            rset[(sccl, sccm)] = testset.Contains(m);
+                        }
+                        return rset;
+                    }
+
+                    Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> IndirectCheck(HashSet<Candidate> scck, Candidate l)
+                    {
+                        Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool> rset
+                            = new Dictionary<(HashSet<Candidate>, HashSet<Candidate>), bool>();
+                        HashSet<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
+                        foreach (Candidate m in linkId.Keys.Except(withdrawn))
+                        {
+                            HashSet<Candidate> sccm = stronglyConnectedComponents.Where(x => x.Contains(m)).Single();
+                            //  - (l) can reach (k) and (k) can reach (m)
+                            if (reachable.ContainsKey((sccl, sccm)) && reachable[(sccl, sccm)])
+                                continue;
+
+                            if (!rset.ContainsKey((sccl, sccm)))
+                                rset[(sccl, sccm)] = false;
+                            else if (rset[(sccl, sccm)])
+                                continue;
+
+                            // we only get here if it's currently false
+                            rset[(sccl, sccm)] = (reachable[(sccl, scck)] && reachable[(scck, sccm)]);
+                        }
+                        return rset;
+                    }
+
+                    void mergeSubsets()
+                    {
+                        foreach (var d in subsets)
+                        {
+                            foreach (var e in d.Keys)
+                            {
+                                if (!reachable.ContainsKey(e))
+                                    reachable[e] = d[e];
+                                else
+                                    reachable[e] = reachable[e] || d[e];
+                            }
                         }
                     }
 
-                    void IndirectCheck(HashSet<Candidate> scck, Candidate l)
-                    {
-                            HashSet<Candidate> sccl = stronglyConnectedComponents.Where(x => x.Contains(l)).Single();
-                            foreach (Candidate m in linkId.Keys.Except(withdrawn))
-                            {
-                                HashSet<Candidate> sccm = stronglyConnectedComponents.Where(x => x.Contains(m)).Single();
-                                //  - (l) can reach (k) and (k) can reach (m)
-                                reachable.TryUpdate((sccl, sccm),
-                                    (reachable[(sccl, scck)] && reachable[(scck, sccm)]),
-                                    false);
-                            }
-                    }
                     // Get all the direct relationships.  Those are expensive to compute,
                     // so this first-pass makes the whole computation faster.
-                    Parallel.ForEach(linkId.Keys.Except(withdrawn), l => DirectCheck(l));
+                    Parallel.ForEach(linkId.Keys.Except(withdrawn), l =>
+                    {
+                        subsets.Add(DirectCheck(l));
+                    });
+
+                    mergeSubsets();
+                    subsets.Clear();
 
                     // https://gkaracha.github.io/papers/floyd-warshall.pdf
                     // The l,m loops are independent and parallelizable
@@ -174,9 +211,11 @@ namespace MoonsetTechnologies.Voting.Analytics
                         HashSet<Candidate> scck = stronglyConnectedComponents.Where(x => x.Contains(k)).Single();
                         Parallel.ForEach(linkId.Keys.Except(withdrawn), l =>
                        {
-                           IndirectCheck(scck, l);
+                           subsets.Add(IndirectCheck(scck, l));
                        });
                     }
+
+                    mergeSubsets();
                 }
 
                 // Do a parallel zero pass

@@ -116,20 +116,20 @@ namespace MoonsetTechnologies.Voting.Analytics
         {
             foreach (Candidate c in graph.Candidates)
             {
+                if (!nodes.ContainsKey(c))
+                    nodes[c] = new Dictionary<Candidate, decimal>();
+            }
+
+            Parallel.ForEach(graph.Candidates, c =>
+           {
                 // Merge the graph nodes for this candidate
                 foreach (Candidate d in graph.Candidates)
-                {
-                    if (!nodes.ContainsKey(c))
-                    {
-                        nodes[c] = new Dictionary<Candidate, decimal>
-                        {
-                            [d] = 0.0m
-                        };
-                    }
-                    if (graph.nodes[c].ContainsKey(d))
-                        nodes[c][d] += graph.nodes[c][d];
-                }
-            }
+               {
+                   nodes[c].TryAdd(d, 0.0m);
+                   if (graph.nodes[c].ContainsKey(d))
+                       nodes[c][d] += graph.nodes[c][d];
+               }
+           });
 
             // This merger may disturb the graph, so fill in any gaps
             foreach (Candidate c in Candidates)
