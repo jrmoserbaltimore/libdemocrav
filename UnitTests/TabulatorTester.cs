@@ -43,13 +43,51 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             {
                 output.WriteLine("Tabulation initial state data:");
 
+                output.WriteLine("  Approval Rankings:");
+
+                Dictionary<Candidate, CandidateState>[] cS = new Dictionary<Candidate, CandidateState>[4];
+                ApprovalAlternateOutcomeAnalysis analysis = new ApprovalAlternateOutcomeAnalysis(e.Ballots,
+                    from x in e.CandidateStates
+                    where x.Value.State == CandidateState.States.withdrawn
+                    select x.Key,
+                    e.Seats);
+                for (int i = 0; i <= 3; i++)
+                {
+                    cS[i] = analysis.BaseOutcome(i);
+                }
+
+                foreach (Candidate c in e.CandidateStates.Keys)
+                {
+                    long[] approvals = new long[4];
+                    
+                    // Count totals for each assumption where a candidate ranked at (i) or better
+                    // would be voted for on an approval ballot
+                    for (int i = 1; i <= 3; i++)
+                    {
+                        approvals[i - 1] = e.Ballots.Aggregate(0L, (x, y) => y.Votes.Where(v => v.Value <= i && v.Candidate == c).Count() * y.Count + x);
+                    }
+
+                    // Any ranking is an approval
+                    approvals[3] = e.Ballots.Aggregate(0L, (x, y) => y.Votes.Where(v => v.Candidate == c).Count() * y.Count + x);
+
+                    output.WriteLine("  {0}:\t{1}\t{2}\t{3}\t{4}", c.Name, cS[1][c].VoteCount, cS[2][c].VoteCount, cS[3][c].VoteCount, cS[0][c].VoteCount);
+                }
+
+                // Manipulation testing
+                //output.WriteLine("  Ballot changes to elect candidates:");
+                //foreach (Candidate c in e.CandidateStates.Keys)
+                //{
+                //    output.WriteLine("    {0}:\t{1}", c.Name, analysis.FindOutcome(new[] { c }));
+                //}
+
                 PairwiseGraph g = new PairwiseGraph(e.Ballots);
                 TopCycle tC = new TopCycle(g);
-                List<Candidate> withdrawn = e.CandidateStates.Where(
-                        x => new[] {
-                            CandidateState.States.withdrawn,
-                            CandidateState.States.defeated }.Contains(x.Value.State)
-                        ).Select(x => x.Key).ToList();
+                HashSet<Candidate> withdrawn =
+                    (from x in e.CandidateStates
+                     where new[] {
+                         CandidateState.States.withdrawn,
+                         CandidateState.States.defeated }.Contains(x.Value.State)
+                     select x.Key).ToHashSet();
                 TabulationStateEventArgs e1 = new RankedTabulationStateEventArgs
                 {
                     CandidateStates = e.CandidateStates,
