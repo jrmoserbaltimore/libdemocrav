@@ -18,10 +18,13 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
         protected IEnumerable<Candidate> GetEliminationCandidates(Dictionary<Candidate, CandidateState> candidateStates, decimal surplus, bool batchElimination = true)
         {
-            Dictionary<Candidate, decimal> hopefuls = candidateStates
-                .Where(x => x.Value.State == CandidateState.States.hopeful)
-                .ToDictionary(x => x.Key, x => x.Value.VoteCount);
-            int bypass = seats - candidateStates.Where(x => x.Value.State == CandidateState.States.elected).Count();
+            Dictionary<Candidate, decimal> hopefuls = (from x in candidateStates
+                                                      where x.Value.State == CandidateState.States.hopeful
+                                                      select x)
+                                                      .ToDictionary(x => x.Key, x => x.Value.VoteCount);
+            int bypass = seats - (from x in candidateStates
+                                  where x.Value.State == CandidateState.States.elected
+                                  select x).Count();
 
             HashSet<Candidate> retained = new HashSet<Candidate>();
             HashSet<Candidate> eliminated = new HashSet<Candidate>();
