@@ -96,6 +96,91 @@ namespace MoonsetTechnologies.Voting.Analytics
             // Maximum depth at which to approve the candidate
             Dictionary<Candidate, int> maxDepth = new Dictionary<Candidate, int>();
 
+            void firstPass(Candidate c)
+            {
+                bool searching = false;
+                decimal countChangedVotes(Candidate d)
+                {
+                    return
+                        (from x in Ballots
+                             // All ballots currently selected for all candidates
+                     where (from y in x.Votes
+                                where maxDepth.Keys.Contains(y.Candidate)
+                                where y.Value >= maxDepth[y.Candidate]
+                                select true).Contains(true)
+                     // Only ballots where the candidate appears ranked below the minimum max depth
+                     where (from y in x.Votes
+                                where y.Candidate == d
+                                where y.Value >= maxDepth.Values.Min()
+                                select true).Contains(true)
+                     // Select ballots where the highest-ranked candidate to be deranked is ranked
+                     // higher than (c)
+                     where (from y in x.Votes
+                                where maxDepth.Keys.Contains(y.Candidate)
+                                where y.Value >= maxDepth[y.Candidate]
+                                orderby y.Value
+                                select (y.Candidate, y.Value)).First().Candidate != d
+                                // ... or where the candidate appears at its own maxDepth
+                                || (from y in x.Votes
+                                    where y.Candidate == d
+                                    where y.Value >= maxDepth.Values.Min()
+                                    select true).Contains(true)
+                     // If A wins and we're trying to show an approval outcome where B wins instead,
+                     // we would modify a ballot with X>B>A to only approve X instead of {X,B,A}.
+                     // By this logic, ballots where B is ranked above A don't count.
+                     where !(from y in x.Votes
+                                 where newWinners.Contains(y.Candidate)
+                                 where y.Value >= maxDepth[d]
+                                 select true).Contains(true)
+                         select x.Count).Sum();
+                }
+
+                do
+                {
+                    // This will use the ABSOLUTE maxDepth for each candidate when checking
+                    // for shared ballots (i.e. ballots where (c) is ranked above maxDepth[c],
+                    // but below some other candidate's maxDepth).
+                    //
+                    // There may be e.g. 100 ballots for candidate X as such, but we only need
+                    // 50 of those.  In such a case, we'll come up short after modifying the
+                    // ballots for the candidates reaching the shallowest maxDepth, and will
+                    // need to take further action.
+                    decimal changedVotes = countChangedVotes(c);
+                    if (changedVotes < maxChangedVotes[c])
+                    {
+                        maxDepth[c]--;
+                        searching = true;
+                    }
+                    else
+                        break;
+                } while (true);
+
+                // Move any candidates with a greater depth back to the start.  They might
+                // be covered incidentally by freeriding on existing ballots.
+                if (searching)
+                {
+                    var query = from x in newLosers
+                                where x != c
+                                where maxDepth[x] > maxDepth[c]
+                                select x;
+
+                    HashSet<Candidate> qresult = query.ToHashSet();
+
+                    foreach (Candidate d in qresult)
+                        maxDepth[d] = Convert.ToInt32((from x in Ballots
+                                                       from y in x.Votes
+                                                       where y.Candidate == d
+                                                       select y.Value).Max());
+
+                    // Horrifying recursive loop recursion
+                    foreach (Candidate d in qresult)
+                    {
+                        if (query.Contains(d))
+                            firstPass(d);
+                    }
+                }
+            }
+
             // Find the minimum depth where reduced approval assumptions affect newLoser vote counts
             foreach (Candidate c in newLosers)
             {
@@ -107,39 +192,14 @@ namespace MoonsetTechnologies.Voting.Analytics
                                                where y.Candidate == c
                                                select y.Value).Max());
             }
-
             // Pass 1:  iterate through depths until voting in each candidate.
             // Truncate all ballots with candidates below that depth.
-            do
+            foreach (Candidate c in newLosers)
             {
-                bool searching = false;
-                foreach (Candidate c in newLosers)
-                {
-                    decimal changedVotes = (from x in Ballots
-                                         where (from y in x.Votes
-                                                where y.Candidate == c
-                                                where y.Value >= maxDepth[c]
-                                                select true).Contains(true)
-                        // If A wins and we're trying to show an approval outcome where B wins instead,
-                        // we would modify a ballot with X>B>A to only approve X instead of {X,B,A}.
-                        // By this logic, ballots where B is ranked above A don't count.
-                                         where !(from y in x.Votes
-                                                where newWinners.Contains(y.Candidate)
-                                                where y.Value >= maxDepth[c]
-                                                select true).Contains(true)
-                                         select x.Count).Sum();
-                    if (changedVotes < maxChangedVotes[c])
-                    {
-                        maxDepth[c]--;
-                        searching = true;
-                    }
-                }
+                firstPass(c);
+            }
 
-                if (!searching)
-                    break;
-            } while (true);
-
-            // One greater than maxDepth, thus we need to change all of these
+            // One greater than maxDepth, thus we need to change all of these in any case
             foreach (Candidate c in newLosers)
             {
                 originalBallots.UnionWith(from x in Ballots
@@ -166,11 +226,73 @@ namespace MoonsetTechnologies.Voting.Analytics
                                                      select y),
                                           x.Count));
 
+            // Pass 2:  we've identified all ballots that WILL be in the minimal change set.
+            // Now we must figure out what remaining ballots give the most impact.
+
             // FIXME:  elucidate the least change required:
             //   1.  From shallowest maxDepth to deepest, identify ballots which demote the most newLosers
             //   2.  Find such ballots with the highest counts
             //   3.  Modify the ballots which can be removed without demoting newWinners
             //   4.  Repeat until we've forced the the approval outcome
+            void secondPass()
+            {
+                // Candidates who aren't yet losing
+                HashSet<Candidate> remainingCandidates = (from x in newLosers
+                                                          where (from y in modifiedBallots
+                                                                 where (from z in y.Votes
+                                                                        select z.Candidate).Contains(x)
+                                                                 select y.Count).Sum() > maxChangedVotes[x]
+                                                          select x).ToHashSet();
+
+                // Maximum number of votes which need changing to eliminate any one candidate
+                decimal maxVotesToChange = (from x in remainingCandidates
+                                            select maxChangedVotes[x]).Max();
+                // Get all candidates at that level
+                HashSet<Candidate> maxChangeCandidates = (from x in remainingCandidates
+                                                         where maxChangedVotes[x] > maxVotesToChange
+                                                         select x).ToHashSet();
+                // Select the ballot with the most candidates present below the given candidates
+                CountedBallot possibleBallot = (from b in Ballots.Except(originalBallots)
+                                                where (from x in b.Votes
+                                                       where maxChangeCandidates.Contains(x.Candidate)
+                                                       where x.Value == maxDepth[x.Candidate]
+                                                       select true).Contains(true)
+                                                where !(from x in b.Votes
+                                                        where newWinners.Contains(x.Candidate)
+                                                        where x.Value >= (from y in maxDepth
+                                                                          where newWinners.Contains(y.Key)
+                                                                          select y.Value).Min()
+                                                        select true).Contains(true)
+                                                orderby (from x in b.Votes
+                                                         where remainingCandidates.Contains(x.Candidate)
+                                                         select x).Count(),
+                                                         (from x in b.Votes
+                                                          where maxChangeCandidates.Contains(x.Candidate)
+                                                          where x.Value == maxDepth[x.Candidate]
+                                                          select x).Count()
+                                                select b).First();
+
+                Ballot newBallot = new Ballot(from y in possibleBallot.Votes
+                                              where y.Value < (from z in possibleBallot.Votes
+                                                               where maxChangeCandidates.Contains(z.Candidate)
+                                                               where z.Value == maxDepth[z.Candidate]
+                                                               select z.Value).Min()
+                                              select y);
+                originalBallots.Add(possibleBallot);
+                if (possibleBallot.Count <= maxVotesToChange)
+                {
+                    // All of them, so just move it
+                    modifiedBallots.Add(new CountedBallot(newBallot, possibleBallot.Count));
+                }
+                else
+                {
+                    // Split into two sets
+                    modifiedBallots.Add(new CountedBallot(newBallot, Convert.ToInt64(maxVotesToChange)));
+                    modifiedBallots.Add(new CountedBallot(new Ballot(possibleBallot.Votes), possibleBallot.Count - Convert.ToInt64(maxVotesToChange)));
+                }
+            }
+            // FIXME:  Loop the above until resolution or out of ballots
+
             throw new NotImplementedException();
         }
     }
