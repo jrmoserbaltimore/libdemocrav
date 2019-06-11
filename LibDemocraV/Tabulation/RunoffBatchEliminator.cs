@@ -16,6 +16,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
         }
 
+        /// <inheritdoc/>
         protected IEnumerable<Candidate> GetEliminationCandidates(Dictionary<Candidate, CandidateState> candidateStates, decimal surplus, bool batchElimination = true)
         {
             Dictionary<Candidate, decimal> hopefuls = (from x in candidateStates
@@ -27,53 +28,66 @@ namespace MoonsetTechnologies.Voting.Tabulation
                                   select x).Count();
 
             HashSet<Candidate> retained = new HashSet<Candidate>();
-            HashSet<Candidate> eliminated = new HashSet<Candidate>();
+            HashSet<Candidate> eliminated = null;
 
             // We're out of seats, so eliminate everybody
-            // FIXME:  Do we just want to throw an exception here?
             if (bypass == 0)
                 return hopefuls.Keys;
 
-            while (bypass > 0)
+            // This doesn't account for ties on its own
+            if (bypass > 0)
             {
-                retained.Add(hopefuls.Where(x => !retained.Contains(x.Key)).Aggregate((x, y) => x.Value > y.Value ? x : y).Key);
-                bypass--;
+                var q = from x in hopefuls
+                            orderby x.Value descending
+                            select x.Key;
+                retained.UnionWith(q.Take(bypass));
             }
 
-            // Select lowest
             if (!batchElimination)
             {
-                Candidate min = hopefuls.Where(x => !retained.Contains(x.Key)).Aggregate((x, y) => x.Value < y.Value ? x : y).Key;
+                // Select all candidates with the minimum
+                var query = from x in hopefuls
+                            where !retained.Contains(x.Key)
+                            select x;
+                decimal min = (from x in query select x.Value).Min();
+                // Select into the bypass set if there are ties across sets
+                eliminated = (from x in hopefuls
+                              where x.Value == min
+                              select x.Key).ToHashSet();
+                // This should not happen when requesting a single
+                if (eliminated.Count == 0)
+                    throw new InvalidOperationException("Somehow pulled zero minimum candidates in elimination!");
+                return eliminated;
             }
-            else while (eliminated.Count == 0)
+
+            // We're doing batch elimination, so find the least
+            while (eliminated is null)
             {
-                // select batch.  Check sum against minimum retained candidate.
-                decimal max = hopefuls.Where(x => retained.Contains(x.Key)).Aggregate((x, y) => x.Value < y.Value ? x : y).Value;
-                // If we sum them all and the vote total is bigger than the lowest-voted retained candidate,
-                // move all highest-voted candidates not retained to the retained set.
-                if (hopefuls.Where(x => !retained.Contains(x.Key)).Sum(x => x.Value) + surplus >= max)
+                var qretain = from x in hopefuls
+                              where retained.Contains(x.Key)
+                              select x;
+                var qeliminate = from x in hopefuls
+                                 where !retained.Contains(x.Key)
+                                 select x;
+
+                // Ties inherently cannot split in batch eliminations,
+                // unless all hopefuls are tied.  Will always select
+                // a candidate who is untied for last place.
+                if (qeliminate.Sum(x => x.Value) >= qretain.Min(x => x.Value) + surplus)
                 {
-                    max = hopefuls.Where(x => !retained.Contains(x.Key)).Aggregate((x, y) => x.Value > y.Value ? x : y).Value;
-                    retained.UnionWith(hopefuls.Where(x => x.Value == max).Select(x => x.Key));
+                    // Throw out all candidates tied at this vote count
+                    var qmax = from x in qeliminate
+                               where x.Value == qeliminate.Max(y => y.Value)
+                               select x.Key;
+                    // Resolve the query or it modifies retained while using it to query
+                    retained.UnionWith(qmax.ToArray());
+                    // Last-place ties that we can't batch eliminate.  Use GetSingleElimination()
+                    // and expect multiple candidates.
+                    if (qeliminate.Count() == 0)
+                        return null; 
                 }
                 else
-                    eliminated.UnionWith(hopefuls.Where(x => !retained.Contains(x.Key)).Select(x => x.Key).ToList());
-                // we just eliminated the last candidate(s), so break
-                if (hopefuls.Keys.Count == retained.Count)
-                    break;
-            }
-
-            // No results, so make a call for a single eliminee
-            if (eliminated.Count == 0)
-            {
-                // This should not happen when requesting a single
-                if (!batchElimination)
-                    throw new InvalidOperationException("Somehow pulled zero minimum candidates in elimination!");
-
-                eliminated = GetSingleElimination(candidateStates, surplus).ToHashSet();
-                // Return null to indicate a tie for a batch request.
-                if (eliminated.Count > 1)
-                    return null;
+                    eliminated = qeliminate.Select(x => x.Key).ToHashSet();
             }
 
             return eliminated;

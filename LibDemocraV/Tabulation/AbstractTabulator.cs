@@ -243,7 +243,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// <returns>An enumerable of elimination candidates.</returns>
         protected IEnumerable<Candidate> GetEliminationCandidates(bool batchElimination = true, decimal surplus = 0.0m)
         {
-            HashSet<Candidate> eliminationCandidates = batchEliminator.GetBatchElimination(CandidateStatesCopy, surplus).ToHashSet();
+            HashSet<Candidate> eliminationCandidates = batchEliminator.GetBatchElimination(CandidateStatesCopy, surplus)?.ToHashSet();
             // Tie
             if (eliminationCandidates is null)
             {
