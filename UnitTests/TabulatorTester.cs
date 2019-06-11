@@ -73,11 +73,16 @@ namespace MoonsetTechnologies.Voting.Development.Tests
                     output.WriteLine("  {0}:\t{1}\t{2}\t{3}\t{4}", c.Name, cS[1][c].VoteCount, cS[2][c].VoteCount, cS[3][c].VoteCount, cS[0][c].VoteCount);
                 }
 
-                // Manipulation testing
+                // Analysis against Approval Voting and how variable the outcome is
                 //output.WriteLine("  Ballot changes to elect candidates:");
                 //foreach (Candidate c in e.CandidateStates.Keys)
                 //{
-                //    output.WriteLine("    {0}:\t{1}", c.Name, analysis.FindOutcome(new[] { c }));
+                //    (BallotSet originalBallots, BallotSet newBallots) = analysis.FindOutcome(new[] { c });
+                //    output.WriteLine("    {0}:\t{1}", c.Name, (from x in newBallots
+                //                                               where (from y in originalBallots
+                //                                                      where y.Votes.ToHashSet().SetEquals(x.Votes)
+                //                                                      select true).Contains(true)
+                //                                               select x.Count).Sum());
                 //}
 
                 PairwiseGraph g = new PairwiseGraph(e.Ballots);

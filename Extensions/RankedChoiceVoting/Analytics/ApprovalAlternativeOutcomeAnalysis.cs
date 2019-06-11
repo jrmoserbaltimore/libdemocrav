@@ -234,7 +234,7 @@ namespace MoonsetTechnologies.Voting.Analytics
             //   2.  Find such ballots with the highest counts
             //   3.  Modify the ballots which can be removed without demoting newWinners
             //   4.  Repeat until we've forced the the approval outcome
-            void secondPass()
+            bool secondPass()
             {
                 // Candidates who aren't yet losing
                 HashSet<Candidate> remainingCandidates = (from x in newLosers
@@ -244,6 +244,8 @@ namespace MoonsetTechnologies.Voting.Analytics
                                                                  select y.Count).Sum() > maxChangedVotes[x]
                                                           select x).ToHashSet();
 
+                if (remainingCandidates.Count == 0)
+                    return true;
                 // Maximum number of votes which need changing to eliminate any one candidate
                 decimal maxVotesToChange = (from x in remainingCandidates
                                             select maxChangedVotes[x]).Max();
@@ -290,10 +292,15 @@ namespace MoonsetTechnologies.Voting.Analytics
                     modifiedBallots.Add(new CountedBallot(newBallot, Convert.ToInt64(maxVotesToChange)));
                     modifiedBallots.Add(new CountedBallot(new Ballot(possibleBallot.Votes), possibleBallot.Count - Convert.ToInt64(maxVotesToChange)));
                 }
+                return false;
             }
-            // FIXME:  Loop the above until resolution or out of ballots
+            
+            while (!secondPass())
+            {
+                // Loop the above until resolution or out of ballots
+            }
 
-            throw new NotImplementedException();
+            return (new BallotSet(originalBallots), new BallotSet(modifiedBallots));
         }
     }
 }
