@@ -19,57 +19,54 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// <inheritdoc/>
         protected IEnumerable<Candidate> GetEliminationCandidates(Dictionary<Candidate, CandidateState> candidateStates, decimal surplus, bool batchElimination = true)
         {
-            Dictionary<Candidate, decimal> hopefuls = (from x in candidateStates
-                                                      where x.Value.State == CandidateState.States.hopeful
-                                                      select x)
-                                                      .ToDictionary(x => x.Key, x => x.Value.VoteCount);
-            int bypass = seats - (from x in candidateStates
-                                  where x.Value.State == CandidateState.States.elected
-                                  select x).Count();
+            CandidateState.States qs = CandidateState.States.hopeful;
+            var stateQuery = from x in candidateStates
+                             where x.Value.State == qs
+                             select x;
+            Dictionary<Candidate, decimal> hopefuls = stateQuery.ToDictionary(x => x.Key, x => x.Value.VoteCount);
+
+            qs = CandidateState.States.elected;
+            int bypass = seats - stateQuery.Count();
 
             HashSet<Candidate> retained = new HashSet<Candidate>();
-            HashSet<Candidate> eliminated = null;
+            var eliminated = from x in new Candidate[] { } select x;
 
             // We're out of seats, so eliminate everybody
             if (bypass == 0)
                 return hopefuls.Keys;
 
+            var qretain = from x in hopefuls
+                          where retained.Contains(x.Key)
+                          select x;
+            var qeliminate = from x in hopefuls
+                             where !retained.Contains(x.Key)
+                             select x;
+
             // This doesn't account for ties on its own
             if (bypass > 0)
             {
                 var q = from x in hopefuls
-                            orderby x.Value descending
-                            select x.Key;
+                        orderby x.Value descending
+                        select x.Key;
                 retained.UnionWith(q.Take(bypass));
             }
 
             if (!batchElimination)
             {
                 // Select all candidates with the minimum
-                var query = from x in hopefuls
-                            where !retained.Contains(x.Key)
-                            select x;
-                decimal min = (from x in query select x.Value).Min();
+                decimal min = (from x in qeliminate select x.Value).Min();
                 // Select into the bypass set if there are ties across sets
-                eliminated = (from x in hopefuls
+                eliminated = from x in hopefuls
                               where x.Value == min
-                              select x.Key).ToHashSet();
+                              select x.Key;
                 // This should not happen when requesting a single
-                if (eliminated.Count == 0)
+                if (!eliminated.Any())
                     throw new InvalidOperationException("Somehow pulled zero minimum candidates in elimination!");
-                return eliminated;
             }
 
             // We're doing batch elimination, so find the least
-            while (eliminated is null)
+            while (!eliminated.Any())
             {
-                var qretain = from x in hopefuls
-                              where retained.Contains(x.Key)
-                              select x;
-                var qeliminate = from x in hopefuls
-                                 where !retained.Contains(x.Key)
-                                 select x;
-
                 // Ties inherently cannot split in batch eliminations,
                 // unless all hopefuls are tied.  Will always select
                 // a candidate who is untied for last place.
@@ -83,14 +80,14 @@ namespace MoonsetTechnologies.Voting.Tabulation
                     retained.UnionWith(qmax.ToArray());
                     // Last-place ties that we can't batch eliminate.  Use GetSingleElimination()
                     // and expect multiple candidates.
-                    if (qeliminate.Count() == 0)
-                        return null; 
+                    if (!qeliminate.Any())
+                        return null;
                 }
                 else
-                    eliminated = qeliminate.Select(x => x.Key).ToHashSet();
+                    eliminated = qeliminate.Select(x => x.Key);
             }
 
-            return eliminated;
+            return eliminated.ToArray();
         }
 
         /// <inheritdoc/>
