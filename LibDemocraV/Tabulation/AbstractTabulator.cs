@@ -67,7 +67,11 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 InitializeCandidateStates(withdrawn, CandidateState.States.withdrawn);
 
             // Initialize hopefuls
-            InitializeCandidateStates(ballots.SelectMany(x => x.Votes.Select(y => y.Candidate)).Distinct().Except(candidateStates.Keys));
+            var q = (from b in ballots
+                     from v in b.Votes
+                     select v.Candidate).Distinct().Except(candidateStates.Keys);
+            InitializeCandidateStates(q.ToArray());
+
             tiebreaker = tiebreakerFactory.CreateTiebreaker(mediator);
         }
 
@@ -121,8 +125,9 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// </summary>
         /// <returns>True if complete, false otherwise.</returns>
         protected bool IsComplete()
-          => candidateStates.Where(x => new[] { CandidateState.States.hopeful }
-                .Contains(x.Value.State)).Count() == 0;
+          => !(from x in candidateStates
+               where x.Value.State == CandidateState.States.hopeful
+               select x).Any();
 
         /// <summary>
         /// Determine if no further rounds are possible.
@@ -131,15 +136,18 @@ namespace MoonsetTechnologies.Voting.Tabulation
         protected bool IsFinalRound()
         {
             int possibleWinnerCount;
+            CandidateState.States s = CandidateState.States.elected;
+            var q = from x in candidateStates
+                    where x.Value.State == s
+                    select x;
 
-            possibleWinnerCount = candidateStates.Where(x =>
-                new[] { CandidateState.States.elected }
-                .Contains(x.Value.State)).Count();
+            possibleWinnerCount = q.Count();
             // So far, elected fewer candidates than seats, so include hopefuls
             if (possibleWinnerCount < seats)
-                possibleWinnerCount = candidateStates.Where(x =>
-                  new[] { CandidateState.States.elected, CandidateState.States.hopeful }
-                  .Contains(x.Value.State)).Count();
+            {
+                s = CandidateState.States.hopeful;
+                possibleWinnerCount += q.Count();
+            }
 
             // We're done counting if we have fewer hopeful+elected than seats
             return (possibleWinnerCount <= seats);
@@ -150,31 +158,31 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// </summary>
         protected void SetFinalWinners()
         {
-            IEnumerable<Candidate> defeated = new List<Candidate>();
+            var defeated = from x in new Candidate[] { } select x; ;
 
             // If we're done, there will be only enough hopefuls to fill remaining seats
             if (IsFinalRound())
             {
-                IEnumerable<Candidate> elected =
-                  candidateStates.Where(x => x.Value.State == CandidateState.States.elected)
-                  .Select(x => x.Key).ToList();
-                IEnumerable<Candidate> hopeful =
-                  candidateStates.Where(x => x.Value.State == CandidateState.States.hopeful)
-                  .Select(x => x.Key).ToList();
-                // seats should always be 1
+                var elected = from x in candidateStates
+                              where x.Value.State == CandidateState.States.elected
+                              select x.Key;
+                var hopeful = from x in candidateStates
+                              where x.Value.State == CandidateState.States.hopeful
+                              select x.Key;
+                
                 if (elected.Count() + hopeful.Count() <= seats)
                     elected = hopeful;
                 else if (elected.Count() == seats)
                 {
-                    elected = null;
+                    elected = from x in new Candidate[] { } select x;
                     defeated = hopeful;
                 }
                 else if (elected.Count() > seats)
                     throw new InvalidOperationException("Somehow elected more candidates than seats.");
 
-                foreach (Candidate c in elected)
+                foreach (Candidate c in elected.ToArray())
                     SetState(c, CandidateState.States.elected);
-                foreach (Candidate c in defeated)
+                foreach (Candidate c in defeated.ToArray())
                     SetState(c, CandidateState.States.defeated);
             }
         }
@@ -201,10 +209,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 c.VoteCount = 0.0m;
             foreach(CountedBallot b in ballots)
             {
-                // Add any candidates not yet seen to candidateStates
-                List<Candidate> c = b.Votes.Where(x => !candidateStates.Keys.Contains(x.Candidate))
-                    .Select(x => x.Candidate).ToList();
-                InitializeCandidateStates(c);
                 CountBallot(b);
             }
         }
