@@ -26,12 +26,12 @@ namespace MoonsetTechnologies.Voting.Tabulation
         public override IEnumerable<Candidate> GetBatchElimination
             (Dictionary<Candidate, CandidateState> candidateStates, decimal surplus = 0.0m)
         {
-            List<Candidate> output;
             List<Candidate> cCheck, rSet;
 
-            List<Candidate> withdrawnSet = candidateStates
-                .Where(x => new[] { CandidateState.States.withdrawn, CandidateState.States.defeated }
-                           .Contains(x.Value.State)).Select(x => x.Key).ToList();
+            HashSet<Candidate> withdrawnSet = (from x in candidateStates
+                                              where x.Value.State == CandidateState.States.withdrawn
+                                              || x.Value.State == CandidateState.States.defeated
+                                              select x.Key).ToHashSet();
 
             cCheck = (analytics as RankedTabulationAnalytics).GetTopCycle(withdrawnSet, condorcetSet).ToList();
             // Reduce these to the appropriate checks
@@ -40,17 +40,13 @@ namespace MoonsetTechnologies.Voting.Tabulation
             // Condorcet winner!
             if (cCheck.Count == 1)
             {
-                return candidateStates
-                    .Where(x => x.Value.State == CandidateState.States.hopeful && x.Key != cCheck.First())
-                    .Select(x => x.Key).ToList();
-
+                return (from x in candidateStates
+                        where x.Value.State == CandidateState.States.hopeful
+                        select x.Key).Except(cCheck).ToArray();
             }
-            else if (rSet.Count() < withdrawnSet.Count())
+            else if (rSet.Count < withdrawnSet.Count)
             {
-                output = new List<Candidate>(withdrawnSet);
-                foreach (Candidate c in rSet)
-                    output.Remove(c);
-                return output;
+                return candidateStates.Keys.Except(rSet).ToArray();
             }
             else
             {
