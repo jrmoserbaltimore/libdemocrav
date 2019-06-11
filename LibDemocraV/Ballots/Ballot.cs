@@ -11,7 +11,7 @@ namespace MoonsetTechnologies.Voting.Ballots
     public class Ballot : IEquatable<Ballot>
     {
         protected readonly HashSet<Vote> votes = new HashSet<Vote>();
-        public IEnumerable<Vote> Votes => votes;
+        public HashSet<Vote> Votes => votes.ToHashSet();
 
         public Ballot(IEnumerable<Vote> votes)
         {
