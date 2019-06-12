@@ -39,6 +39,7 @@ namespace MoonsetTechnologies.Voting.Utility
             foreach (Vote v in votes)
                 vout.Add(CreateVote(v.Candidate, v.Value));
             bin = new Ballot(vout);
+            // Adds without triggering a call that might CreateBallot
             Ballots.TryGetValue(bin, out b);
             b = Ballots[bin];
             return b;
@@ -51,91 +52,19 @@ namespace MoonsetTechnologies.Voting.Utility
         /// <returns>A BallotSet with any duplicate Ballots combined into CountedBallots.</returns>
         public BallotSet CreateBallotSet(IEnumerable<Ballot> ballots)
         {
-            HashSet<Ballot> outBallots = new HashSet<Ballot>();
-            Dictionary<Ballot, long> ballotCounts = new Dictionary<Ballot, long>();
-
             int threadCount = Environment.ProcessorCount;
 
             // We need to create and count each single, identical ballot,
             // and count the number of such ballots in any CountedBallot we
             // encounter.  To do this, we create uncounted, single ballots
             // and specifically avoid looking up CountedBallot.
-            void CountBallots()
-            {
-                List<Ballot> bList = ballots.ToList();
-                Dictionary<Ballot, long>[] subsets = new Dictionary<Ballot, long>[threadCount];
+            var outBallots = from b in ballots.AsParallel()
+                             group b is CountedBallot ? (b as CountedBallot).Count : 1 by CreateBallot(b.Votes) into bCount
+                             select Ballots[bCount.Sum() == 1 ? bCount.Key : new CountedBallot(bCount.Key, bCount.Sum())];
 
-                // Thread safety:  only writes to function-local objects;
-                // reads from an index in bList.
-                Dictionary<Ballot, long> CountSubsets(int start, int end)
-                {
-                    Dictionary<Ballot, long> bC = new Dictionary<Ballot, long>();
-                   
-                    for (int i = start; i <= end; i++)
-                    {
-                        Ballot oneBallot = CreateBallot(bList[i].Votes);
-                        long count = (bList[i] is CountedBallot) ? (bList[i] as CountedBallot).Count : 1;
-
-                        if (!bC.ContainsKey(oneBallot))
-                            bC[oneBallot] = 0;
-                        bC[oneBallot] += count;
-                    }
-
-                    return bC;
-                }
-
-                // First divide all the processes up for background run
-                // Thread safety:  subsets is an array not accessed outside this loop;
-                // each parallel thread accesses a specific unique index in the array.
-                Parallel.For(0, threadCount, i =>
-                {
-                    subsets[i] = CountSubsets(bList.Count() * i / threadCount, (bList.Count() * (i + 1) / threadCount) - 1);
-                });
-
-                // Now merge them
-                for (int i = 0; i < threadCount; i++)
-                {
-                    foreach (Ballot b in subsets[i].Keys)
-                    {
-                        // Count this in the full ballot counts
-                        if (!ballotCounts.ContainsKey(b))
-                            ballotCounts[b] = 0;
-                        ballotCounts[b] += subsets[i][b];
-
-                        // Check for identical ballots found in each further thread
-                        for (int j = i+1; j < threadCount; j++)
-                        {
-                            if (subsets[j].ContainsKey(b))
-                            {
-                                ballotCounts[b] += subsets[j][b];
-                                // It's been counted, so remove it
-                                subsets[j].Remove(b);
-                            }
-                        }
-                    }
-                    // We've counted all these, so clear them.
-                    subsets[i].Clear();
-                }
-            }
-
-            // Count in a threaded model
-            CountBallots();
-
-            // Generate CountedBallots from the counts made
-            foreach (Ballot b in ballotCounts.Keys)
-            {
-                Ballot newBallot;
-                if (ballotCounts[b] == 1)
-                    newBallot = b;
-                else
-                    newBallot = new CountedBallot(b, ballotCounts[b]);
-                // Look itself up to store or deduplicate
-                newBallot = Ballots[newBallot];
-                outBallots.Add(newBallot);
-            }
-
-            return new BallotSet(outBallots);
+            return new BallotSet(outBallots.ToArray());
         }
+
         /// <summary>
         /// Produces a single BallotSet from a set of BallotSet objects.
         /// </summary>
@@ -143,10 +72,10 @@ namespace MoonsetTechnologies.Voting.Utility
         /// <returns>A BallotSet created from the total of all Ballots.</returns>
         public BallotSet MergeBallotSets(IEnumerable<BallotSet> sets)
         {
-            List<CountedBallot> ballots = new List<CountedBallot>();
-            foreach (BallotSet b in sets)
-                ballots.AddRange(b.Ballots);
-            return CreateBallotSet(ballots);
+            var q = from s in sets.AsParallel()
+                    from b in s.Ballots
+                    select b;
+            return CreateBallotSet(q.ToArray());
         }
         /// <summary>
         /// Creates a vote object.

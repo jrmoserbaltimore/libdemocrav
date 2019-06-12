@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime;
+using System.Threading.Tasks;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
@@ -16,15 +17,18 @@ namespace MoonsetTechnologies.Voting.Utility
         static void Main(string[] args)
         {
             AbstractBallotStorage s = new DavidHillFormat();
-            FileStream file;
-
-            List<string> winners = new List<string>();
-            HashSet<Candidate> candidates = new HashSet<Candidate>();
-            TopCycle t;
-            BallotSet bset = null;
-            int smithSetCount = 0;
-            for (int j = 0; j < 1000; j++)
+            object displayLock = new object();
+            for (int j = 0; j < 100; j++)
             {
+                Console.Write("Entering thread {0}\n", j);
+                FileStream file;
+
+                List<string> winners = new List<string>();
+                HashSet<Candidate> candidates = new HashSet<Candidate>();
+                TopCycle t;
+                BallotSet bset = null;
+                int smithSetCount = 0;
+
                 winners.Clear();
                 candidates.Clear();
                 bset = null;
@@ -33,20 +37,24 @@ namespace MoonsetTechnologies.Voting.Utility
 
                 if (bset is null)
                 {
-                    using (file = new FileStream(args[0], FileMode.Open))
+
+                    using (file = new FileStream(args[0], FileMode.Open, FileAccess.Read))
                     {
                         bset = s.LoadBallots(file);
                     }
                 }
-
+                Console.Write("{0}\tLoaded ballots.\n", j);
                 for (int i = 0; i < 1000; i++)
                 {
                     bsets.Add(bset);
                     //GC.Collect(2, GCCollectionMode.Forced, true, true);
                 }
 
+                Console.Write("{0}\tBuilt sets.\n", j);
                 bset = s.ballotFactory.MergeBallotSets(bsets);
+                Console.Write("{0}\tMerged sets.\n", j);
                 PairwiseGraph g = new PairwiseGraph(bset);
+                Console.Write("{0}\tBuilt pairwise graph\n", j);
 
                 t = new TopCycle(g);
 
@@ -61,11 +69,14 @@ namespace MoonsetTechnologies.Voting.Utility
                     winners.Add(c.Name);
                 }
 
-                Console.Write(@"""{0}"" ""smith set"" {1}", args[0], winners.Count());
+                lock (displayLock)
+                {
+                    Console.Write(@"""{0}"" ""smith set"" {1}", args[0], winners.Count());
 
-                foreach (string w in winners)
-                    Console.Write(@" ""{0}""", w);
-                Console.Write("\n");
+                    foreach (string w in winners)
+                        Console.Write(@" ""{0}""", w);
+                    Console.Write("\n");
+                }
 
                 smithSetCount = winners.Count();
 
@@ -78,12 +89,14 @@ namespace MoonsetTechnologies.Voting.Utility
 
                 if (winners.Count() != smithSetCount)
                 {
+                    lock (displayLock)
+                    {
+                        Console.Write(@"""{0}"" ""schwartz set"" {1}", args[0], winners.Count());
 
-                    Console.Write(@"""{0}"" ""schwartz set"" {1}", args[0], winners.Count());
-
-                    foreach (string w in winners)
-                        Console.Write(@" ""{0}""", w);
-                    Console.Write("\n");
+                        foreach (string w in winners)
+                            Console.Write(@" ""{0}""", w);
+                        Console.Write("\n");
+                    }
                 }
 
                 foreach (Candidate c in candidates)
