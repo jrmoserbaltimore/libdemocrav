@@ -7,7 +7,6 @@ using System.Text;
 namespace MoonsetTechnologies.Voting.Ballots
 {
     // A ranked ballot
-    [BallotTypeId("eaf87c88-6352-42d0-a048-250c09da2d89")]
     public class Ballot : IEquatable<Ballot>
     {
         protected readonly HashSet<Vote> votes = new HashSet<Vote>();

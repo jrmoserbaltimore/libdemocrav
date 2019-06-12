@@ -6,12 +6,21 @@
 // fallback tiebreaker of Last Difference would be a random tiebreaker.
 using System;
 using System.Collections.Generic;
+using System.Composition;
 using System.Linq;
 using MoonsetTechnologies.Voting.Ballots;
 using MoonsetTechnologies.Voting.Tabulation;
+using MoonsetTechnologies.Voting.Utility;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
+    /// <inheritdoc/>
+    [Export(typeof(AbstractTiebreaker))]
+    [ExportMetadata("Algorithm", "lundell")]
+    [ExportMetadata("Factory", typeof(LundellTiebreakerFactory))]
+    [ExportMetadata("Title", "Lundell Tiebreaker")]
+    [ExportMetadata("Description", "Uses the Lundell tiebreaking algorithm, calculating a " +
+        "runoff election between all tied candidates.")]
     public class LundellTiebreaker : AbstractTiebreaker
     {
         public LundellTiebreaker()

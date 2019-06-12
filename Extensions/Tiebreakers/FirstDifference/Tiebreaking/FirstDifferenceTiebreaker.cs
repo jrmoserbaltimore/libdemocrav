@@ -9,7 +9,6 @@ using MoonsetTechnologies.Voting.Utility;
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
 
-    [TiebreakerTypeId("16a6295a-e18e-4d4c-8ccc-cab059ffff5d")]
     public class FirstDifferenceTiebreaker : AbstractDifferenceTiebreaker
     {
         public FirstDifferenceTiebreaker(AbstractTiebreaker tiebreaker = null)

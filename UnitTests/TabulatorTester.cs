@@ -4,7 +4,6 @@ using MoonsetTechnologies.Voting.Storage;
 using MoonsetTechnologies.Voting.Tabulation;
 using MoonsetTechnologies.Voting.Tiebreaking;
 using MoonsetTechnologies.Voting.Utility;
-using MoonsetTechnologies.Voting.Utility.Attributes;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -130,7 +129,7 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             Assert.NotNull(ballots);
 
             // Use Last Difference
-            tabulatorFactory.SetTiebreaker(new LastDifferenceTiebreakerFactory());
+            tabulatorFactory.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
 
             t = tabulatorFactory.CreateTabulator();
 

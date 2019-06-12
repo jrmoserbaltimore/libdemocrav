@@ -5,13 +5,13 @@ using System.Text;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
-    class LundellTiebreakerFactory : TiebreakerFactory<LundellTiebreaker>
+    public class LundellTiebreakerFactory : TiebreakerFactory<LundellTiebreaker>
     {
         public LundellTiebreakerFactory() : base()
         {
         }
 
         protected override void CreateDefaultConfiguration()
-          => FallbackTiebreakerFactory = new LastDifferenceTiebreakerFactory();
+          => FallbackTiebreakerFactory = new TiebreakerFactory<LastDifferenceTiebreaker>();
     }
 }

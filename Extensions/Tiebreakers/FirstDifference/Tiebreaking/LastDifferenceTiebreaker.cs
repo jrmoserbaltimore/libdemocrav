@@ -8,6 +8,7 @@ using System.Composition;
 
 namespace MoonsetTechnologies.Voting.Tiebreaking
 {
+    /// <inheritdoc/>
     [Export(typeof(AbstractTiebreaker))]
     [ExportMetadata("Algorithm","last-difference")]
     [ExportMetadata("Factory", typeof(TiebreakerFactory<LastDifferenceTiebreaker>))]
