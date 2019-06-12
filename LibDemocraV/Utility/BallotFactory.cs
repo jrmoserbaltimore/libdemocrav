@@ -10,6 +10,19 @@ namespace MoonsetTechnologies.Voting.Utility
     /// <summary>
     /// A deduplicating ballot factory.  Members are thread-safe.
     /// </summary>
+    /// <remarks>
+    /// Without deduplication, we tend to proliferate thousands of copies of
+    /// immutable Ballot and Vote objects.  Deduplication can reduce memory usage
+    /// from several gigabytes to several hundred kilobytes, at the expense of a
+    /// mild increase in CPU usage.
+    /// 
+    /// CountedBallot and BallotSet objects reduce the sheer number of iterations
+    /// required to perform most complex tasks like PairwiseGraph and TopCycle
+    /// analysis, as well as basic vote counting.  This more than makes up for
+    /// deduplication overhead, and renders the impact of deduplication meaningful
+    /// only for extremely-large elections where RAM usage would be unmanageable
+    /// without it.
+    /// </remarks>
     public class BallotFactory
     {
         private DeduplicatorHashSet<Vote> Votes { get; set; }
