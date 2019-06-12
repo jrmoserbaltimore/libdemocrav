@@ -52,8 +52,6 @@ namespace MoonsetTechnologies.Voting.Utility
         /// <returns>A BallotSet with any duplicate Ballots combined into CountedBallots.</returns>
         public BallotSet CreateBallotSet(IEnumerable<Ballot> ballots)
         {
-            int threadCount = Environment.ProcessorCount;
-
             // We need to create and count each single, identical ballot,
             // and count the number of such ballots in any CountedBallot we
             // encounter.  To do this, we create uncounted, single ballots
@@ -62,7 +60,7 @@ namespace MoonsetTechnologies.Voting.Utility
                              group b is CountedBallot ? (b as CountedBallot).Count : 1 by CreateBallot(b.Votes) into bCount
                              select Ballots[bCount.Sum() == 1 ? bCount.Key : new CountedBallot(bCount.Key, bCount.Sum())];
 
-            return new BallotSet(outBallots.ToArray());
+            return new BallotSet(outBallots);
         }
 
         /// <summary>
@@ -72,10 +70,10 @@ namespace MoonsetTechnologies.Voting.Utility
         /// <returns>A BallotSet created from the total of all Ballots.</returns>
         public BallotSet MergeBallotSets(IEnumerable<BallotSet> sets)
         {
-            var q = from s in sets.AsParallel()
+            var q = from s in sets
                     from b in s.Ballots
                     select b;
-            return CreateBallotSet(q.ToArray());
+            return CreateBallotSet(q);
         }
         /// <summary>
         /// Creates a vote object.
