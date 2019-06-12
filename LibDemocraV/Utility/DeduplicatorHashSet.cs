@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
@@ -28,6 +29,7 @@ namespace MoonsetTechnologies.Voting.Utility
         {
             get
             {
+                Interlocked.Decrement(ref ExcessCountdown);
                 if (!TryGetValue(index, out T output))
                 {
                     // Look up the object through a creator if supplied
@@ -43,7 +45,6 @@ namespace MoonsetTechnologies.Voting.Utility
                         bucket = hashTable.GetOrAdd(output.GetHashCode(), new ConcurrentBag<WeakReference<T>>());
                         // add it to the bucket and return it as the object.
                         bucket.Add(new WeakReference<T>(output));
-                        Interlocked.Decrement(ref ExcessCountdown);
                     }
                     else
                         output = testout;
@@ -54,15 +55,13 @@ namespace MoonsetTechnologies.Voting.Utility
 
         public bool TryGetValue(T key, out T value)
         {
-            List<WeakReference<T>> toRemove = new List<WeakReference<T>>();
-            
             lock (trimLock)
             {
                 if (ExcessCountdown <= 0)
                 {
                     TrimExcess();
-                    if (ExcessCountdown < 10000)
-                        ExcessCountdown = 10000;
+                    if (ExcessCountdown < 100000)
+                        ExcessCountdown = 100000;
                 }
             }
 
@@ -82,15 +81,8 @@ namespace MoonsetTechnologies.Voting.Utility
                         return true;
                     }
                 }
-                else
-                {
-                    // Remove collected items as we encounter them
-                    toRemove.Add(item);
-                }
             }
 
-            // Remove the identified items
-            hashTable.TryUpdate(key.GetHashCode(), new ConcurrentBag<WeakReference<T>>(bucket.Except(toRemove)), bucket);
             // didn't find it in the bucket, so fail
             return false;
         }
@@ -106,25 +98,28 @@ namespace MoonsetTechnologies.Voting.Utility
 
         private void TrimExcess()
         {
-            List<WeakReference<T>> toRemove = new List<WeakReference<T>>();
+            // Query the dictionary in parallel; bags should be small
+            var q = from x in hashTable.AsParallel()
+                    from y in x.Value
+                    where !y.TryGetTarget(out T output)
+                    group y by x.Key into g
+                    select g;
 
-            foreach (int i in hashTable.Keys)
+            // Resolve the query first so we're not updating hashTable while querying it
+            Parallel.ForEach(q.ToArray(), (i) =>
             {
-                ConcurrentBag<WeakReference<T>> bucket = hashTable[i];
-                foreach (WeakReference<T> item in bucket)
+                ConcurrentBag<WeakReference<T>> bucket;
+                if (hashTable.TryGetValue(i.Key, out bucket))
                 {
-                    if (!item.TryGetTarget(out T output))
-                        toRemove.Add(item);
+                    var bag = new ConcurrentBag<WeakReference<T>>(bucket.Except(i).Distinct());
+
+                    if (bag.Any())
+                        hashTable.TryUpdate(i.Key, bag, bucket);
+                    else
+                        hashTable.TryRemove(i.Key, out bag);
+                    Interlocked.Add(ref ExcessCountdown, bag.Count);
                 }
-                // Remove the identified items
-                if (toRemove.Count == bucket.Count)
-                    hashTable.TryRemove(i, out bucket);
-                else
-                    hashTable.TryUpdate(i, new ConcurrentBag<WeakReference<T>>(bucket.Except(toRemove)), bucket);
-                Interlocked.Add(ref ExcessCountdown, toRemove.Count());
-                
-                toRemove.Clear();
-            }
+            });
         }
     }
 }
