@@ -38,19 +38,25 @@ namespace MoonsetTechnologies.Voting.Utility
                     else // FIXME:  Thread safety?
                         output = objectCreator(index);
                     // If we still can't find it, store what we found into the table
-                    if (!TryGetValue(output, out T testout))
-                    {
-                        ConcurrentBag<WeakReference<T>> bucket;
-                        // Get or create the bucket
-                        bucket = hashTable.GetOrAdd(output.GetHashCode(), new ConcurrentBag<WeakReference<T>>());
-                        // add it to the bucket and return it as the object.
-                        bucket.Add(new WeakReference<T>(output));
-                    }
-                    else
-                        output = testout;
+                    output = GetOrAdd(output);
                 }
                 return output;
             }
+        }
+
+        public T GetOrAdd(T item)
+        {
+            T testout;
+            if (!TryGetValue(item, out testout))
+            {
+                ConcurrentBag<WeakReference<T>> bucket;
+                // Get or create the bucket
+                bucket = hashTable.GetOrAdd(item.GetHashCode(), new ConcurrentBag<WeakReference<T>>());
+                // add it to the bucket and return it as the object.
+                bucket.Add(new WeakReference<T>(item));
+                testout = item;
+            }
+            return testout;
         }
 
         public bool TryGetValue(T key, out T value)

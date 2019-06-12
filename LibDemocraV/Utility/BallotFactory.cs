@@ -14,6 +14,8 @@ namespace MoonsetTechnologies.Voting.Utility
     {
         private DeduplicatorHashSet<Vote> Votes { get; set; }
         private DeduplicatorHashSet<Ballot> Ballots { get; set; }
+        // FIXME:  this needs to be set on creation of the BallotFactory
+        // to something sane, such as back-end storage
         private AbstractPeopleFactory peopleFactory = new ByNamePeopleFactory();
 
         /// <summary>
@@ -35,13 +37,17 @@ namespace MoonsetTechnologies.Voting.Utility
             HashSet<Vote> vout = new HashSet<Vote>();
             Ballot b, bin;
 
-            // Deduplicate the votes
-            foreach (Vote v in votes)
-                vout.Add(CreateVote(v.Candidate, v.Value));
-            bin = new Ballot(vout);
-            // Adds without triggering a call that might CreateBallot
-            Ballots.TryGetValue(bin, out b);
-            b = Ballots[bin];
+            bin = new Ballot(votes);
+            // Try a fast lookup, or else deduplicate everything
+            if (!Ballots.TryGetValue(bin, out b))
+            {
+                // Deduplicate the votes
+                foreach (Vote v in votes)
+                    vout.Add(CreateVote(v.Candidate, v.Value));
+                bin = new Ballot(vout);
+                // Adds without triggering a call that might CreateBallot
+                b = Ballots.GetOrAdd(bin);
+            }
             return b;
         }
         /// <summary>

@@ -64,7 +64,7 @@ namespace MoonsetTechnologies.Voting.Ballots
         {
             if (ReferenceEquals(this, other))
                 return true;
-            if (votes.Except(other.votes).Count() != 0)
+            if (votes.Except(other.votes).Any())
                 return false;
             return true;
         }
