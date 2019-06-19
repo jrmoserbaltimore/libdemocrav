@@ -13,8 +13,9 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
         /// <inheritdoc/>
         public RunoffTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory)
-            : base(mediator, tiebreakerFactory)
+            AbstractTiebreakerFactory tiebreakerFactory,
+            IEnumerable<ITabulatorSetting> tabulatorSettings)
+            : base(mediator, tiebreakerFactory, tabulatorSettings)
         {
 
         }

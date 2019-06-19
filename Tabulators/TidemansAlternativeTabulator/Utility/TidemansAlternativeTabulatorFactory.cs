@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using MoonsetTechnologies.Voting;
 using MoonsetTechnologies.Voting.Ballots;
+using System.Composition;
 
 namespace MoonsetTechnologies.Voting.Utility
 { 
@@ -30,22 +31,34 @@ namespace MoonsetTechnologies.Voting.Utility
             : base()
         {
         }
-    }
 
-    public class TidemansAlternativeSmithTabulatorFactory : TidemansAlternativeTabulatorFactory
-    {
-        public TidemansAlternativeSmithTabulatorFactory() : base()
+        /// <inheritdoc/>
+        protected override void ConfigureTabulator(ITabulatorSetting tabulatorSetting)
         {
-            condorcetSet = retainSet = TopCycle.TopCycleSets.smith;
+            // Condorcet and retention checks
+            if (tabulatorSetting is TidemansAlternativeCondorcetSetting)
+                condorcetSet = (tabulatorSetting as TopCycleTabulatorSetting).Value;
+            else if (tabulatorSetting is TidemansAlternativeRetentionSetting)
+                retainSet = (tabulatorSetting as TopCycleTabulatorSetting).Value;
+            // Don't recognize the setting
+            else
+                base.ConfigureTabulator(tabulatorSetting);
         }
     }
 
-    public class TidemansAlternativeSchwartzTabulatorFactory : TidemansAlternativeTabulatorFactory
+    [Export(typeof(ITabulatorSetting))]
+    [ExportMetadata("Title", "Condorcet set")]
+    [ExportMetadata("Description","The top cycle set used to test for a single Condorcet winner.")]
+    public class TidemansAlternativeCondorcetSetting : TopCycleTabulatorSetting
     {
-        public TidemansAlternativeSchwartzTabulatorFactory() : base()
-        {
-            condorcetSet = retainSet = TopCycle.TopCycleSets.schwartz;
-        }
+
     }
 
+    [Export(typeof(ITabulatorSetting))]
+    [ExportMetadata("Title", "Top cycle set")]
+    [ExportMetadata("Description", "The top cycle set from which candidates are retained each round.")]
+    public class TidemansAlternativeRetentionSetting : TopCycleTabulatorSetting
+    {
+
+    }
 }

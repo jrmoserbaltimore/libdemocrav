@@ -19,6 +19,10 @@ namespace MoonsetTechnologies.Voting.Tabulation
         "candidates not in the top cycle, performs one round of runoff to eliminate " +
         "the candidate with the fewest first-preference votes, and repeats the whole " +
         "tabulation.")]
+    [ExportMetadata("Settings", new[]
+    {
+        typeof(TiebreakerTabulatorSetting)
+    })]
     //[ExportMetadata("Constraints", new[] { "condorcet", "majority", "condorcet-loser",
     // "majority-loser", "mutual-majority", "smith", "isda", "clone-independence",
     // "polynomial-time", "resolvability" })]
@@ -28,8 +32,9 @@ namespace MoonsetTechnologies.Voting.Tabulation
         TopCycle.TopCycleSets retainSet = TopCycle.TopCycleSets.smith;
 
         public TidemansAlternativeTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory)
-            : base(mediator, tiebreakerFactory)
+            AbstractTiebreakerFactory tiebreakerFactory,
+            IEnumerable<ITabulatorSetting> tabulatorSettings)
+            : base(mediator, tiebreakerFactory, tabulatorSettings)
         {
 
         }

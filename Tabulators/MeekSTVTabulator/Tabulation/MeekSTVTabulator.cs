@@ -46,8 +46,9 @@ namespace MoonsetTechnologies.Voting.Tabulation
         }
 
         public MeekSTVTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory)
-            : base(mediator, tiebreakerFactory)
+            AbstractTiebreakerFactory tiebreakerFactory,
+            IEnumerable<ITabulatorSetting> tabulatorSettings)
+            : base(mediator, tiebreakerFactory, tabulatorSettings)
         {
 
         }

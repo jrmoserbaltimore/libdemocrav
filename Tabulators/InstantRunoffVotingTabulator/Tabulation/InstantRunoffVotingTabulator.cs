@@ -11,8 +11,9 @@ namespace MoonsetTechnologies.Voting.Tabulation
     public class InstantRunoffVotingTabulator : RunoffTabulator
     {
         public InstantRunoffVotingTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory)
-            : base(mediator, tiebreakerFactory)
+            AbstractTiebreakerFactory tiebreakerFactory,
+            IEnumerable<ITabulatorSetting> tabulatorSettings)
+            : base(mediator, tiebreakerFactory, tabulatorSettings)
         {
 
         }

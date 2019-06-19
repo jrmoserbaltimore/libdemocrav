@@ -263,15 +263,31 @@ namespace MoonsetTechnologies.Voting.Tabulation
         }
 
         /// <summary>
+        /// Configures the Tabulators created based on a settings object.
+        /// </summary>
+        /// <param name="tabulatorSetting">The setting to adjust</param>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if the setting is ultimately not recognized for this Tabulator.</exception>
+        protected virtual void ConfigureTabulator(ITabulatorSetting tabulatorSetting)
+        {
+            throw new ArgumentOutOfRangeException("tabulatorSetting", "Tabulator factory given ITabulatorSetting not applicable to tabulator.");
+        }
+
+        /// <summary>
         /// Create a Tabulator with the given mediator and tiebreaker factory.
         /// </summary>
         /// <param name="mediator">The mediator to use.</param>
-        /// <param name="tiebreakerFactory">The factory to use to create tiebreakers.</param>
+        /// <param name="tiebreakerFactory">The tiebreaker factory to use.</param>
+        /// <param name="tabulatorSettings">The settings to use.</param>
         protected AbstractTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory)
+            AbstractTiebreakerFactory tiebreakerFactory,
+            IEnumerable<ITabulatorSetting> tabulatorSettings)
         {
             this.mediator = mediator;
             this.tiebreakerFactory = tiebreakerFactory;
+            foreach (var x in tabulatorSettings)
+            {
+                ConfigureTabulator(x);
+            }
         }
     }
 }

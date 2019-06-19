@@ -129,7 +129,12 @@ namespace MoonsetTechnologies.Voting.Development.Tests
             Assert.NotNull(ballots);
 
             // Use Last Difference
-            tabulatorFactory.SetTiebreaker(new TiebreakerFactory<LastDifferenceTiebreaker>());
+            List<ITabulatorSetting> tabulatorSettings = new List<ITabulatorSetting>();
+            tabulatorSettings.Add(new TiebreakerTabulatorSetting
+            {
+                Value = typeof(TiebreakerFactory<LastDifferenceTiebreaker>)
+            });
+            tabulatorFactory.ConfigureTabulator(tabulatorSettings);
 
             t = tabulatorFactory.CreateTabulator();
 
