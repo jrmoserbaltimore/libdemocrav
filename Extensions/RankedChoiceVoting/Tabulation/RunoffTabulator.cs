@@ -8,8 +8,32 @@ using MoonsetTechnologies.Voting.Analytics;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
+
+    //
+    // 1. If Smith/IRV or Tideman's, eliminate all non-Smith candidates;
+    // 2. If only one candidate remains, go to 6;
+    // 3. Eliminate the remaining candidate with the fewest votes;
+    // 4. If Tideman’s Alternative, go to 1;
+    // 5. If Instant Runoff Voting, go to 2;
+    // 6. Elect the single remaining candidate.
+    //
     public class RunoffTabulator : AbstractTabulator
     {
+        private CondorcetCheck condorcetCheck = CondorcetCheck.none;
+        private AbstractBatchEliminator condorcetBatcheliminator = null;
+
+        TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;
+        TopCycle.TopCycleSets retainSet = TopCycle.TopCycleSets.smith;
+
+        public enum CondorcetCheck
+        {
+            // no Condorcet checks
+            none = 0,
+            // Check on first round, restrict to retainSet
+            start = 1,
+            // Check after each single-candidate runoff
+            runoff = 2
+        }
 
         /// <inheritdoc/>
         public RunoffTabulator(TabulationMediator mediator,
@@ -26,6 +50,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
             base.InitializeTabulation(ballots, withdrawn, seats);
             analytics = new RankedTabulationAnalytics(ballots, seats);
             batchEliminator = new RunoffBatchEliminator(analytics as RankedTabulationAnalytics, seats);
+            if (condorcetCheck == CondorcetCheck.start)
+                condorcetBatcheliminator = new TopCycleBatchEliminator(analytics as RankedTabulationAnalytics, seats);
         }
 
         // A simple count of who has the most votes.
@@ -74,6 +100,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 SetFinalWinners();
             else
             {
+
                 eliminationCandidates = GetEliminationCandidates();
                 if (!(eliminationCandidates?.Count() > 0))
                     throw new InvalidOperationException("Called TabulateRound() after completion.");
