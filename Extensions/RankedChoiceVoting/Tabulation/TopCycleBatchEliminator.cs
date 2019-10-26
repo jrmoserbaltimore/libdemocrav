@@ -26,6 +26,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
                                                || x.Value.State == CandidateState.States.defeated
                                                select x.Key).ToHashSet();
 
+            // FIXME:  Make configurable
+            TopCycle.TopCycleSets retentionSet = TopCycle.TopCycleSets.schwartz;
             // Reduce these to the appropriate checks
             rSet = (analytics as RankedTabulationAnalytics).GetTopCycle(withdrawnSet, retentionSet).ToList();
 

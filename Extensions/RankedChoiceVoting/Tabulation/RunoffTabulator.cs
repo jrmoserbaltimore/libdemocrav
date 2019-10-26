@@ -6,6 +6,12 @@ using MoonsetTechnologies.Voting.Ballots;
 using MoonsetTechnologies.Voting.Utility;
 using MoonsetTechnologies.Voting.Analytics;
 
+
+// XXX
+// This tabulator is implemented simply by API that doesn't even exist.
+// Refactor everything else to match.
+// XXX
+
 namespace MoonsetTechnologies.Voting.Tabulation
 {
 
@@ -83,6 +89,42 @@ namespace MoonsetTechnologies.Voting.Tabulation
             }
         }
 
+        protected override IEnumerable<Candidate> GetEliminationCandidates()
+        {
+            HashSet<Candidate> retainedCandidates = null;
+            HashSet<Candidate> eliminatedCandidates;
+
+            // Get the Condorcet candidate
+            if (!(condorcetSet is null))
+            {
+                retainedCandidates = analytics.GetCandidates(condorcetSet);
+            }
+
+            if (!(retainSet is null))
+            {
+                // There is no Condorcet candidate
+                if (retainedCandidates is null || retainedCandidates.Count > 1)
+                {
+                    retainedCandidates = analytics.GetCandidates(retainSet);
+                }
+                eliminatedCandidates = analytics.GetCandidates(electableCandidates).Except(retainedCandidates);
+            }
+            else
+                eliminatedCandidates = new HashSet<Candidate>();
+
+            // All candidates are in the retained set, so use one round of runoff
+            if (eliminatedCandidates.Count == 0)
+            {
+                eliminatedCandidates = analytics.GetCandidates(runoffLoser);
+
+                // Break ties
+                if (eliminatedCandidates.Count > 1)
+                {
+
+                }
+            }
+            
+        }
         /// <inheritdoc/>
         protected override TabulationStateEventArgs TabulateRound()
         {

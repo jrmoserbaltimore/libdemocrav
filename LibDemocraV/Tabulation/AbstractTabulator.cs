@@ -242,10 +242,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// <summary>
         /// Get elimination candidates, including checking for and breaking ties.
         /// </summary>
-        /// <param name="batchElimination">false to disable batch elimination.</param>
-        /// <param name="surplus"></param>
         /// <returns>An enumerable of elimination candidates.</returns>
-        protected IEnumerable<Candidate> GetEliminationCandidates(bool batchElimination = true, decimal surplus = 0.0m)
+        protected virtual IEnumerable<Candidate> GetEliminationCandidates()
         {
             HashSet<Candidate> eliminationCandidates = batchEliminator.GetBatchElimination(CandidateStatesCopy, surplus)?.ToHashSet();
             // Tie

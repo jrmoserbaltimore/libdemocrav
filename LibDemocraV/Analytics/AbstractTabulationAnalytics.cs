@@ -11,5 +11,10 @@ namespace MoonsetTechnologies.Voting.Analytics
         {
 
         }
+
+        public HashSet<Candidate> GetCandidates(Type t)
+        {
+            return null;
+        }
     }
 }
