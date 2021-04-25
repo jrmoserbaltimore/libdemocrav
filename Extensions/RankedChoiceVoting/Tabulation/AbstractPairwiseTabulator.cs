@@ -36,5 +36,15 @@ namespace MoonsetTechnologies.Voting.Tabulation
                     .Select(x => x.Key)
                     .Except(tc);
         }
+
+        // TODO:  Implement a TabulateRound() that can do the below:
+        //  return new RankedTabulationStateEventArgs
+        //  {
+        //      CandidateStates = CandidateStatesCopy,
+        //      SchwartzSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(candidateStates.Keys.Except(startSet)),
+        //      SmithSet = (analytics as RankedTabulationAnalytics).GetSmithSet(candidateStates.Keys.Except(startSet)),
+        //      PairwiseGraph = pairwiseGraph
+        // };
+
     }
 }

@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Extensions\RankedChoiceVoting\RankedChoiceVoting.csproj" />
     <ProjectReference Include="..\..\LibDemocraV\LibDemocraV.csproj" />
   </ItemGroup>
 
