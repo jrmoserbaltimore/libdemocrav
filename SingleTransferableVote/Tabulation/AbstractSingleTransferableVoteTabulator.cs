@@ -7,7 +7,7 @@ using MoonsetTechnologies.Voting.Utility;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
-    public abstract class AbstractSingleTransferableVoteTabulator : RunoffTabulator
+    public abstract class AbstractSingleTransferableVoteTabulator : AbstractTabulator
     {
         public AbstractSingleTransferableVoteTabulator(TabulationMediator mediator,
             AbstractTiebreakerFactory tiebreakerFactory,

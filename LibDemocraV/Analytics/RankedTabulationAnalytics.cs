@@ -5,15 +5,15 @@ using MoonsetTechnologies.Voting.Ballots;
 
 namespace MoonsetTechnologies.Voting.Analytics
 {
-    public class RankedTabulationAnalytics : AbstractTabulationAnalytics
+    public class RankedTabulationAnalytics
     {
         protected TopCycle topCycle;
         public PairwiseGraph pairwiseGraph { get; protected set; }
 
-        public RankedTabulationAnalytics(BallotSet ballots, int seats = 1) : base(ballots, seats)
+        public RankedTabulationAnalytics(BallotSet ballots, int seats = 1)
         {
-            topCycle = new TopCycle(ballots);
-            pairwiseGraph = null;
+            pairwiseGraph = new PairwiseGraph(ballots);
+            topCycle = new TopCycle(pairwiseGraph);
         }
 
         public IEnumerable<Candidate> GetTopCycle(IEnumerable<Candidate> withdrawn, TopCycle.TopCycleSets set)
