@@ -59,6 +59,13 @@ namespace MoonsetTechnologies.Voting.Tabulation
             base.InitializeTabulation(ballots, withdrawn, seats);
         }
 
+        // Finds the candidates with the lowest vote count
+        protected override IEnumerable<Candidate> GetEliminationCandidates()
+        {
+            decimal minVotes = candidateStates.Select(x => x.Value.VoteCount).Min();
+            return candidateStates.Where(x => x.Value.VoteCount == minVotes).Select(x => x.Key);
+        }
+
         /// <inheritdoc/>
         protected override TabulationStateEventArgs TabulateRound()
         {
@@ -110,7 +117,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 }
                 else
                 {
-                    eliminationCandidates = GetEliminationCandidates(true, surplus);
+                    eliminationCandidates = GetEliminationCandidates();
                 }
                 if (!(eliminationCandidates?.Count() > 0))
                     throw new InvalidOperationException("Called TabulateRound() but no winners or losers.");
@@ -151,6 +158,14 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 .Select(x => x.Candidate).ToList();
             InitializeCandidateStates(c);
 
+            // Only counts hopeful and elected candidates
+            int totalCandidates
+                = candidateStates
+                   .Where(x => new[] { CandidateState.States.hopeful, CandidateState.States.elected, CandidateState.States.defeated }
+                     .Contains(x.Value.State))
+                   .ToDictionary(x => x.Key, x => x.Value).Count;
+
+
             votes.Sort();
             foreach (Vote v in votes)
             {
@@ -168,6 +183,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 // we add that many ballots to the vote and decrease the weight
                 // of all identical ballots by the value kept.
                 cs.VoteCount += value * ballot.Count;
+                cs.BordaScore += value * ballot.Count * (totalCandidates - v.Value);
                 weight -= value;
 
                 // Do this until weight hits zero, or we run out of rankings.
