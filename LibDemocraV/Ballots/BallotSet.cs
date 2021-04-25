@@ -8,7 +8,7 @@ namespace MoonsetTechnologies.Voting.Ballots
     public class BallotSet : IEnumerable<CountedBallot>
     {
         private List<Ballot> ballots = new List<Ballot>();
-        public IEnumerable<CountedBallot> Ballots => (this as IEnumerable<CountedBallot>).ToList();
+        public IEnumerable<CountedBallot> Ballots => this as IEnumerable<CountedBallot>;
 
         /// <summary>
         /// Total count of ballots.

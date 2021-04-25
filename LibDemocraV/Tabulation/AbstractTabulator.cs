@@ -22,7 +22,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// <summary>
         /// The BatchEliminator to use when the tabulator needs to eliminate candidates.
         /// </summary>
-        protected AbstractBatchEliminator batchEliminator;
+        protected AbstractEliminator batchEliminator;
         /// <summary>
         /// The tiebreaker to use in the event of a tie.
         /// </summary>
@@ -52,7 +52,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             candidateStates.ToDictionary(x => x.Key, x => x.Value.Clone() as CandidateState);
 
         /// <summary>
-        /// Initialize the tabulation state from a set of bandidates, withdrawn candidates, and a number of seats.
+        /// Initialize the tabulation state from a set of candidates, withdrawn candidates, and a number of seats.
         /// </summary>
         /// <param name="ballots">The ballots to tabulate.</param>
         /// <param name="withdrawn">Candidates excluded from tabulation.</param>
@@ -191,7 +191,19 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// Perform a round of tabulation, electing and eliminating candidates.
         /// Returns when it's time to check for completion or recount ballots.
         /// </summary>
-        protected abstract TabulationStateEventArgs TabulateRound();
+        protected virtual TabulationStateEventArgs TabulateRound()
+        {
+            foreach (Candidate c in GetEliminationCandidates())
+            {
+                SetState(c, CandidateState.States.defeated);
+            }
+
+            return new TabulationStateEventArgs
+            {
+                CandidateStates = CandidateStatesCopy,
+                Note = ""
+            };
+        }
 
         /// <summary>
         /// Count ballot and update candidateState.

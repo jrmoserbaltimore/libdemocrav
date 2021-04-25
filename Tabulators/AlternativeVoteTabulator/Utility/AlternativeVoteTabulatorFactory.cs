@@ -17,9 +17,6 @@ namespace MoonsetTechnologies.Voting.Utility
     //   Tideman's Alternative Smith:  (smith, smith)
     public class AlternativeVoteTabulatorFactory : AbstractTabulatorFactory<AlternativeVoteTabulator>
     {
-        protected TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;
-        protected TopCycle.TopCycleSets retainSet = TopCycle.TopCycleSets.smith;
-
         public AlternativeVoteTabulatorFactory()
             : base()
         {
@@ -29,30 +26,13 @@ namespace MoonsetTechnologies.Voting.Utility
         protected override void ConfigureTabulator(ITabulatorSetting tabulatorSetting)
         {
             // Condorcet and retention checks
-            if (tabulatorSetting is TidemansAlternativeCondorcetSetting)
-                condorcetSet = (tabulatorSetting as TopCycleTabulatorSetting).Value;
-            else if (tabulatorSetting is TidemansAlternativeRetentionSetting)
-                retainSet = (tabulatorSetting as TopCycleTabulatorSetting).Value;
+            if (tabulatorSetting is AlternativeVoteAlternativeSmithSetting
+                || tabulatorSetting is AlternativeVoteSmithIRVSetting)
+                settings.Add(tabulatorSetting);
             // Don't recognize the setting
             else
                 base.ConfigureTabulator(tabulatorSetting);
         }
-    }
-
-    [Export(typeof(ITabulatorSetting))]
-    [ExportMetadata("Title", "Condorcet set")]
-    [ExportMetadata("Description","The top cycle set used to test for a single Condorcet winner.")]
-    public class TidemansAlternativeCondorcetSetting : TopCycleTabulatorSetting
-    {
-
-    }
-
-    [Export(typeof(ITabulatorSetting))]
-    [ExportMetadata("Title", "Top cycle set")]
-    [ExportMetadata("Description", "The top cycle set from which candidates are retained each round.")]
-    public class TidemansAlternativeRetentionSetting : TopCycleTabulatorSetting
-    {
-
     }
 
     // FIXME:  Allow dependencies

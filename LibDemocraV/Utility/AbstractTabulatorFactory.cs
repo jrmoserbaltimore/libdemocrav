@@ -24,6 +24,8 @@ namespace MoonsetTechnologies.Voting.Utility
             this.tiebreakerFactory = tiebreakerFactory;
         }
 
+        protected HashSet<ITabulatorSetting> settings = new HashSet<ITabulatorSetting>();
+
         /// <summary>
         /// Configures the Tabulators created based on a settings object.
         /// </summary>
@@ -52,7 +54,7 @@ namespace MoonsetTechnologies.Voting.Utility
         }
 
         protected virtual IEnumerable<ITabulatorSetting> CreateSettings()
-            => new List<ITabulatorSetting>();
+            => new HashSet<ITabulatorSetting>(settings);
     }
 
     public abstract class AbstractTabulatorFactory<T> : AbstractTabulatorFactory

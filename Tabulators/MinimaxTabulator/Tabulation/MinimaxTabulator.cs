@@ -10,8 +10,9 @@ namespace MoonsetTechnologies.Voting.Tabulation
 {
     // Only use Minimax as Smith/Minimax
     // TODO:  base on an abstract pairwise tabulator that initializes the graph
-    public class MinimaxTabulator : AbstractTabulator
+    public class MinimaxTabulator : AbstractPairwiseTabulator
     {
+        protected bool SmithConstrain = false;
         /// <inheritdoc/>
         public MinimaxTabulator(TabulationMediator mediator,
             AbstractTiebreakerFactory tiebreakerFactory,
@@ -20,6 +21,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         {
 
         }
+
         protected override void CountBallot(CountedBallot ballot)
         {
             // Only counts hopeful and elected candidates
@@ -28,20 +30,44 @@ namespace MoonsetTechnologies.Voting.Tabulation
                    .Where(x => new[] { CandidateState.States.hopeful, CandidateState.States.elected, CandidateState.States.defeated }
                      .Contains(x.Value.State))
                    .ToDictionary(x => x.Key, x => x.Value);
-
-            // TODO:  Create a graph
         }
 
-        protected override TabulationStateEventArgs TabulateRound()
+        protected override IEnumerable<Candidate> GetEliminationCandidates()
         {
-            // TODO:  If Smith setting is enabled, eliminate all non-Smith candidates first
-            // TODO:  Generate a list of largest pairwise defeats per candidate
-            // TODO:  Elect candidate who has the smallest pairwise defeat
-            return new TabulationStateEventArgs
+            HashSet<Candidate> ec = new HashSet<Candidate>();
+
+            HashSet <Candidate> tc = new HashSet<Candidate>(topCycle.GetTopCycle(candidateStates
+                .Where(x => x.Value.State != CandidateState.States.hopeful)
+                .Select(x => x.Key), TopCycle.TopCycleSets.smith));
+
+            // When Smith/Minimax OR there is a Condorcet winner,
+            // eliminate all non-Smith candidates first
+            if (SmithConstrain || (tc.Count() == 1))
             {
-                CandidateStates = CandidateStatesCopy,
-                Note = ""
-            };
+                ec.UnionWith(GetNonSmithCandidates());
+            }
+
+            // We're done if we found the Condorcet winner
+            if (tc.Count() > 1)
+            {
+                Dictionary<Candidate, decimal> biggestLosses = new Dictionary<Candidate, decimal>();
+
+                foreach (Candidate c in candidateStates
+                    .Where(x => x.Value.State == CandidateState.States.hopeful)
+                    .Select(x => x.Key)
+                    .Except(ec))
+                {
+                    biggestLosses[c] = pairwiseGraph.Losses(c)
+                        .Select(x => pairwiseGraph.GetVoteCount(c, x))
+                        .Max(x => x.v2 - x.v1);
+                }
+                // Select everyone whose biggest loss is bigger than the smallest biggest loss
+                ec.UnionWith(biggestLosses
+                    .Where(x => x.Value > biggestLosses.Values.Min())
+                    .Select(x => x.Key));
+            }
+
+            return ec;
         }
     }
 }

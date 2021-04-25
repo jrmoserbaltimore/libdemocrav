@@ -11,14 +11,14 @@ namespace MoonsetTechnologies.Voting.Tabulation
 {
     /// <inheritdoc/>
     [Export(typeof(AbstractTabulator))]
-    [ExportMetadata("Algorithm", "tideman-alternative")]
+    [ExportMetadata("Algorithm", "alternative-vote")]
     [ExportMetadata("Factory", typeof(AlternativeVoteTabulatorFactory))]
-    [ExportMetadata("Title", "Tideman's Alternative")]
-    [ExportMetadata("Description", "Uses the Tideman's Alternative algorithm, which " +
-        "elects a Condorcet candidate or, if no such candidate exists, eliminates all " +
-        "candidates not in the top cycle, performs one round of runoff to eliminate " +
-        "the candidate with the fewest first-preference votes, and repeats the whole " +
-        "tabulation.")]
+    [ExportMetadata("Title", "Alternative Vote")]
+    [ExportMetadata("Description", "Uses the Instant Runoff Voting, Smith/IRV, or " +
+        " Alternative  Smithalgorithm, which elect by eliminating the candidate " +
+        " with the fewest first-preference votes until one has a simple majority.  " +
+        " Smith/IRV eliminates all non-Smith candidates first; Alternative Smith " +
+        " eliminates all non-Smith candidates before each runoff elimination.")]
     [ExportMetadata("Settings", new[]
     {
         typeof(TiebreakerTabulatorSetting)
@@ -30,11 +30,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
     // TODO:  Base on an abstract pairwise tabulator
     // TODO:  Include setting for Alternative-Smith (Tideman's Alternative)
     // TODO:  Include setting for Smith/IRV
-    public class AlternativeVoteTabulator : AbstractTabulator
+    public class AlternativeVoteTabulator : AbstractPairwiseTabulator
     {
-        TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;
-        TopCycle.TopCycleSets retainSet = TopCycle.TopCycleSets.smith;
-
         bool SmithConstrain = false;
         bool AlternativeSmith = false;
 
@@ -43,15 +40,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
             IEnumerable<ITabulatorSetting> tabulatorSettings)
             : base(mediator, tiebreakerFactory, tabulatorSettings)
         {
-
-        }
-
-        protected override void InitializeTabulation(BallotSet ballots, IEnumerable<Candidate> withdrawn, int seats)
-        {
-            base.InitializeTabulation(ballots, withdrawn, seats);
-
-            RankedTabulationAnalytics analytics;
-            analytics = new RankedTabulationAnalytics(ballots, seats);
 
         }
 
@@ -86,46 +74,53 @@ namespace MoonsetTechnologies.Voting.Tabulation
         // Eliminates all non-Smith candidates, plus one more if there is no Condorcet winner
         protected override IEnumerable<Candidate> GetEliminationCandidates()
         {
-            // TODO:  identify the Smith set
+            HashSet<Candidate> ec = new HashSet<Candidate>();
+
+            HashSet<Candidate> tc = new HashSet<Candidate>(topCycle.GetTopCycle(candidateStates
+                .Where(x => x.Value.State != CandidateState.States.hopeful)
+                .Select(x => x.Key), TopCycle.TopCycleSets.smith));
+
+            long totalCount = ballots.TotalCount();
+
+            // First, eliminate all non-Smith candidates
             if (AlternativeSmith && !SmithConstrain)
                 throw new ApplicationException("AlternativeSmith and not Smith Constrained!");
             if (SmithConstrain)
             {
-                // TODO:  Eliminate all non-Smith candidates
+                ec.UnionWith(GetNonSmithCandidates());
             }
             if (!AlternativeSmith)
                 SmithConstrain = false;
-            
-            // TODO:  Check if the Smith set is one candidate; if not, append the lowest-vote
-            // candidate to the elimination set
-            decimal minVotes = candidateStates
-                .Where(x => x.Value.State == CandidateState.States.hopeful)
-                .Select(x => x.Value.VoteCount).Min();
-            return candidateStates.Where(x => x.Value.VoteCount == minVotes).Select(x => x.Key);
-        }
 
-        protected override TabulationStateEventArgs TabulateRound()
-        {
-            long tc = ballots.TotalCount();
-
-            Candidate winner = candidateStates.Where(x => x.Value.VoteCount > new decimal((tc / 2) + 0.5)).Select(x => x.Key).First();
-
-            if (!(winner is null))
+            // If all were in the Smith set, do eliminations
+            if (ec.Count == 0)
             {
-                SetState(winner, CandidateState.States.elected);
-            }
-            else
-            {
-                foreach (Candidate c in GetEliminationCandidates())
+                Candidate winner = candidateStates
+                    .Where(x => x.Value.VoteCount > new decimal((totalCount / 2) + 0.5))
+                    .Select(x => x.Key)
+                    .First();
+                // if we have a simple majority winner, eliminate everyone else
+                if (!(winner is null))
                 {
-                    SetState(c, CandidateState.States.defeated);
+                    ec.UnionWith(candidateStates
+                        .Where(x => x.Value.State == CandidateState.States.hopeful)
+                        .Select(x => x.Key)
+                        .Where(x => x != winner));
+                }
+                else
+                {
+                    decimal minVotes = candidateStates
+                        .Where(x => x.Value.State == CandidateState.States.hopeful)
+                        .Where(x => !ec.Contains(x.Key))
+                        .Select(x => x.Value.VoteCount).Min();
+                    ec.UnionWith(candidateStates
+                        .Where(x => x.Value.State == CandidateState.States.hopeful)
+                        .Where(x => !ec.Contains(x.Key))
+                        .Where(x => x.Value.VoteCount == minVotes)
+                        .Select(x => x.Key));
                 }
             }
-            return new TabulationStateEventArgs
-            {
-                CandidateStates = CandidateStatesCopy,
-                Note = ""
-            };
+            return ec;
         }
     }
 }
