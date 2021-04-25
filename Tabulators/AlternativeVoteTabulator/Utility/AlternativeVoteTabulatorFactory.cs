@@ -1,12 +1,5 @@
 using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Tabulation;
-using MoonsetTechnologies.Voting.Tiebreaking;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MoonsetTechnologies.Voting;
-using MoonsetTechnologies.Voting.Ballots;
 using System.Composition;
 
 namespace MoonsetTechnologies.Voting.Utility
@@ -22,12 +15,12 @@ namespace MoonsetTechnologies.Voting.Utility
     //   Tideman's Alternative:  (schwartz, smith)
     //   Tideman's Alternative Schwartz:  (schwartz, schwartz)
     //   Tideman's Alternative Smith:  (smith, smith)
-    public class TidemansAlternativeTabulatorFactory : AbstractTabulatorFactory<TidemansAlternativeTabulator>
+    public class AlternativeVoteTabulatorFactory : AbstractTabulatorFactory<AlternativeVoteTabulator>
     {
         protected TopCycle.TopCycleSets condorcetSet = TopCycle.TopCycleSets.schwartz;
         protected TopCycle.TopCycleSets retainSet = TopCycle.TopCycleSets.smith;
 
-        public TidemansAlternativeTabulatorFactory()
+        public AlternativeVoteTabulatorFactory()
             : base()
         {
         }
@@ -58,6 +51,22 @@ namespace MoonsetTechnologies.Voting.Utility
     [ExportMetadata("Title", "Top cycle set")]
     [ExportMetadata("Description", "The top cycle set from which candidates are retained each round.")]
     public class TidemansAlternativeRetentionSetting : TopCycleTabulatorSetting
+    {
+
+    }
+
+    // FIXME:  Allow dependencies
+    [Export(typeof(ITabulatorSetting))]
+    [ExportMetadata("Title", "Alternative Smith")]
+    [ExportMetadata("Description", "Before each elimination, eliminate all non-Smith candidates and elect if only one remains.")]
+    public class AlternativeVoteAlternativeSmithSetting : TopCycleTabulatorSetting
+    {
+
+    }
+    [Export(typeof(ITabulatorSetting))]
+    [ExportMetadata("Title", "Smith/IRV")]
+    [ExportMetadata("Description", "Before beginning, eliminate all non-smith candidates.")]
+    public class AlternativeVoteSmithIRVSetting : TopCycleTabulatorSetting
     {
 
     }

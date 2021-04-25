@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Extensions\RankedChoiceVoting\RankedChoiceVoting.csproj" />
     <ProjectReference Include="..\..\Extensions\Tiebreakers\FirstDifference\FirstDifference.csproj" />
+    <ProjectReference Include="..\InstantRunoffVotingTabulator\InstantRunoffVotingTabulator.csproj" />
   </ItemGroup>
 
   <ItemGroup>

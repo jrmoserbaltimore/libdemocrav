@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Analytics\**" />
+    <EmbeddedResource Remove="Analytics\**" />
+    <None Remove="Analytics\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Extensions\Tiebreakers\FirstDifference\FirstDifference.csproj" />
     <ProjectReference Include="..\..\SingleTransferableVote\SingleTransferableVote.csproj" />
   </ItemGroup>
@@ -16,10 +22,6 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Analytics\" />
   </ItemGroup>
 
 </Project>
