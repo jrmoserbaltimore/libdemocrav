@@ -19,17 +19,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// The ballots to tabulate.
         /// </summary>
         protected BallotSet ballots;
-        /// <summary>
-        /// The BatchEliminator to use when the tabulator needs to eliminate candidates.
-        /// </summary>
-        protected AbstractEliminator batchEliminator;
-        /// <summary>
-        /// The tiebreaker to use in the event of a tie.
-        /// </summary>
-        protected AbstractTiebreakerFactory tiebreakerFactory;
-
-        protected AbstractTiebreaker tiebreaker;
-        protected AbstractTabulationAnalytics analytics;
 
         /// <summary>
         /// Internal state for all candidates.
@@ -71,8 +60,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
                      from v in b.Votes
                      select v.Candidate).Distinct().Except(candidateStates.Keys);
             InitializeCandidateStates(q.ToArray());
-
-            tiebreaker = tiebreakerFactory.CreateTiebreaker(mediator);
         }
 
         /// <summary>
@@ -255,22 +242,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// Get elimination candidates, including checking for and breaking ties.
         /// </summary>
         /// <returns>An enumerable of elimination candidates.</returns>
-        protected virtual IEnumerable<Candidate> GetEliminationCandidates()
-        {
-            HashSet<Candidate> eliminationCandidates = batchEliminator.GetBatchElimination(CandidateStatesCopy, surplus)?.ToHashSet();
-            // Tie
-            if (eliminationCandidates is null)
-            {
-                eliminationCandidates = batchEliminator.GetSingleElimination(CandidateStatesCopy, surplus).ToHashSet();
-                if (!(eliminationCandidates.Count() > 1))
-                    throw new InvalidOperationException("Tie detected on batch elimination, but no tie on single elimination candidate check!");
-                Candidate loser = tiebreaker.GetTieLoser(eliminationCandidates);
-                eliminationCandidates.Clear();
-                eliminationCandidates.Add(loser);
-            }
-
-            return eliminationCandidates;
-        }
+        protected abstract IEnumerable<Candidate> GetEliminationCandidates();
 
         /// <summary>
         /// Configures the Tabulators created based on a settings object.
@@ -286,14 +258,11 @@ namespace MoonsetTechnologies.Voting.Tabulation
         /// Create a Tabulator with the given mediator and tiebreaker factory.
         /// </summary>
         /// <param name="mediator">The mediator to use.</param>
-        /// <param name="tiebreakerFactory">The tiebreaker factory to use.</param>
         /// <param name="tabulatorSettings">The settings to use.</param>
         protected AbstractTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory,
             IEnumerable<ITabulatorSetting> tabulatorSettings)
         {
             this.mediator = mediator;
-            this.tiebreakerFactory = tiebreakerFactory;
             foreach (var x in tabulatorSettings)
             {
                 ConfigureTabulator(x);

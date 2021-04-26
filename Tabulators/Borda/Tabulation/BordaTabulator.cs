@@ -13,30 +13,29 @@ namespace MoonsetTechnologies.Voting.Tabulation
     {
         /// <inheritdoc/>
         public BordaTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory,
             IEnumerable<ITabulatorSetting> tabulatorSettings)
-            : base(mediator, tiebreakerFactory, tabulatorSettings)
+            : base(mediator, tabulatorSettings)
         {
 
         }
         protected override void CountBallot(CountedBallot ballot)
         {
             // Only counts hopeful and elected candidates
-            Dictionary<Candidate, CandidateState> candidates
-                = candidateStates
-                   .Where(x => new[] { CandidateState.States.hopeful, CandidateState.States.elected, CandidateState.States.defeated }
-                     .Contains(x.Value.State))
-                   .ToDictionary(x => x.Key, x => x.Value);
-            int totalCandidates = candidates.Count;
+            HashSet<Candidate> candidates
+                = new HashSet<Candidate>(
+                    from x in candidateStates
+                    where new[] { CandidateState.States.hopeful, CandidateState.States.elected, CandidateState.States.defeated }
+                      .Contains(x.Value.State)
+                    select x.Key);
 
             foreach (Vote v in ballot.Votes)
             {
                 // Skip candidates not included in this count.
-                if (!candidates.Keys.Contains(v.Candidate))
+                if (!candidates.Contains(v.Candidate))
                     continue;
                 // Add borda score, which for rank r and c candidates is c-r
                 if (!(v is null))
-                    candidateStates[v.Candidate].VoteCount += ballot.Count * (totalCandidates - v.Value);
+                    candidateStates[v.Candidate].VoteCount += ballot.Count * (candidates.Count - v.Value);
             }
         }
 

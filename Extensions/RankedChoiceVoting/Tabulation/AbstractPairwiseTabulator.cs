@@ -16,8 +16,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         protected PairwiseGraph pairwiseGraph;
         protected TopCycle topCycle;
         public AbstractPairwiseTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory,
-            IEnumerable<ITabulatorSetting> tabulatorSettings) : base(mediator, tiebreakerFactory, tabulatorSettings)
+            IEnumerable<ITabulatorSetting> tabulatorSettings) : base(mediator, tabulatorSettings)
         {
 
         }
@@ -31,13 +30,13 @@ namespace MoonsetTechnologies.Voting.Tabulation
 
         protected IEnumerable<Candidate> GetNonSmithCandidates()
         {
-            HashSet<Candidate> tc = new HashSet<Candidate>(topCycle.GetTopCycle(candidateStates
-                .Where(x => x.Value.State != CandidateState.States.hopeful)
-                .Select(x => x.Key), TopCycle.TopCycleSets.smith));
-            return candidateStates
-                    .Where(x => x.Value.State == CandidateState.States.hopeful)
-                    .Select(x => x.Key)
-                    .Except(tc);
+            var tc = topCycle.GetTopCycle(
+                from x in candidateStates
+                where x.Value.State != CandidateState.States.hopeful
+                select x.Key, TopCycle.TopCycleSets.smith);
+            return (from x in candidateStates
+                   where x.Value.State == CandidateState.States.hopeful
+                   select  x.Key).Except(tc);
         }
 
         // TODO:  Implement a TabulateRound() that can do the below:

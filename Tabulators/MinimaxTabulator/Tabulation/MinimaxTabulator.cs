@@ -41,19 +41,21 @@ namespace MoonsetTechnologies.Voting.Tabulation
         {
             // Only counts hopeful and elected candidates
             Dictionary<Candidate, CandidateState> candidates
-                = candidateStates
-                   .Where(x => new[] { CandidateState.States.hopeful, CandidateState.States.elected, CandidateState.States.defeated }
-                     .Contains(x.Value.State))
-                   .ToDictionary(x => x.Key, x => x.Value);
+                = new Dictionary<Candidate, CandidateState>
+                  (from x in candidateStates
+                   where new[] { CandidateState.States.hopeful, CandidateState.States.elected, CandidateState.States.defeated }
+                       .Contains(x.Value.State)
+                   select x);
         }
 
         protected override IEnumerable<Candidate> GetEliminationCandidates()
         {
             HashSet<Candidate> ec = new HashSet<Candidate>();
 
-            HashSet <Candidate> tc = new HashSet<Candidate>(topCycle.GetTopCycle(candidateStates
-                .Where(x => x.Value.State != CandidateState.States.hopeful)
-                .Select(x => x.Key), TopCycle.TopCycleSets.smith));
+            HashSet<Candidate> tc = new HashSet<Candidate>(
+                topCycle.GetTopCycle(from x in candidateStates
+                                     where x.Value.State != CandidateState.States.hopeful
+                                     select x.Key, TopCycle.TopCycleSets.smith));
 
             // When Smith/Minimax OR there is a Condorcet winner,
             // eliminate all non-Smith candidates first
@@ -67,19 +69,18 @@ namespace MoonsetTechnologies.Voting.Tabulation
             {
                 Dictionary<Candidate, decimal> biggestLosses = new Dictionary<Candidate, decimal>();
 
-                foreach (Candidate c in candidateStates
-                    .Where(x => x.Value.State == CandidateState.States.hopeful)
-                    .Select(x => x.Key)
-                    .Except(ec))
+                foreach (Candidate c in (from x in candidateStates
+                                         where x.Value.State == CandidateState.States.hopeful
+                                         select x.Key).Except(ec))
                 {
-                    biggestLosses[c] = pairwiseGraph.Losses(c)
-                        .Select(x => pairwiseGraph.GetVoteCount(c, x))
-                        .Max(x => x.v2 - x.v1);
+                    biggestLosses[c] = (from x in pairwiseGraph.Losses(c)
+                                        select pairwiseGraph.GetVoteCount(c, x))
+                                       .Max(x => x.v2 - x.v1);
                 }
                 // Select everyone whose biggest loss is bigger than the smallest biggest loss
-                ec.UnionWith(biggestLosses
-                    .Where(x => x.Value > biggestLosses.Values.Min())
-                    .Select(x => x.Key));
+                ec.UnionWith(from x in biggestLosses
+                             where x.Value > biggestLosses.Values.Min()
+                             select x.Key);
             }
 
             return ec;

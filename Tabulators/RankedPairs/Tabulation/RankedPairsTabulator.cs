@@ -27,21 +27,15 @@ namespace MoonsetTechnologies.Voting.Tabulation
     {
         /// <inheritdoc/>
         public RankedPairsTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory,
             IEnumerable<ITabulatorSetting> tabulatorSettings)
-            : base(mediator, tiebreakerFactory, tabulatorSettings)
+            : base(mediator, tabulatorSettings)
         {
 
         }
 
         protected override void CountBallot(CountedBallot ballot)
         {
-            // Only counts hopeful and elected candidates
-            Dictionary<Candidate, CandidateState> candidates
-                = candidateStates
-                   .Where(x => new[] { CandidateState.States.hopeful, CandidateState.States.elected, CandidateState.States.defeated }
-                     .Contains(x.Value.State))
-                   .ToDictionary(x => x.Key, x => x.Value);
+            // Ranked Pairs only uses the pairwise graph, generated on initialization
         }
 
         private struct Pair
@@ -60,7 +54,9 @@ namespace MoonsetTechnologies.Voting.Tabulation
             HashSet<Candidate> ec = new HashSet<Candidate>();
 
             Dictionary<Pair, decimal> WinMargins = new Dictionary<Pair, decimal>();
-            foreach (Candidate c in candidateStates.Where(x => x.Value.State == CandidateState.States.hopeful).Select(x => x.Key))
+            foreach (Candidate c in from x in candidateStates
+                                    where x.Value.State == CandidateState.States.hopeful
+                                    select x.Key)
             {
                 foreach (Candidate d in pairwiseGraph.Wins(c))
                 {
@@ -96,9 +92,9 @@ namespace MoonsetTechnologies.Voting.Tabulation
             // Locate graph root
             TopCycle tc = new TopCycle(rp, TopCycle.TopCycleSets.smith);
             // Eliminate all candidates except the root candidate
-            ec.UnionWith(candidateStates
-                .Where(x => x.Value.State == CandidateState.States.hopeful)
-                .Select(x => x.Key)
+            ec.UnionWith((from x in candidateStates
+                          where x.Value.State == CandidateState.States.hopeful
+                          select x.Key)
                 .Except(tc.GetTopCycle(new Candidate[] { })));
 
             return ec;

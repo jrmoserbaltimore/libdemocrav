@@ -20,14 +20,25 @@
 
 using System;
 using System.Collections.Generic;
+using System.Composition;
 using System.Linq;
 using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Ballots;
-using MoonsetTechnologies.Voting.Tiebreaking;
 using MoonsetTechnologies.Voting.Utility;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
+    /// <inheritdoc/>
+    [Export(typeof(AbstractTabulator))]
+    [ExportMetadata("Algorithm", "alternative-vote")]
+    [ExportMetadata("Factory", typeof(MeekSTVTabulatorFactory))]
+    [ExportMetadata("Title", "Minimax")]
+    [ExportMetadata("Description", "Meek's method of Single Transferable Vote.  " +
+                    "Configurable to use Borda eliminations (Meek-Geller).")]
+    [ExportMetadata("Settings", new[]
+    {
+        typeof(TiebreakerTabulatorSetting)
+    })]
     public class MeekSTVTabulator : AbstractSingleTransferableVoteTabulator
     {
         private decimal quota = 0.0m;
@@ -62,19 +73,22 @@ namespace MoonsetTechnologies.Voting.Tabulation
         // Finds the candidates with the lowest vote count
         protected override IEnumerable<Candidate> GetEliminationCandidates()
         {
-            decimal minVotes = candidateStates.Select(x => x.Value.VoteCount).Min();
-            return candidateStates.Where(x => x.Value.VoteCount == minVotes).Select(x => x.Key);
+            decimal minVotes = (from x in candidateStates select x.Value.VoteCount).Min();
+            return from x in candidateStates
+                   where x.Value.VoteCount == minVotes
+                   select x.Key;
         }
 
         /// <inheritdoc/>
         protected override TabulationStateEventArgs TabulateRound()
         {
-            IEnumerable<Candidate> startSet =
-                candidateStates
-                .Where(x => new[] { CandidateState.States.hopeful, CandidateState.States.elected }
-                     .Contains(x.Value.State)).Select(x => x.Key).ToList();
+            IEnumerable<Candidate> startSet = 
+                from x in candidateStates
+                where new[] { CandidateState.States.hopeful, CandidateState.States.elected }
+                     .Contains(x.Value.State)
+                select x.Key;
 
-            IEnumerable<Candidate> winners = new List<Candidate>();
+            IEnumerable<Candidate> winners = null;
             IEnumerable<Candidate> eliminationCandidates;
             // Mutually exclusive, and exclusive with electing winners
             string note = kfStasis ? "KeepFactor Stasis, so eliminating candidates." : null;
@@ -83,14 +97,14 @@ namespace MoonsetTechnologies.Voting.Tabulation
             // B.1:  if we have fewer hopefuls than open seats, elect everyone
             if (IsFinalRound())
             {
-                int count = candidateStates
-                    .Where(x => x.Value.State == CandidateState.States.elected)
-                    .Count();
+                int count = (from x in candidateStates
+                    where x.Value.State == CandidateState.States.elected
+                    select x).Count();
                 if (count < seats)
                 {
-                    winners = candidateStates
-                        .Where(x => x.Value.State == CandidateState.States.hopeful)
-                        .Select(x => x.Key).ToList();
+                    winners = from x in candidateStates
+                              where x.Value.State == CandidateState.States.hopeful
+                              select x.Key;
                     note = "Fewer hopeful candidates than open seats, so elected all.";
                 }
             }
@@ -98,7 +112,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
             {
                 // Meek's Method iterates until it elects winners or hits a no-winner state.
                 // On a winner state, it repeats the iteration
-                winners = GetNewWinners(quota).ToList();
+                winners = GetNewWinners(quota);
             }
 
             // Elect our winners either way
@@ -110,9 +124,9 @@ namespace MoonsetTechnologies.Voting.Tabulation
             {
                 if (IsFinalRound())
                 {
-                    eliminationCandidates = candidateStates
-                        .Where(x => x.Value.State == CandidateState.States.hopeful)
-                        .Select(x => x.Key).ToList();
+                    eliminationCandidates = from x in candidateStates
+                        where x.Value.State == CandidateState.States.hopeful
+                        select x.Key;
                     note = "Filled seats, so eliminated all remainig hopefuls.";
                 }
                 else
@@ -128,8 +142,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
             return new MeekSTVTabulationStateEventArgs
             {
                 CandidateStates = CandidateStatesCopy,
-                SchwartzSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet),
-                SmithSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet),
+               // SchwartzSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet),
+               // SmithSet = (analytics as RankedTabulationAnalytics).GetSchwartzSet(startSet),
                 Quota = quota,
                 Surplus = surplus
             };
@@ -154,17 +168,16 @@ namespace MoonsetTechnologies.Voting.Tabulation
             decimal weight = 1.0m;
             List<Vote> votes = ballot.Votes.ToList();
             // Ensure any newly-seen candidates are counted
-            List<Candidate> c = ballot.Votes.Where(x => !candidateStates.Keys.Contains(x.Candidate))
-                .Select(x => x.Candidate).ToList();
-            InitializeCandidateStates(c);
+            InitializeCandidateStates(from x in ballot.Votes
+                                      where !candidateStates.Keys.Contains(x.Candidate)
+                                      select x.Candidate);
 
-            // Only counts hopeful and elected candidates
+            // Used for Borda score.  Do not count withdrawn candidates.
             int totalCandidates
-                = candidateStates
-                   .Where(x => new[] { CandidateState.States.hopeful, CandidateState.States.elected, CandidateState.States.defeated }
-                     .Contains(x.Value.State))
-                   .ToDictionary(x => x.Key, x => x.Value).Count;
-
+                = (from x in candidateStates
+                   where new[] { CandidateState.States.hopeful, CandidateState.States.elected, CandidateState.States.defeated }
+                      .Contains(x.Value.State)
+                   select x).Count();
 
             votes.Sort();
             foreach (Vote v in votes)
