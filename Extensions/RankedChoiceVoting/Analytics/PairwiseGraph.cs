@@ -194,6 +194,42 @@ namespace MoonsetTechnologies.Voting.Analytics
         public HashSet<Candidate> Losses(Candidate candidate)
           => VoteCounts(candidate).Where(x => x.Value.v1 < x.Value.v2).Select(x => x.Key).ToHashSet();
 
+        /// <summary>
+        /// Determines if one candidate has a beatpath to another, or back to itself.
+        /// </summary>
+        /// <param name="from">The candidate from which to start.</param>
+        /// <param name="to">The candidate to reach.</param>
+        /// <returns></returns>
+        public bool CanReach(Candidate from, Candidate to)
+        {
+            HashSet<Candidate> visited = new HashSet<Candidate>();
+            HashSet<Candidate> seen = new HashSet<Candidate>();
+
+            // Don't add 'from' to the set seen, in case we're trying to find if a
+            // node can reach itself (cycle)
+            seen.UnionWith(Wins(from));
+            seen.UnionWith(Ties(from));
+            while (seen.Except(visited).Count() >= 0 && !seen.Contains(to))
+            {
+                // Pick one that's been seen but not visited and visit it
+                Candidate c = seen.Except(visited).First();
+                visited.Add(c);
+
+                // See whatever is connected
+                seen.UnionWith(Wins(c));
+                seen.UnionWith(Ties(c));
+            }
+
+            return seen.Contains(to);
+        }
+
+        public BallotSet GetAsBallots(Candidate c1, Candidate c2)
+        {
+            CountedBallot v = new CountedBallot(new Ballot(new[] { new Vote(c1, 1) }), Convert.ToInt64(nodes[c1][c2]));
+            CountedBallot u = new CountedBallot(new Ballot(new[] { new Vote(c2, 1) }), Convert.ToInt64(nodes[c2][c1]));
+            return new BallotSet(new[] { v, u });
+        }
+
         protected PairwiseGraph()
         {
             

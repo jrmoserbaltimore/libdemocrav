@@ -1,4 +1,7 @@
-﻿using MoonsetTechnologies.Voting.Ballots;
+﻿// This uses pairwise tabulation.
+// If using summable methods, produce summable pairwise ballot sets from the indivdual
+// counts, and then load them all with the combining utility.
+using MoonsetTechnologies.Voting.Ballots;
 using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Utility;
 using System;

@@ -13,8 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Extensions\Tiebreakers\FirstDifference\FirstDifference.csproj" />
-    <ProjectReference Include="..\..\SingleTransferableVote\SingleTransferableVote.csproj" />
+    <ProjectReference Include="..\..\Extensions\RankedChoiceVoting\RankedChoiceVoting.csproj" />
+    <ProjectReference Include="..\..\Extensions\SingleTransferableVote\SingleTransferableVote.csproj" />
+    <ProjectReference Include="..\..\LibDemocraV\LibDemocraV.csproj" />
   </ItemGroup>
 
   <ItemGroup>
