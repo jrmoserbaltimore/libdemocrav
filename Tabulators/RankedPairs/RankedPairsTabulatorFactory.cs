@@ -4,9 +4,9 @@ using System.Composition;
 
 namespace MoonsetTechnologies.Voting.Utility
 {
-    public class MinimaxTabulatorFactory : AbstractTabulatorFactory<MinimaxTabulator>
+    public class RankedPairsTabulatorFactory : AbstractTabulatorFactory<RankedPairsTabulator>
     {
-        public MinimaxTabulatorFactory()
+        public RankedPairsTabulatorFactory()
             : base()
         {
         }
@@ -16,14 +16,6 @@ namespace MoonsetTechnologies.Voting.Utility
         {
             base.ConfigureTabulator(tabulatorSetting);
         }
-    }
-
-    [Export(typeof(ITabulatorSetting))]
-    [ExportMetadata("Title", "Smith-constrained")]
-    [ExportMetadata("Description", "Enable to use Smith/Minimax.")]
-    public class MinimaxTabulatorSmithSetting : TopCycleTabulatorSetting
-    {
-
     }
 }
 

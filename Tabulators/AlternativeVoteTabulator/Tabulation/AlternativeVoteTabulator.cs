@@ -4,7 +4,6 @@ using System.Composition;
 using System.Linq;
 using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Ballots;
-using MoonsetTechnologies.Voting.Tiebreaking;
 using MoonsetTechnologies.Voting.Utility;
 
 namespace MoonsetTechnologies.Voting.Tabulation
@@ -26,10 +25,6 @@ namespace MoonsetTechnologies.Voting.Tabulation
     //[ExportMetadata("Constraints", new[] { "condorcet", "majority", "condorcet-loser",
     // "majority-loser", "mutual-majority", "smith", "isda", "clone-independence",
     // "polynomial-time", "resolvability" })]
-
-    // TODO:  Base on an abstract pairwise tabulator
-    // TODO:  Include setting for Alternative-Smith (Tideman's Alternative)
-    // TODO:  Include setting for Smith/IRV
     public class AlternativeVoteTabulator : AbstractPairwiseTabulator
     {
         bool SmithConstrain = false;

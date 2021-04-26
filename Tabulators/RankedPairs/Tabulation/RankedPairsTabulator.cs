@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Composition;
 using System.Linq;
 using MoonsetTechnologies.Voting.Ballots;
 using MoonsetTechnologies.Voting.Utility;
@@ -8,6 +8,21 @@ using MoonsetTechnologies.Voting.Analytics;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
+    /// <inheritdoc/>
+    [Export(typeof(AbstractTabulator))]
+    [ExportMetadata("Algorithm", "alternative-vote")]
+    [ExportMetadata("Factory", typeof(RankedPairsTabulatorFactory))]
+    [ExportMetadata("Title", "Ranked Pairs")]
+    [ExportMetadata("Description", "Accepts pairwise majority wins in order from " +
+                "largest to smallest margin of victory, skipping those which would " +
+                "cause a cycle.")]
+    [ExportMetadata("Settings", new[]
+{
+        typeof(TiebreakerTabulatorSetting)
+    })]
+    //[ExportMetadata("Constraints", new[] { "condorcet", "majority", "condorcet-loser",
+    // "majority-loser", "mutual-majority", "smith", "isda", "polynomial-time", "resolvability",
+    // "clone-independence", "monotonicity", "summable"})]
     public class RankedPairsTabulator : AbstractPairwiseTabulator
     {
         /// <inheritdoc/>

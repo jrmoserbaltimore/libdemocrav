@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Composition;
 using System.Linq;
 using MoonsetTechnologies.Voting.Ballots;
 using MoonsetTechnologies.Voting.Utility;
@@ -9,7 +9,22 @@ using MoonsetTechnologies.Voting.Analytics;
 namespace MoonsetTechnologies.Voting.Tabulation
 {
     // Only use Minimax as Smith/Minimax
-    // TODO:  base on an abstract pairwise tabulator that initializes the graph
+    /// <inheritdoc/>
+    [Export(typeof(AbstractTabulator))]
+    [ExportMetadata("Algorithm", "alternative-vote")]
+    [ExportMetadata("Factory", typeof(MinimaxTabulatorFactory))]
+    [ExportMetadata("Title", "Minimax")]
+    [ExportMetadata("Description", "Elects the candidate whose largest pairwise defeat " +
+                    "is the smallest.  The Smith constraint is highly recommended, as " +
+                    "Minimax can, in some cases, elect the Condorcet loser otherwise.")]
+    [ExportMetadata("Settings", new[]
+    {
+        typeof(TiebreakerTabulatorSetting)
+    })]
+    // TODO:  support this, and support placing constraints on configuration options
+    //[ExportMetadata("Constraints", new[] { "condorcet", "majority", "condorcet-loser",
+    // "majority-loser", "mutual-majority", "smith", "isda", "polynomial-time", "resolvability",
+    // "summability"})]
     public class MinimaxTabulator : AbstractPairwiseTabulator
     {
         protected bool SmithConstrain = false;
