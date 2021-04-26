@@ -80,7 +80,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
                 // and add to the graph if not
                 if (!(rp is null))
                 {
-                    if (rp.CanReach(p.Key.winner, p.Key.loser))
+                    if (!rp.CanReach(p.Key.winner, p.Key.loser))
                     {
                         rp = new PairwiseGraph(rp, new PairwiseGraph(pairwiseGraph.GetAsBallots(p.Key.winner, p.Key.loser)));
                     }
