@@ -1,13 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Composition;
 using System.Linq;
 using MoonsetTechnologies.Voting.Ballots;
 using MoonsetTechnologies.Voting.Utility;
-using MoonsetTechnologies.Voting.Analytics;
 
 namespace MoonsetTechnologies.Voting.Tabulation
 {
+    [Export(typeof(AbstractTabulator))]
+    [ExportMetadata("Algorithm", "borda-count")]
+    [ExportMetadata("Factory", typeof(BordaTabulatorFactory))]
+    [ExportMetadata("Title", "Borda Count")]
+    [ExportMetadata("Description", "Borda's method using tournament-style counting.  " +
+        "Each candidate's rank on each ballot is subtracted from the number of " +
+        "candidates, and as many points are awarded to that candidate.  Vulnerable " +
+        "to sophisticated voting and strategic nomination.  Black's method or " +
+        "Smith-constrained Borda are recommended if using Borda.")]
+    [ExportMetadata("Settings", new[]
+    {
+        typeof(SmithConstrainedTabulatorSetting),
+        typeof(BordaBlackSetting)
+    })]
+    //[ExportMetadata("Constraints", new[] {  })]
     // Borda is terrible.  Never use it.
     public class BordaTabulator : AbstractTabulator
     {
@@ -39,6 +53,16 @@ namespace MoonsetTechnologies.Voting.Tabulation
             }
         }
 
+        protected override IEnumerable<Candidate> GetEliminationCandidates()
+        {
+            decimal bordaWin = (from x in candidateStates
+                                orderby x.Value.VoteCount descending
+                                select x).ElementAt(seats - 1).Value.VoteCount;
+            // This may leave more hopefuls than seats if there are ties
+            return from x in candidateStates
+                   where x.Value.VoteCount < bordaWin
+                   select x.Key;
+        }
         protected override TabulationStateEventArgs TabulateRound()
         {
             return new TabulationStateEventArgs

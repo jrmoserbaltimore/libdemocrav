@@ -22,7 +22,6 @@ using System;
 using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
-using MoonsetTechnologies.Voting.Analytics;
 using MoonsetTechnologies.Voting.Ballots;
 using MoonsetTechnologies.Voting.Utility;
 
@@ -30,14 +29,14 @@ namespace MoonsetTechnologies.Voting.Tabulation
 {
     /// <inheritdoc/>
     [Export(typeof(AbstractTabulator))]
-    [ExportMetadata("Algorithm", "alternative-vote")]
+    [ExportMetadata("Algorithm", "meek-stv")]
     [ExportMetadata("Factory", typeof(MeekSTVTabulatorFactory))]
-    [ExportMetadata("Title", "Minimax")]
+    [ExportMetadata("Title", "Meek-STV")]
     [ExportMetadata("Description", "Meek's method of Single Transferable Vote.  " +
                     "Configurable to use Borda eliminations (Meek-Geller).")]
     [ExportMetadata("Settings", new[]
     {
-        typeof(TiebreakerTabulatorSetting)
+        typeof(MeekSTVGellerSetting)
     })]
     public class MeekSTVTabulator : AbstractSingleTransferableVoteTabulator
     {
@@ -46,6 +45,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         private readonly int precision = 9;
         private bool kfStasis = false;
         private bool surplusStasis = false;
+        private bool gellerElimination = false;
         // Round up to precision
         private decimal RoundUp(decimal d)
         {
@@ -57,9 +57,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
         }
 
         public MeekSTVTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory,
             IEnumerable<ITabulatorSetting> tabulatorSettings)
-            : base(mediator, tiebreakerFactory, tabulatorSettings)
+            : base(mediator, tabulatorSettings)
         {
 
         }
@@ -73,10 +72,21 @@ namespace MoonsetTechnologies.Voting.Tabulation
         // Finds the candidates with the lowest vote count
         protected override IEnumerable<Candidate> GetEliminationCandidates()
         {
-            decimal minVotes = (from x in candidateStates select x.Value.VoteCount).Min();
-            return from x in candidateStates
-                   where x.Value.VoteCount == minVotes
-                   select x.Key;
+            if (gellerElimination)
+            {
+                decimal minScore = (from x in candidateStates
+                                    select (x.Value as MeekCandidateState).BordaScore).Min();
+                return from x in candidateStates
+                       where (x.Value as MeekCandidateState).BordaScore == minScore
+                       select x.Key;
+            }
+            else
+            {
+                decimal minVotes = (from x in candidateStates select x.Value.VoteCount).Min();
+                return from x in candidateStates
+                       where x.Value.VoteCount == minVotes
+                       select x.Key;
+            }
         }
 
         /// <inheritdoc/>

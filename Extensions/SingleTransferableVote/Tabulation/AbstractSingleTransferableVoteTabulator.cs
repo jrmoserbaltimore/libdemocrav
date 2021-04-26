@@ -10,9 +10,8 @@ namespace MoonsetTechnologies.Voting.Tabulation
     public abstract class AbstractSingleTransferableVoteTabulator : AbstractTabulator
     {
         public AbstractSingleTransferableVoteTabulator(TabulationMediator mediator,
-            AbstractTiebreakerFactory tiebreakerFactory,
             IEnumerable<ITabulatorSetting> tabulatorSettings)
-            : base(mediator, tiebreakerFactory, tabulatorSettings)
+            : base(mediator, tabulatorSettings)
         {
         }
     }

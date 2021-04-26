@@ -17,13 +17,5 @@ namespace MoonsetTechnologies.Voting.Utility
             base.ConfigureTabulator(tabulatorSetting);
         }
     }
-
-    [Export(typeof(ITabulatorSetting))]
-    [ExportMetadata("Title", "Smith-constrained")]
-    [ExportMetadata("Description", "Enable to use Smith/Minimax.")]
-    public class MinimaxTabulatorSmithSetting : TopCycleTabulatorSetting
-    {
-
-    }
 }
 

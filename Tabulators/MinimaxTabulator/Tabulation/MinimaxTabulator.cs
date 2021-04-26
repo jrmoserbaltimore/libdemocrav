@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Minimax and Smith/Minimax tabulator
+// If you want to use this to elect multiple seats, elect one at a time
+// and rerun with each candidate withdrawn.
+
+using System;
 using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
@@ -25,6 +29,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
     //[ExportMetadata("Constraints", new[] { "condorcet", "majority", "condorcet-loser",
     // "majority-loser", "mutual-majority", "smith", "isda", "polynomial-time", "resolvability",
     // "summability"})]
+
     public class MinimaxTabulator : AbstractPairwiseTabulator
     {
         protected bool SmithConstrain = false;
@@ -32,7 +37,7 @@ namespace MoonsetTechnologies.Voting.Tabulation
         public MinimaxTabulator(TabulationMediator mediator,
             AbstractTiebreakerFactory tiebreakerFactory,
             IEnumerable<ITabulatorSetting> tabulatorSettings)
-            : base(mediator, tiebreakerFactory, tabulatorSettings)
+            : base(mediator, tabulatorSettings)
         {
 
         }

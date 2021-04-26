@@ -27,7 +27,7 @@ namespace MoonsetTechnologies.Voting.Utility
         {
             // Condorcet and retention checks
             if (tabulatorSetting is AlternativeVoteAlternativeSmithSetting
-                || tabulatorSetting is AlternativeVoteSmithIRVSetting)
+                || tabulatorSetting is SmithConstrainedTabulatorSetting)
                 settings.Add(tabulatorSetting);
             // Don't recognize the setting
             else
@@ -35,19 +35,28 @@ namespace MoonsetTechnologies.Voting.Utility
         }
     }
 
-    // FIXME:  Allow dependencies
     [Export(typeof(ITabulatorSetting))]
     [ExportMetadata("Title", "Alternative Smith")]
     [ExportMetadata("Description", "Before each elimination, eliminate all non-Smith candidates and elect if only one remains.")]
-    public class AlternativeVoteAlternativeSmithSetting : TopCycleTabulatorSetting
+    [ExportMetadata("ParentOption", new System.Type[] { typeof(SmithConstrainedTabulatorSetting) })]
+    public class AlternativeVoteAlternativeSmithSetting : BooleanTabulatorSetting
     {
 
     }
+
     [Export(typeof(ITabulatorSetting))]
-    [ExportMetadata("Title", "Smith/IRV")]
-    [ExportMetadata("Description", "Before beginning, eliminate all non-smith candidates.")]
-    public class AlternativeVoteSmithIRVSetting : TopCycleTabulatorSetting
+    [ExportMetadata("Title", "Geller Elimination")]
+    [ExportMetadata("Description", "Eliminate candidates by lowes Borda score instead of least votes.")]
+    public class AlternativeVoteGellerSetting : BooleanTabulatorSetting
     {
 
     }
+
+    // 26 A>B>C
+    // 25 B>A>C
+    // 49 C>B>A
+    //
+    // A: 77
+    // B: 125
+    // C: 98
 }
